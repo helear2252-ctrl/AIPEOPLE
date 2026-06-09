@@ -1,0 +1,29 @@
+{
+    "user_preferences": {
+        "learning_language": "Python",
+        "project_name": "NOVA AI",
+        "digital_secretary_style": "Efficient, Professional, Courteous",
+        "avatar_preference": "Simulation 2D Photorealistic",
+        "preferred_analysis": "Stock Analysis & Market Intelligence",
+        "spec_preference": "Complete Project Specifications"
+    },
+    "project_preferences": {
+        "active_project": "NOVA AI"
+    },
+    "learning_progress": {
+        "python_status": "Intermediate Level"
+    },
+    "common_settings": {
+        "offline_simulation": "Enabled"
+    },
+    "common_analysis_modes": {
+        "stock_mode": "Briefing outline"
+    },
+    "digital_human_settings": {
+        "gender": "Female",
+        "age": 28
+    },
+    "common_ai_providers": {
+        "default": "Gemini 3.5 Flash"
+    }
+}

@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOVA AI - Your Intelligent Digital Human Assistant</title>
+    <meta name="description" content="NOVA AI is a photorealistic Executive Digital Secretary assistant. Experience real-time speech, blinking, and gesture-responsive conversational AI.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main Style Sheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Background Ice-Blue Neon Glows -->
+    <div class="glow-bg glow-1"></div>
+    <div class="glow-bg glow-2"></div>
+    <div class="glow-bg glow-3"></div>
+
+    <!-- Navigation Header -->
+    <header class="main-header">
+        <div class="container header-container">
+            <a href="#" class="logo-link">
+                <div class="logo-area">
+                    <div class="logo-icon">
+                        <i class="fa-solid fa-cube"></i>
+                    </div>
+                    <div class="logo-text">
+                        <span class="logo-title">NOVA <span class="accent-text">AI</span></span>
+                        <span class="logo-subtitle">Digital Secretary</span>
+                    </div>
+                </div>
+            </a>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#home" class="nav-link active">Home</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="#portfolio" class="nav-link">Use Cases</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <span class="status-indicator online" id="backend-status-badge">
+                    <span class="dot"></span> Backend: Connecting...
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero / Workspace Section -->
+    <section id="home" class="hero-section">
+        <div class="container hero-container">
+            <!-- Left: Strategic Executive Content -->
+            <div class="hero-text-content">
+                <div class="badge"><i class="fa-solid fa-shield-halved"></i> Enterprise Digital Secretary Layer</div>
+                <h1 class="hero-title">NOVA AI</h1>
+                <h2 class="hero-subtitle">Your Intelligent Digital Human Assistant</h2>
+                <p class="hero-description">
+                    Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation. NOVA handles your executive scheduling, information briefings, and daily operational reports with an unmatched corporate professionalism.
+                </p>
+                <div class="hero-cta-buttons">
+                    <button class="btn btn-primary" onclick="focusChat();">Start Chat <i class="fa-solid fa-comments"></i></button>
+                    <button class="btn btn-secondary" onclick="focusChat();">Launch AI Assistant <i class="fa-solid fa-circle-play"></i></button>
+                    <a href="#portfolio" class="btn btn-link">View Portfolio <i class="fa-solid fa-arrow-right"></i></a>
+                </div>
+                
+                <!-- Live KPI Readout -->
+                <div class="hero-kpis">
+                    <div class="kpi-box">
+                        <span class="kpi-num" id="kpi-uptime">0h 0m</span>
+                        <span class="kpi-lbl">System Uptime</span>
+                    </div>
+                    <div class="kpi-box">
+                        <span class="kpi-num" id="kpi-cpu">0%</span>
+                        <span class="kpi-lbl">CPU Load</span>
+                    </div>
+                    <div class="kpi-box">
+                        <span class="kpi-num" id="kpi-memory">0%</span>
+                        <span class="kpi-lbl">RAM Usage</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Integrated Digital Human Workstation -->
+            <div class="hero-workspace-column">
+                <div class="digital-human-card glass-panel">
+                    <!-- HUD header -->
+                    <div class="avatar-header">
+                        <div class="avatar-title-info">
+                            <i class="fa-solid fa-user-shield accent-color"></i>
+                            <div>
+                                <h4 id="avatar-name">NOVA</h4>
+                                <p id="avatar-role">Executive Digital Secretary</p>
+                            </div>
+                        </div>
+                        <div class="avatar-controls">
+                            <button id="voice-toggle" title="Toggle Voice Response"><i class="fa-solid fa-volume-high"></i></button>
+                            <button id="settings-sync" title="Sync Configurations"><i class="fa-solid fa-rotate"></i></button>
+                        </div>
+                    </div>
+
+                    <!-- Digital Human Render Window -->
+                    <div class="avatar-view-container">
+                        <div class="avatar-bg-desk"></div>
+                        <div class="avatar-wrapper" id="avatar-wrapper">
+                            <!-- Eye blink masks -->
+                            <div class="eyelid eye-left" id="eye-left"></div>
+                            <div class="eyelid eye-right" id="eye-right"></div>
+                            
+                            <!-- Speaking mouth overlay -->
+                            <div class="mouth-overlay" id="mouth-overlay"></div>
+
+                            <!-- Avatar image frame -->
+                            <img src="assets/avatar_female.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img">
+                        </div>
+
+                        <!-- Workspace HUD HUD items -->
+                        <div class="avatar-hud">
+                            <div class="hud-item state-badge" id="avatar-state">
+                                <span class="pulse-dot"></span> <span id="state-text">IDLE</span>
+                            </div>
+                            <div class="hud-item settings-pill">
+                                <span id="hud-gender">Female</span> • <span id="hud-age">28</span> yrs
+                            </div>
+                            <div class="hud-item memory-pill" id="hud-memory">
+                                <i class="fa-solid fa-brain" style="color: #38bdf8;"></i> <span id="hud-memory-text">Memory: Active</span>
+                            </div>
+                        </div>
+
+                        <!-- Real-time Speech wave graphic -->
+                        <div class="speech-waves" id="speech-waves">
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                            <span class="wave-bar"></span>
+                        </div>
+                    </div>
+
+                    <!-- HUD Metadata parameters -->
+                    <div class="avatar-metadata-grid">
+                        <div class="meta-box">
+                            <span class="meta-label">Personality</span>
+                            <span class="meta-val" id="meta-personality">Efficient, Professional</span>
+                        </div>
+                        <div class="meta-box">
+                            <span class="meta-label">Outfit Style</span>
+                            <span class="meta-val" id="meta-outfit">Navy Blue Blazer</span>
+                        </div>
+                        <div class="meta-box">
+                            <span class="meta-label">Speaking Style</span>
+                            <span class="meta-val" id="meta-speech">Clear & Formal</span>
+                        </div>
+                    </div>
+
+                    <!-- Chat UI Panel Integrated into Card -->
+                    <div class="workspace-chat-area">
+                        <div class="chat-messages-container" id="chat-messages">
+                            <!-- Welcome greeting -->
+                            <div class="chat-message secretary">
+                                <div class="message-avatar">
+                                    <i class="fa-solid fa-user-tie"></i>
+                                </div>
+                                <div class="message-content">
+                                    <p>Hello, I am NOVA. As your Executive Digital Secretary, how may I assist you with your professional scheduling, research, or communications today?</p>
+                                    <span class="message-time">System Ready</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Preset Action commands -->
+                        <div class="chat-quick-actions">
+                            <button class="quick-btn" data-text="What is your current configuration?">Check Config</button>
+                            <button class="quick-btn" data-text="Generate the daily schedule outline.">Daily Schedule</button>
+                            <button class="quick-btn" data-text="Perform market research on AI assistants.">Market Research</button>
+                        </div>
+
+                        <!-- Input form -->
+                        <form class="chat-input-form" id="chat-form">
+                            <input type="text" id="chat-input" placeholder="Ask NOVA something..." autocomplete="off" required>
+                            <button type="submit" class="chat-submit-btn"><i class="fa-solid fa-paper-plane"></i></button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Subsystems -->
+    <section id="about" class="about-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">The Three-Layer Architecture</h2>
+                <p class="section-subtitle">A professional decoupled design for high performance digital assistants</p>
+            </div>
+            <div class="about-grid">
+                <div class="about-card glass-panel">
+                    <div class="about-icon"><i class="fa-solid fa-laptop-code"></i></div>
+                    <h3>Frontend Layer</h3>
+                    <p>Handles the user workspace display and landing layout. Highly optimized HTML5 and CSS3, ready for serverless static hosting via GitHub Pages.</p>
+                </div>
+
+                <div class="about-card glass-panel">
+                    <div class="about-icon"><i class="fa-solid fa-user-astronaut"></i></div>
+                    <h3>Digital Human Layer</h3>
+                    <p>Drives realistic 2D digital secretary animation states. Controls randomized blinks, breathing, micro posture bobs, and text-to-speech visual lip-sync.</p>
+                </div>
+
+                <div class="about-card glass-panel">
+                    <div class="about-icon"><i class="fa-solid fa-server"></i></div>
+                    <h3>Backend Layer</h3>
+                    <p>Powered by Streamlit and FastAPI. Orchestrates dynamic avatar customization parameters, cognitive memory layers, research logs, and voice settings.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Executive Features -->
+    <section id="features" class="features-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Executive Capabilities</h2>
+                <p class="section-subtitle">Advanced enterprise-grade operations designed for business productivity</p>
+            </div>
+            <div class="features-grid">
+                <div class="feature-item glass-panel">
+                    <div class="feature-head">
+                        <i class="fa-solid fa-brain"></i>
+                        <h3>Cognitive Memory</h3>
+                    </div>
+                    <p>Tracks thread history across conversations, allowing details to carry over and references to remain active throughout sessions.</p>
+                </div>
+                <div class="feature-item glass-panel">
+                    <div class="feature-head">
+                        <i class="fa-solid fa-magnifying-glass-chart"></i>
+                        <h3>Dynamic Research</h3>
+                    </div>
+                    <p>Integrates structured data searches to compose brief reports, providing factually validated insights and resources.</p>
+                </div>
+                <div class="feature-item glass-panel">
+                    <div class="feature-head">
+                        <i class="fa-solid fa-microphone-lines"></i>
+                        <h3>Acoustic Voice</h3>
+                    </div>
+                    <p>Speaks back responses using professional speech patterns and custom voice speeds, syncable in real-time.</p>
+                </div>
+                <div class="feature-item glass-panel">
+                    <div class="feature-head">
+                        <i class="fa-solid fa-sliders"></i>
+                        <h3>Parameter Control</h3>
+                    </div>
+                    <p>Allows adjustments of gender, outfit attire, personality tags, and speaking styles dynamically from the admin panel.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Use Cases / Portfolio -->
+    <section id="portfolio" class="portfolio-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Corporate Use Cases</h2>
+                <p class="section-subtitle">Tailored business deployment workflows</p>
+            </div>
+            <div class="portfolio-grid">
+                <div class="portfolio-item glass-panel">
+                    <div class="portfolio-image-placeholder">
+                        <i class="fa-solid fa-calendar-check"></i>
+                    </div>
+                    <div class="portfolio-info">
+                        <span class="category">Office Integration</span>
+                        <h3>Executive Calendar & Meeting Briefs</h3>
+                        <p>Streamlines events scheduling, synthesizes schedules, and briefs attendees with minimal delay.</p>
+                    </div>
+                </div>
+                <div class="portfolio-item glass-panel">
+                    <div class="portfolio-image-placeholder">
+                        <i class="fa-solid fa-chart-line"></i>
+                    </div>
+                    <div class="portfolio-info">
+                        <span class="category">Business Intelligence</span>
+                        <h3>Market Intelligence Summarization</h3>
+                        <p>Synthesizes complicated business indices, market changes, and industry briefings into brief summaries.</p>
+                    </div>
+                </div>
+                <div class="portfolio-item glass-panel">
+                    <div class="portfolio-image-placeholder">
+                        <i class="fa-solid fa-comments"></i>
+                    </div>
+                    <div class="portfolio-info">
+                        <span class="category">Client Experience</span>
+                        <h3>Corporate Digital Concierge</h3>
+                        <p>Delivers photorealistic greet services for virtual headquarters reception, lobby, and enterprise websites.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact Form -->
+    <section id="contact" class="contact-section">
+        <div class="container">
+            <div class="section-header">
+                <h2 class="section-title">Connect with NOVA</h2>
+                <p class="section-subtitle">Inquire about custom enterprise integrations</p>
+            </div>
+            <div class="contact-content glass-panel">
+                <form class="contact-form" onsubmit="event.preventDefault(); alert('Inquiry sent successfully. Our enterprise integration team will contact you shortly.');">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="contact-name">Full Name</label>
+                            <input type="text" id="contact-name" placeholder="John Doe" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="contact-email">Corporate Email</label>
+                            <input type="email" id="contact-email" placeholder="john.doe@company.com" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-company">Company / Organization</label>
+                        <input type="text" id="contact-company" placeholder="Enterprise Corp" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="contact-message">Integration Requirements</label>
+                        <textarea id="contact-message" rows="5" placeholder="Briefly describe your business goals and intended deployment scale for NOVA AI..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Submit Inquiry</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="main-footer">
+        <div class="container footer-container">
+            <p>&copy; 2026 NOVA AI - Executive Digital Secretary Systems. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="#about">Documentation</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Helper script to trigger input focus -->
+    <script>
+        function focusChat() {
+            const chatInput = document.getElementById("chat-input");
+            if (chatInput) {
+                chatInput.focus();
+                chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    </script>
+    <!-- Main Script Sheet -->
+    <script src="script.js"></script>
+</body>
+</html>
