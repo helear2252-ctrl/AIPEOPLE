@@ -11,7 +11,6 @@
   "personality": "Efficient, Professional, Courteous",
   "speaking_style": "Clear, Formal, Reassuring",
   "voice_enabled": true,
-  "system_mode": "Online",
   "search_provider": "Tavily",
   "search_api_key": "",
   "avatar_images": {

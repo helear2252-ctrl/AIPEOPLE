@@ -23,7 +23,7 @@ let systemSettings = {
     }
 };
 
-const BACKEND_BASE_URL = "http://localhost:8010";
+const BACKEND_BASE_URL = "";
 let isBackendOnline = false;
 let isSpeaking = false;
 let speechUtterance = null;
@@ -70,7 +70,7 @@ setInterval(() => {
         const h = Math.floor(offlineUptimeSeconds / 3600);
         const m = Math.floor((offlineUptimeSeconds % 3600) / 60);
         const s = offlineUptimeSeconds % 60;
-        kpiUptime.textContent = `${h}h ${m}m ${s}s`;
+        if (kpiUptime) kpiUptime.textContent = `${h}h ${m}m ${s}s`;
     }
 }, 1000);
 
@@ -256,9 +256,18 @@ function applySettingsUI() {
 }
 
 /**
- * Pull config settings from the FastAPI Backend
+ * Pull config settings from an optional standalone API
  */
 async function fetchBackendSettings() {
+    if (!BACKEND_BASE_URL) {
+        isBackendOnline = false;
+        backendStatusBadge.className = "status-indicator";
+        backendStatusBadge.innerHTML = `<span class="dot"></span> Offline Demo Mode`;
+        applySettingsUI();
+        simulateOfflineMetrics();
+        return;
+    }
+
     try {
         const response = await fetch(`${BACKEND_BASE_URL}/api/settings`);
         if (response.ok) {
@@ -266,7 +275,7 @@ async function fetchBackendSettings() {
             systemSettings = data;
             isBackendOnline = true;
             backendStatusBadge.className = "status-indicator online";
-            backendStatusBadge.innerHTML = `<span class="dot"></span> Backend: Connected`;
+            backendStatusBadge.innerHTML = `<span class="dot"></span> API: Connected`;
             applySettingsUI();
             fetchSystemMetrics();
         }
@@ -280,16 +289,16 @@ async function fetchBackendSettings() {
 }
 
 /**
- * Fetch live system status readings from FastAPI
+ * Fetch live system status readings from an optional standalone API
  */
 async function fetchSystemMetrics() {
     try {
         const response = await fetch(`${BACKEND_BASE_URL}/api/status`);
         if (response.ok) {
             const data = await response.json();
-            kpiUptime.textContent = data.uptime_human;
-            kpiCpu.textContent = `${data.cpu_percent.toFixed(1)}%`;
-            kpiMemory.textContent = `${data.memory_percent.toFixed(1)}%`;
+            if (kpiUptime) kpiUptime.textContent = data.uptime_human;
+            if (kpiCpu) kpiCpu.textContent = `${data.cpu_percent.toFixed(1)}%`;
+            if (kpiMemory) kpiMemory.textContent = `${data.memory_percent.toFixed(1)}%`;
             if (data.memory_layer_status) {
                 const modeLabel = data.memory_layer_status.demo_mode ? "Demo" : "Active";
                 const typeLabel = data.memory_layer_status.db_type === "JSON Local File" ? "JSON" : "DB";
@@ -307,8 +316,8 @@ async function fetchSystemMetrics() {
 function simulateOfflineMetrics() {
     // Fake cpu loads between 1% and 5%
     const cpuMock = (Math.random() * 4 + 1).toFixed(1);
-    kpiCpu.textContent = `${cpuMock}%`;
-    kpiMemory.textContent = "12.8%";
+    if (kpiCpu) kpiCpu.textContent = `${cpuMock}%`;
+    if (kpiMemory) kpiMemory.textContent = "12.8%";
     hudMemoryText.textContent = "Memory: Offline (Sim)";
 }
 
@@ -387,7 +396,7 @@ async function handleChatSubmit(text) {
 }
 
 /**
- * Client-side simulation of NOVA when Streamlit/FastAPI isn't running
+ * Client-side simulation of NOVA when no standalone API is running
  */
 function simulateLocalResponse(text) {
     const lower = text.toLowerCase();

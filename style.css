@@ -1121,6 +1121,181 @@ body {
     100% { height: 24px; }
 }
 
+@keyframes assistant-breathe {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-8px) scale(1.012); }
+}
+
+@keyframes assistant-float {
+    0%, 100% { filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.48)); }
+    50% { filter: drop-shadow(0 36px 46px rgba(56, 189, 248, 0.18)); }
+}
+
+@keyframes background-flow {
+    0% { filter: hue-rotate(0deg) brightness(1); }
+    100% { filter: hue-rotate(10deg) brightness(1.12); }
+}
+
+/* V1 Digital Human Landing refinements */
+.hero-section {
+    padding: 2rem 0;
+}
+
+.hero-container {
+    grid-template-columns: minmax(280px, 40%) minmax(520px, 60%);
+    gap: 3rem;
+}
+
+.hero-title {
+    font-size: clamp(4rem, 8vw, 7.2rem);
+    line-height: 0.95;
+}
+
+.hero-subtitle {
+    color: var(--primary);
+    text-shadow: 0 0 18px rgba(56, 189, 248, 0.18);
+}
+
+.hero-principles {
+    display: grid;
+    gap: 0.35rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-hover);
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.hero-description {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+    max-width: 540px;
+}
+
+.hero-cta-buttons {
+    margin-bottom: 0;
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.btn-secondary {
+    background: rgba(15, 23, 42, 0.48);
+    backdrop-filter: blur(14px);
+}
+
+.digital-human-card {
+    max-width: 780px;
+    border-radius: 8px;
+}
+
+.avatar-view-container {
+    height: min(62vh, 620px);
+    min-height: 500px;
+    border-radius: 8px;
+}
+
+.avatar-bg-desk {
+    background:
+        radial-gradient(circle at 48% 18%, rgba(56, 189, 248, 0.25), transparent 28%),
+        radial-gradient(circle at 88% 40%, rgba(224, 242, 254, 0.13), transparent 26%),
+        linear-gradient(135deg, rgba(16, 28, 54, 0.68) 0%, rgba(3, 7, 18, 0.96) 85%);
+    animation: background-flow 16s linear infinite alternate;
+}
+
+.avatar-bg-desk::before {
+    height: 25%;
+    background: linear-gradient(to top, rgba(30, 41, 59, 0.98), rgba(15, 23, 42, 0.82));
+}
+
+.office-window-grid {
+    position: absolute;
+    inset: 0 0 36%;
+    z-index: 1;
+    background:
+        linear-gradient(90deg, rgba(224, 242, 254, 0.13) 1px, transparent 1px),
+        linear-gradient(rgba(224, 242, 254, 0.10) 1px, transparent 1px),
+        repeating-linear-gradient(90deg, transparent 0 22px, rgba(56, 189, 248, 0.28) 23px 25px, transparent 26px 54px);
+    background-size: 78px 78px, 78px 78px, auto;
+    opacity: 0.5;
+}
+
+.desk-keyboard {
+    position: absolute;
+    right: 9%;
+    bottom: 12%;
+    width: 30%;
+    height: 4.5%;
+    border-radius: 6px;
+    background:
+        repeating-linear-gradient(90deg, rgba(224, 242, 254, 0.22) 0 7px, transparent 7px 11px),
+        rgba(15, 23, 42, 0.96);
+    border: 1px solid rgba(56, 189, 248, 0.18);
+    z-index: 5;
+    transform: skewX(-10deg);
+}
+
+.desk-notebook {
+    position: absolute;
+    left: 8%;
+    bottom: 9%;
+    width: 22%;
+    height: 9%;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #e0f2fe, #94a3b8);
+    box-shadow: 0 12px 22px rgba(0, 0, 0, 0.3);
+    opacity: 0.82;
+    z-index: 5;
+    transform: rotate(-5deg);
+}
+
+.desk-coffee {
+    position: absolute;
+    right: 42%;
+    bottom: 12%;
+    width: 7%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: radial-gradient(circle, #78350f 0 32%, #e0f2fe 34% 54%, #0f172a 56% 100%);
+    border: 1px solid rgba(224, 242, 254, 0.28);
+    z-index: 5;
+}
+
+.avatar-wrapper {
+    width: auto;
+    height: 82%;
+    z-index: 4;
+    animation: assistant-breathe 5.5s ease-in-out infinite, assistant-float 7s ease-in-out infinite;
+}
+
+.speech-waves {
+    bottom: 5.9rem;
+    opacity: 1;
+}
+
+.standby-greeting {
+    position: absolute;
+    left: 50%;
+    bottom: 1.1rem;
+    transform: translateX(-50%);
+    width: min(76%, 500px);
+    text-align: center;
+    z-index: 7;
+    padding: 0.85rem 1rem;
+    border: 1px solid rgba(56, 189, 248, 0.22);
+    border-radius: 8px;
+    background: rgba(3, 7, 18, 0.72);
+    backdrop-filter: blur(14px);
+    color: var(--primary-hover);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+}
+
+.standby-greeting strong {
+    display: block;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
 /* Responsive Media Queries */
 @media (max-width: 1024px) {
     .hero-container {

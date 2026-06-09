@@ -1,4 +1,6 @@
 import streamlit as st
+import base64
+import html
 import json
 import os
 import time
@@ -27,10 +29,10 @@ system_status = SystemStatus()
 
 # Page Configurations
 st.set_page_config(
-    page_title="NOVA AI Backend Control",
+    page_title="NOVA AI",
     page_icon="💼",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 # Shared Styling CSS Injection for Palette Alignment.
@@ -92,44 +94,480 @@ st.markdown("""
         color: #94a3b8;
         margin-top: -0.25rem;
     }
+    .nova-home {
+        min-height: 100vh;
+        display: grid;
+        grid-template-columns: minmax(280px, 40%) minmax(420px, 60%);
+        gap: 2rem;
+        align-items: center;
+        padding: 0.5rem 0 1.5rem;
+    }
+    .nova-hero-copy {
+        max-width: 560px;
+    }
+    .nova-kicker {
+        color: #38bdf8;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        margin-bottom: 0.9rem;
+    }
+    .nova-title {
+        color: #f8fafc;
+        font-size: clamp(3.8rem, 8vw, 7.6rem);
+        font-weight: 800;
+        line-height: 0.95;
+        margin: 0;
+    }
+    .nova-subtitle {
+        color: #38bdf8;
+        font-size: clamp(1.35rem, 2.4vw, 2.25rem);
+        font-weight: 650;
+        margin: 1.25rem 0 1.2rem;
+    }
+    .nova-description {
+        color: #dbeafe;
+        font-size: 1.08rem;
+        line-height: 1.8;
+        max-width: 54ch;
+        margin-bottom: 1.6rem;
+    }
+    .nova-principles {
+        display: grid;
+        gap: 0.35rem;
+        margin: 0 0 1.7rem;
+        color: #e0f2fe;
+        font-size: 1.02rem;
+        font-weight: 650;
+    }
+    .nova-actions {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    .nova-action {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 3.15rem;
+        padding: 0.8rem 1rem;
+        border-radius: 8px;
+        border: 1px solid rgba(56, 189, 248, 0.24);
+        background: rgba(15, 23, 42, 0.46);
+        color: #e0f2fe !important;
+        text-decoration: none !important;
+        font-weight: 750;
+        box-shadow: 0 14px 34px rgba(0, 0, 0, 0.24), inset 0 1px 0 rgba(224, 242, 254, 0.08);
+        transition: all 0.28s ease;
+        backdrop-filter: blur(14px);
+    }
+    .nova-action.primary {
+        background: linear-gradient(135deg, #38bdf8, #e0f2fe);
+        color: #030712 !important;
+        box-shadow: 0 0 26px rgba(56, 189, 248, 0.38);
+    }
+    .nova-action.subtle {
+        color: #94a3b8 !important;
+    }
+    .nova-action:hover {
+        transform: translateY(-3px);
+        border-color: rgba(224, 242, 254, 0.68);
+        box-shadow: 0 0 28px rgba(56, 189, 248, 0.44);
+    }
+    .workspace-shell {
+        position: relative;
+        min-height: min(820px, calc(100vh - 3rem));
+        border: 1px solid rgba(56, 189, 248, 0.18);
+        border-radius: 8px;
+        overflow: hidden;
+        background:
+            radial-gradient(circle at 50% 18%, rgba(56, 189, 248, 0.24), transparent 28%),
+            radial-gradient(circle at 86% 38%, rgba(224, 242, 254, 0.12), transparent 30%),
+            linear-gradient(155deg, rgba(8, 13, 26, 0.24), rgba(14, 24, 44, 0.92)),
+            linear-gradient(180deg, #111827 0%, #030712 100%);
+        box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+    }
+    .workspace-shell::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        background: conic-gradient(from 90deg, transparent, rgba(56, 189, 248, 0.18), transparent, rgba(224, 242, 254, 0.08), transparent);
+        animation: nova-glow-flow 16s linear infinite;
+        opacity: 0.75;
+    }
+    .workspace-window {
+        position: absolute;
+        inset: 0 0 34%;
+        background:
+            linear-gradient(90deg, rgba(224, 242, 254, 0.12) 1px, transparent 1px),
+            linear-gradient(rgba(224, 242, 254, 0.10) 1px, transparent 1px),
+            radial-gradient(circle at 78% 34%, rgba(56, 189, 248, 0.26), transparent 20%),
+            linear-gradient(135deg, rgba(15, 23, 42, 0.85), rgba(30, 41, 59, 0.45));
+        background-size: 72px 72px, 72px 72px, auto, auto;
+        z-index: 1;
+    }
+    .workspace-window::after {
+        content: "";
+        position: absolute;
+        inset: 12% 8% 18%;
+        border-left: 1px solid rgba(224, 242, 254, 0.16);
+        border-right: 1px solid rgba(224, 242, 254, 0.16);
+        background:
+            linear-gradient(90deg, transparent 0 24%, rgba(224, 242, 254, 0.12) 24% 24.3%, transparent 24.3% 49%, rgba(224, 242, 254, 0.12) 49% 49.3%, transparent 49.3% 74%, rgba(224, 242, 254, 0.12) 74% 74.3%, transparent 74.3%),
+            linear-gradient(180deg, rgba(56, 189, 248, 0.12), transparent 65%);
+    }
+    .city-lights {
+        position: absolute;
+        left: 9%;
+        right: 9%;
+        top: 21%;
+        height: 20%;
+        z-index: 2;
+        background:
+            repeating-linear-gradient(90deg, transparent 0 17px, rgba(56, 189, 248, 0.32) 18px 21px, transparent 22px 44px),
+            linear-gradient(180deg, transparent 0 60%, rgba(15, 23, 42, 0.72) 60% 100%);
+        opacity: 0.62;
+    }
+    .monitor {
+        position: absolute;
+        right: 5%;
+        bottom: 20%;
+        width: 35%;
+        aspect-ratio: 16 / 10;
+        border: 9px solid #0f172a;
+        border-radius: 8px;
+        background:
+            linear-gradient(135deg, rgba(14, 165, 233, 0.24), rgba(15, 23, 42, 0.92)),
+            repeating-linear-gradient(0deg, transparent 0 13px, rgba(56, 189, 248, 0.10) 14px);
+        box-shadow: 0 18px 38px rgba(0, 0, 0, 0.35);
+        z-index: 5;
+    }
+    .monitor::after {
+        content: "";
+        position: absolute;
+        left: 42%;
+        right: 42%;
+        bottom: -56px;
+        height: 56px;
+        background: #0f172a;
+    }
+    .desk {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 25%;
+        background: linear-gradient(180deg, rgba(30, 41, 59, 0.94), rgba(15, 23, 42, 1));
+        border-top: 1px solid rgba(148, 163, 184, 0.25);
+        z-index: 4;
+    }
+    .keyboard {
+        position: absolute;
+        right: 11%;
+        bottom: 13%;
+        width: 30%;
+        height: 4%;
+        border-radius: 6px;
+        background:
+            repeating-linear-gradient(90deg, rgba(224, 242, 254, 0.22) 0 7px, transparent 7px 11px),
+            rgba(15, 23, 42, 0.96);
+        border: 1px solid rgba(56, 189, 248, 0.18);
+        z-index: 6;
+        transform: skewX(-10deg);
+    }
+    .notebook {
+        position: absolute;
+        left: 9%;
+        bottom: 10%;
+        width: 23%;
+        height: 10%;
+        border-radius: 6px;
+        background: linear-gradient(135deg, #e0f2fe, #94a3b8);
+        box-shadow: 0 12px 22px rgba(0, 0, 0, 0.3);
+        opacity: 0.82;
+        z-index: 5;
+        transform: rotate(-5deg);
+    }
+    .coffee {
+        position: absolute;
+        right: 42%;
+        bottom: 13%;
+        width: 7%;
+        aspect-ratio: 1;
+        border-radius: 50%;
+        background: radial-gradient(circle, #78350f 0 32%, #e0f2fe 34% 54%, #0f172a 56% 100%);
+        border: 1px solid rgba(224, 242, 254, 0.28);
+        z-index: 6;
+    }
+    .avatar-stage {
+        position: absolute;
+        left: 14%;
+        bottom: 11%;
+        height: 78%;
+        width: auto;
+        max-width: 62%;
+        animation: nova-breathe 5.5s ease-in-out infinite;
+        transform-origin: center bottom;
+        z-index: 7;
+    }
+    .avatar-head {
+        position: relative;
+        height: 100%;
+        animation: nova-micro 7s ease-in-out infinite, nova-float 8s ease-in-out infinite;
+    }
+    .avatar-stage img {
+        display: block;
+        height: 100%;
+        width: auto;
+        filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.48));
+    }
+    .blink {
+        position: absolute;
+        top: 30.5%;
+        width: 7.5%;
+        height: 2.8%;
+        border-radius: 999px;
+        background: rgba(31, 23, 20, 0.78);
+        opacity: 0;
+        animation: nova-blink 5.2s infinite;
+    }
+    .blink.left {
+        left: 36.5%;
+    }
+    .blink.right {
+        left: 55.5%;
+    }
+    .workspace-label {
+        position: absolute;
+        top: 1rem;
+        left: 1rem;
+        color: #e0f2fe;
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        z-index: 8;
+    }
+    .status-strip {
+        position: absolute;
+        right: 1rem;
+        top: 1rem;
+        color: #94a3b8;
+        font-size: 0.8rem;
+        z-index: 8;
+    }
+    .nova-greeting {
+        position: absolute;
+        left: 50%;
+        bottom: 3.1%;
+        transform: translateX(-50%);
+        width: min(76%, 520px);
+        text-align: center;
+        z-index: 9;
+        padding: 0.85rem 1rem;
+        border: 1px solid rgba(56, 189, 248, 0.22);
+        border-radius: 8px;
+        background: rgba(3, 7, 18, 0.72);
+        backdrop-filter: blur(14px);
+        color: #e0f2fe;
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+    }
+    .nova-greeting strong {
+        display: block;
+        color: #f8fafc;
+        font-size: 1rem;
+    }
+    .voice-wave {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+        height: 26px;
+        margin-top: 0.55rem;
+    }
+    .voice-wave span {
+        width: 4px;
+        height: 8px;
+        border-radius: 999px;
+        background: #38bdf8;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.55);
+        animation: nova-wave 1.1s ease-in-out infinite;
+    }
+    .voice-wave span:nth-child(2) { animation-delay: 0.12s; }
+    .voice-wave span:nth-child(3) { animation-delay: 0.24s; }
+    .voice-wave span:nth-child(4) { animation-delay: 0.36s; }
+    .voice-wave span:nth-child(5) { animation-delay: 0.48s; }
+    .voice-wave span:nth-child(6) { animation-delay: 0.6s; }
+    @keyframes nova-breathe {
+        0%, 100% { transform: translateY(0) scale(1); }
+        50% { transform: translateY(-7px) scale(1.012); }
+    }
+    @keyframes nova-micro {
+        0%, 100% { transform: translateX(0) rotate(0deg); }
+        35% { transform: translateX(3px) rotate(0.7deg); }
+        70% { transform: translateX(-2px) rotate(-0.5deg); }
+    }
+    @keyframes nova-float {
+        0%, 100% { filter: drop-shadow(0 28px 38px rgba(0, 0, 0, 0.48)); }
+        50% { filter: drop-shadow(0 34px 46px rgba(56, 189, 248, 0.18)); }
+    }
+    @keyframes nova-blink {
+        0%, 91%, 100% { opacity: 0; transform: scaleY(0.1); }
+        93%, 95% { opacity: 1; transform: scaleY(1); }
+    }
+    @keyframes nova-glow-flow {
+        to { transform: rotate(360deg); }
+    }
+    @keyframes nova-wave {
+        0%, 100% { height: 7px; opacity: 0.55; }
+        50% { height: 24px; opacity: 1; }
+    }
+    @media (max-width: 900px) {
+        .nova-home {
+            grid-template-columns: 1fr;
+            gap: 1.5rem;
+        }
+        .workspace-shell {
+            min-height: 520px;
+        }
+        .avatar-stage {
+            left: 8%;
+            height: 68%;
+            max-width: 70%;
+        }
+        .nova-actions {
+            grid-template-columns: 1fr;
+        }
+    }
     </style>
 """, unsafe_allow_html=True)
 
 # Load settings
 config_data = avatar_interface.load_settings()
 
+def get_avatar_data_uri(settings):
+    gender = settings.get("gender", "Female")
+    avatar_path = settings.get("avatar_images", {}).get(gender, "assets/avatar_female.png")
+    abs_avatar_path = os.path.join(os.path.dirname(__file__), avatar_path)
+    with open(abs_avatar_path, "rb") as avatar_file:
+        encoded = base64.b64encode(avatar_file.read()).decode("ascii")
+    return f"data:image/png;base64,{encoded}"
+
+if "page" not in st.session_state:
+    st.session_state.page = "Home"
+
+if st.query_params.get("view") == "admin":
+    st.session_state.page = "Admin Dashboard"
+if st.query_params.get("view") == "home":
+    st.session_state.page = "Home"
+
 # Sidebar Setup
 with st.sidebar:
     st.markdown("### 🤖 NOVA AI Core")
     st.caption("Your Intelligent Digital Human Assistant")
+    st.session_state.page = st.radio(
+        "Navigation",
+        ["Home", "Admin Dashboard"],
+        index=0 if st.session_state.page == "Home" else 1,
+    )
     st.write("---")
     
-    # System status display
-    st.write("📋 **System Health Status**")
-    metrics = system_status.get_metrics()
-    
-    st.metric("API Status", metrics["api_status"])
-    st.metric("System Uptime", metrics["uptime_human"])
-    st.metric("CPU Utilization", f"{metrics['cpu_percent']}%")
-    st.metric("Memory Utilization", f"{metrics['memory_percent']}%")
+    if st.session_state.page == "Admin Dashboard":
+        # System status display
+        st.write("📋 **System Health Status**")
+        metrics = system_status.get_metrics()
+        
+        st.metric("App Status", metrics["api_status"])
+        st.metric("System Uptime", metrics["uptime_human"])
+        st.metric("CPU Utilization", f"{metrics['cpu_percent']}%")
+        st.metric("Memory Utilization", f"{metrics['memory_percent']}%")
+
+if st.session_state.page == "Home":
+    project_name = html.escape(config_data.get("project_name", "NOVA AI"))
+    subtitle = html.escape(config_data.get("subtitle", "Your Intelligent Digital Human Assistant"))
+    persona = html.escape(config_data.get("persona", "Executive Digital Secretary"))
+    personality = html.escape(config_data.get("personality", "Efficient, Professional, Courteous"))
+    avatar_src = get_avatar_data_uri(config_data)
+
+    if st.query_params.get("view") == "portfolio":
+        st.info("Portfolio is available in the static GitHub Pages frontend demo. Admin tools remain available from the sidebar.")
+
+    st.markdown(f"""
+        <div class="nova-home">
+            <section class="nova-hero-copy">
+                <div class="nova-kicker">{persona}</div>
+                <h1 class="nova-title">{project_name}</h1>
+                <div class="nova-subtitle">{subtitle}</div>
+                <div class="nova-principles">
+                    <span>Executive support.</span>
+                    <span>Research intelligence.</span>
+                    <span>Memory that understands you.</span>
+                </div>
+                <p class="nova-description">
+                    NOVA is a next-generation Digital Human Assistant designed to help with research,
+                    analysis, learning, programming and daily productivity.
+                </p>
+                <div class="nova-actions">
+                    <a class="nova-action primary" href="?view=admin&section=chat">Start Chat</a>
+                    <a class="nova-action" href="?view=admin&section=settings">Launch Assistant</a>
+                    <a class="nova-action subtle" href="?view=portfolio">View Portfolio</a>
+                </div>
+            </section>
+            <section class="workspace-shell" aria-label="Digital Human Workspace">
+                <div class="workspace-window"></div>
+                <div class="city-lights"></div>
+                <div class="workspace-label">Digital Human Workspace</div>
+                <div class="status-strip">{personality}</div>
+                <div class="monitor"></div>
+                <div class="desk"></div>
+                <div class="keyboard"></div>
+                <div class="notebook"></div>
+                <div class="coffee"></div>
+                <div class="avatar-stage">
+                    <div class="avatar-head">
+                        <img src="{avatar_src}" alt="NOVA digital human assistant">
+                        <span class="blink left"></span>
+                        <span class="blink right"></span>
+                    </div>
+                </div>
+                <div class="nova-greeting">
+                    <strong>Good morning, I'm NOVA.</strong>
+                    <span>How can I assist you today?</span>
+                    <div class="voice-wave" aria-hidden="true">
+                        <span></span><span></span><span></span><span></span><span></span><span></span>
+                    </div>
+                </div>
+            </section>
+        </div>
+    """, unsafe_allow_html=True)
+    st.stop()
 
 # Main Title Area
 st.markdown(
-    '<div class="nova-heading">NOVA AI <span class="accent-header">Control Dashboard</span></div>',
+    '<div class="nova-heading">NOVA AI <span class="accent-header">Admin Dashboard</span></div>',
     unsafe_allow_html=True,
 )
 st.markdown(
-    '<div class="nova-caption">Enterprise-Grade Executive Digital Secretary Central Administration</div>',
+    '<div class="nova-caption">Settings, Memory, Research, Chat, and System Status Administration</div>',
     unsafe_allow_html=True,
 )
 
 # Tabs
-tab_settings, tab_chat, tab_memory, tab_architecture = st.tabs([
-    "👤 Digital Human Settings", 
-    "💬 Interactive Chat Console", 
-    "🧠 Memory Settings",
-    "🏛️ System Architecture"
-])
+if st.query_params.get("section") == "chat":
+    tab_chat, tab_settings, tab_memory, tab_architecture = st.tabs([
+        "💬 Interactive Chat Console",
+        "👤 Digital Human Settings",
+        "🧠 Memory Settings",
+        "🏛️ System Architecture"
+    ])
+else:
+    tab_settings, tab_chat, tab_memory, tab_architecture = st.tabs([
+        "👤 Digital Human Settings",
+        "💬 Interactive Chat Console",
+        "🧠 Memory Settings",
+        "🏛️ System Architecture"
+    ])
 
 # Tab 1: Settings
 with tab_settings:
