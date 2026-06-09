@@ -17,9 +17,9 @@ NOVA AI is a modular, enterprise-grade **Executive Digital Secretary** system bu
      - **Posture Shifting**: Micro-movements (subtle head/torso rotations and offsets) to simulate a lifelike state.
      - **Lip Sync**: Real-time mouth width/height warp animations synchronized with audio speech synthesis output.
 
-3. **Backend Layer (Streamlit Control Panel & FastAPI Server)**:
+3. **Backend Layer (Streamlit Control Panel)**:
    - Admin console built in **Streamlit** to update settings dynamically, review hardware usage metrics, and interact with the chatbot.
-   - An asynchronous **FastAPI** server runs in a daemon thread on port `8010` to serve the static frontend requests (CORS enabled).
+   - V1 Streamlit Cloud deployment runs as a pure Streamlit app. A standalone FastAPI service is reserved for a future independent deployment if live static-frontend APIs are needed.
    - Core modules handle AI Provider generation, session memories, web research indexing, and system hardware status readings.
 
 ---
@@ -45,7 +45,7 @@ nova-ai/
 ├── index.html                   # Workspace landing page
 ├── style.css                    # Premium glassmorphic stylesheets
 ├── script.js                    # Digital Human blink/breathe/speech engine
-├── app.py                       # Streamlit panel + FastAPI backend thread
+├── app.py                       # Pure Streamlit Cloud control panel
 ├── requirements.txt             # Python packages
 └── README.md                    # Setup and guide doc
 ```
@@ -64,18 +64,19 @@ Run the following command in your terminal to install the python packages:
 pip install -r requirements.txt
 ```
 
-### 3. Run the Backend
-Start the Streamlit panel (which also fires up the FastAPI port `8010` in the background):
+### 3. Run the Streamlit Control Panel
+Start the Streamlit panel:
 ```bash
 streamlit run app.py --server.port 8510
 ```
 - Streamlit Admin dashboard: `http://localhost:8510`
-- FastAPI documentation endpoint: `http://localhost:8010/docs`
+
+V1 does not start a FastAPI server from Streamlit. The previous `localhost:8010` API is reserved for a future standalone `api_server.py` deployment.
 
 ### 4. Run the Frontend
 You can run the frontend by opening the static `index.html` file in your browser:
 - Double click `index.html` or run a local static server (e.g. `npx live-server` or VS Code Live Server extension).
-- When the backend is running, the frontend badge will automatically switch to **Backend: Connected** and import configurations dynamically!
+- In V1 Streamlit Cloud deployment, the static frontend can remain in offline demo mode or show the backend as disconnected. A live API for GitHub Pages should be deployed separately in a future FastAPI service.
 
 ---
 
@@ -108,4 +109,6 @@ To deploy the administration console to Streamlit Community Cloud:
 1. Push the complete codebase to a GitHub repository (including `app.py`, `requirements.txt`, `config/`, and `modules/`).
 2. Log into [Streamlit Share](https://share.streamlit.io/).
 3. Click **New App**, select your repository, branch, and specify the main file path as `app.py`.
-4. Deploy the app. Your administration console will run on Streamlit's server infrastructure.
+4. Deploy the app. Your administration console will run as a pure Streamlit app on Streamlit's server infrastructure.
+
+Streamlit Cloud does not start or expose a separate `localhost:8010` FastAPI server for this V1 deployment. If the static GitHub Pages frontend later needs live API endpoints, deploy that API separately and point the frontend to the public API URL.

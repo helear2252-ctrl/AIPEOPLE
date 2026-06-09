@@ -1,13 +1,7 @@
 import streamlit as st
 import json
 import os
-import threading
-import socket
 import time
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import uvicorn
 
 # Import custom modules
 from modules.avatar_interface import AvatarInterface
@@ -28,106 +22,6 @@ research_layer = ResearchLayer(avatar_interface)
 system_status = SystemStatus()
 
 # ==========================================================================
-# FastAPI Backend Server Setup (Runs in background)
-# ==========================================================================
-api = FastAPI(title="NOVA AI API", description="API Backend for NOVA Digital Human")
-
-# Enable CORS for static GitHub Pages frontend
-api.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-class ChatRequest(BaseModel):
-    message: str
-    session_id: str = "default_session"
-
-class SettingsModel(BaseModel):
-    project_name: str
-    subtitle: str
-    persona: str
-    gender: str
-    age: int
-    hair_style: str
-    hair_color: str
-    face_style: str
-    outfit: str
-    personality: str
-    speaking_style: str
-    voice_enabled: bool
-    search_provider: str
-    search_api_key: str
-
-@api.get("/api/settings")
-def get_settings():
-    return avatar_interface.load_settings()
-
-@api.post("/api/settings")
-def update_settings(settings: SettingsModel):
-    try:
-        # Load existing config to retain image paths
-        existing_settings = avatar_interface.load_settings()
-        
-        # Merge new settings
-        new_data = settings.dict()
-        new_data["avatar_images"] = existing_settings.get("avatar_images", {
-            "Female": "assets/avatar_female.png",
-            "Male": "assets/avatar_male.png"
-        })
-        
-        success = avatar_interface.save_settings(new_data)
-        if not success:
-            raise HTTPException(status_code=500, detail="Failed to save settings")
-        return {"status": "success", "message": "Settings updated successfully"}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api.post("/api/chat")
-def chat_endpoint(request: ChatRequest):
-    try:
-        user_msg = request.message
-        session_id = request.session_id
-        
-        # Add to memory
-        memory_layer.add_message(session_id, "user", user_msg)
-        
-        # Generate response
-        history = memory_layer.get_history(session_id)
-        response_text = ai_provider.generate_response(user_msg, history, session_id=session_id)
-        
-        # Add response to memory
-        memory_layer.add_message(session_id, "secretary", response_text)
-        
-        return {"response": response_text}
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-@api.get("/api/status")
-def get_status():
-    metrics = system_status.get_metrics()
-    metrics["memory_layer_status"] = {
-        "demo_mode": memory_layer.demo_mode,
-        "db_type": memory_layer.db_type,
-        "store_path": memory_layer.store_path
-    }
-    return metrics
-
-# Port checker & Background server initiator
-def is_port_open(port):
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        return s.connect_ex(("127.0.0.1", port)) == 0
-
-def run_api_server():
-    uvicorn.run(api, host="127.0.0.1", port=8010, log_level="warning")
-
-if not is_port_open(8010):
-    api_thread = threading.Thread(target=run_api_server, daemon=True)
-    api_thread.start()
-
-# ==========================================================================
 # Streamlit Frontend Administration Panel
 # ==========================================================================
 
@@ -139,21 +33,19 @@ st.set_page_config(
     initial_sidebar_state="expanded",
 )
 
-# Shared Styling CSS Injection for Palette Alignment
+# Shared Styling CSS Injection for Palette Alignment.
+# Keep this CSS limited to visible Streamlit widgets and NOVA classes only.
 st.markdown("""
     <style>
-    /* Dark Theme Alignments matching Frontend */
-    .stApp {
-        background-color: #030712 !important;
-        color: #f8fafc !important;
-    }
-    div[data-testid="stSidebar"] {
+    section[data-testid="stSidebar"] {
         background-color: #0b0f19 !important;
         border-right: 1px solid rgba(56, 189, 248, 0.15) !important;
     }
     
-    /* Input Elements styling (simulate glassmorphism) */
-    input, select, textarea {
+    .stTextInput input,
+    .stNumberInput input,
+    .stTextArea textarea,
+    .stSelectbox [data-baseweb="select"] {
         background-color: rgba(15, 23, 42, 0.6) !important;
         color: #f8fafc !important;
         border: 1px solid rgba(56, 189, 248, 0.15) !important;
@@ -185,36 +77,20 @@ st.markdown("""
         background-color: #e0f2fe !important;
     }
     
-    /* Headers */
-    h1, h2, h3 {
+    .nova-heading {
         font-family: 'Outfit', sans-serif !important;
         color: #f8fafc !important;
-        letter-spacing: -0.5px;
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin: 0 0 0.25rem;
     }
     .accent-header {
         color: #38bdf8;
         text-shadow: 0 0 8px rgba(56, 189, 248, 0.2);
     }
-    .metric-card {
-        background: rgba(15, 23, 42, 0.65);
-        border: 1px solid rgba(56, 189, 248, 0.15);
-        border-radius: 10px;
-        padding: 1rem;
-        margin-bottom: 0.75rem;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-        backdrop-filter: blur(8px);
-    }
-    .metric-label {
-        font-size: 0.7rem;
+    .nova-caption {
         color: #94a3b8;
-        text-transform: uppercase;
-        letter-spacing: 0.8px;
-    }
-    .metric-value {
-        font-size: 1.25rem;
-        font-weight: 700;
-        color: #38bdf8;
-        text-shadow: 0 0 6px rgba(56, 189, 248, 0.2);
+        margin-top: -0.25rem;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -225,35 +101,27 @@ config_data = avatar_interface.load_settings()
 # Sidebar Setup
 with st.sidebar:
     st.markdown("### 🤖 NOVA AI Core")
-    st.markdown("<p style='font-size:0.8rem; color:#94a3b8; margin-top:-10px;'>Your Intelligent Digital Human Assistant</p>", unsafe_allow_html=True)
+    st.caption("Your Intelligent Digital Human Assistant")
     st.write("---")
     
     # System status display
     st.write("📋 **System Health Status**")
     metrics = system_status.get_metrics()
     
-    st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">API Status</div>
-            <div class="metric-value" style="color: #10b981;">{metrics['api_status']}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">System Uptime</div>
-            <div class="metric-value">{metrics['uptime_human']}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">CPU Utilization</div>
-            <div class="metric-value">{metrics['cpu_percent']}%</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Memory Utilization</div>
-            <div class="metric-value">{metrics['memory_percent']}%</div>
-        </div>
-    """, unsafe_allow_html=True)
+    st.metric("API Status", metrics["api_status"])
+    st.metric("System Uptime", metrics["uptime_human"])
+    st.metric("CPU Utilization", f"{metrics['cpu_percent']}%")
+    st.metric("Memory Utilization", f"{metrics['memory_percent']}%")
 
 # Main Title Area
-st.markdown("<h1>NOVA AI <span class='accent-header'>Control Dashboard</span></h1>", unsafe_allow_html=True)
-st.markdown("<p style='color:#94a3b8;'>Enterprise-Grade Executive Digital Secretary Central Administration</p>", unsafe_allow_html=True)
+st.markdown(
+    '<div class="nova-heading">NOVA AI <span class="accent-header">Control Dashboard</span></div>',
+    unsafe_allow_html=True,
+)
+st.markdown(
+    '<div class="nova-caption">Enterprise-Grade Executive Digital Secretary Central Administration</div>',
+    unsafe_allow_html=True,
+)
 
 # Tabs
 tab_settings, tab_chat, tab_memory, tab_architecture = st.tabs([
@@ -370,24 +238,10 @@ with tab_memory:
     with col_mem1:
         st.markdown("### 🧠 Short-Term Memory (STM)")
         stm_status = memory_layer.get_stm_status("streamlit_session")
-        st.markdown(f"""
-        <div class="metric-card">
-            <div class="metric-label">Active Session ID</div>
-            <div class="metric-value" style="font-size:1rem; color:#f8fafc;">streamlit_session</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Dialog History Count</div>
-            <div class="metric-value" style="font-size:1rem; color:#38bdf8;">{stm_status['history_count']} messages</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Current Analysis Theme</div>
-            <div class="metric-value" style="font-size:1rem; color:#38bdf8;">{stm_status['current_analysis_theme']}</div>
-        </div>
-        <div class="metric-card">
-            <div class="metric-label">Current Active Task</div>
-            <div class="metric-value" style="font-size:1.1rem; color:#38bdf8;">{stm_status['current_task']}</div>
-        </div>
-        """, unsafe_allow_html=True)
+        st.metric("Active Session ID", "streamlit_session")
+        st.metric("Dialog History Count", f"{stm_status['history_count']} messages")
+        st.metric("Current Analysis Theme", stm_status["current_analysis_theme"])
+        st.metric("Current Active Task", stm_status["current_task"])
         
         st.markdown("**Recent Dialog Context Preview**")
         st.text_area("Recent User Question", value=stm_status['recent_user_question'], height=80, disabled=True)
@@ -457,7 +311,7 @@ with tab_architecture:
                 │ Synthesizes voice & viseme sync states
                 ▼
     ┌────────────────────────┐
-    │     Backend Layer      │  ◄── Streamlit Control Panel & FastAPI Routing Layer (Localhost:8010)
+    │     Backend Layer      │  ◄── Streamlit Cloud Control Panel
     └───────────┬────────────┘
                 │ Interacts with logic modules
                 ▼
@@ -467,5 +321,5 @@ with tab_architecture:
     ```
     
     - **Branding Consistency**: Both systems utilize identical naming and colors from `config/avatar_settings.json` to project a single enterprise solution product space.
-    - **Real-Time Integration**: The static frontend makes HTTP calls directly to the Streamlit FastAPI server (`localhost:8010`) for unified operation.
+    - **Cloud Deployment**: V1 Streamlit Cloud deployment runs as a pure Streamlit control panel. The static frontend remains in offline demo mode until a future standalone API service is deployed.
     """)
