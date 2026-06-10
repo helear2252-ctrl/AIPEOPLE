@@ -130,24 +130,16 @@ function startPostureShiftEngine() {
  * Lip Sync animation simulator (varies height of mouth shape)
  */
 function startLipSyncAnimation() {
-    if (lipSyncInterval) clearInterval(lipSyncInterval);
+    if (lipSyncInterval) {
+        clearInterval(lipSyncInterval);
+        lipSyncInterval = null;
+    }
     
-    mouthOverlay.classList.add("speaking");
+    // mouthOverlay.classList.add("speaking"); // Disabled for B-level upgrade
     speechWaves.classList.add("active");
     updateAvatarState("SPEAKING");
     
-    lipSyncInterval = setInterval(() => {
-        // Vary mouth opening size (height) randomly between 5px and 16px to mock visemes
-        const mouthHeight = Math.floor(Math.random() * 12) + 5;
-        const widthWarp = Math.floor(Math.random() * 4) + 12; // vary shape slightly
-        
-        mouthOverlay.style.height = `${mouthHeight}px`;
-        mouthOverlay.style.width = `calc(2.8% + ${widthWarp - 14}px)`;
-        
-        // Also apply a micro bounce to the head wrapper synchronized with speech
-        const headBounce = (Math.random() * 1 - 0.5).toFixed(1);
-        avatarWrapper.style.transform = `translateX(-50%) scale(1) translateY(${headBounce}px)`;
-    }, 90);
+    // The speaking nod animation is driven smoothly inside the requestAnimationFrame loop in real time.
 }
 
 function stopLipSyncAnimation() {
@@ -156,10 +148,9 @@ function stopLipSyncAnimation() {
         lipSyncInterval = null;
     }
     
-    mouthOverlay.classList.remove("speaking");
-    mouthOverlay.style.height = "0px";
+    // mouthOverlay.classList.remove("speaking"); // Disabled for B-level upgrade
+    // mouthOverlay.style.height = "0px"; // Disabled for B-level upgrade
     speechWaves.classList.remove("active");
-    avatarWrapper.style.transform = "translateX(-50%) scale(1) translateY(0px)";
     updateAvatarState("IDLE");
 }
 
@@ -517,3 +508,73 @@ if (window.speechSynthesis.onvoiceschanged !== undefined) {
         // reload/reset preferred voice if speech synthesis is triggered
     };
 }
+
+// ==========================================================================
+// Parallax Mouse-Following Subsystem (lerp-interpolated variables)
+// ==========================================================================
+(() => {
+    let targetX = 0, targetY = 0;
+    let currentX = 0, currentY = 0;
+    let currentBounce = 0; // smooth vertical nodding offset
+    let speakingTime = 0; // accumulated time for sine-wave oscillation
+    const lerpFactor = 0.08; // smooth deceleration lag
+
+    document.addEventListener("mousemove", (e) => {
+        // Compute normalized coordinates relative to center (-0.5 to 0.5)
+        const normX = (e.clientX / window.innerWidth) - 0.5;
+        const normY = (e.clientY / window.innerHeight) - 0.5;
+        
+        targetX = normX;
+        targetY = normY;
+    });
+
+    function renderParallax() {
+        // Interpolate current values towards targets
+        currentX += (targetX - currentX) * lerpFactor;
+        currentY += (targetY - currentY) * lerpFactor;
+        
+        // Calculate smooth, low-frequency speaking nod
+        let nodRot = 0;
+        if (isSpeaking) {
+            speakingTime += 0.06; // Slow nodding frequency (about 1 cycle per second)
+            // Oscillate vertical offset very subtly (between 0.0px and 0.3px)
+            const targetBounce = (Math.sin(speakingTime) + 0.5) * 0.2;
+            currentBounce += (targetBounce - currentBounce) * 0.08;
+            // Add a matching, extremely tiny rotation oscillation (-0.05deg to 0.05deg)
+            nodRot = Math.sin(speakingTime) * 0.05;
+        } else {
+            speakingTime = 0;
+            // Smoothly return nod offset to 0 when idle
+            currentBounce += (0 - currentBounce) * 0.08;
+        }
+        
+        // Parallax multipliers (tuned to be very subtle and premium)
+        const bgX = -currentX * 12; // shifts opposite to mouse
+        const bgY = -currentY * 12;
+        
+        const charX = currentX * 18; // shifts with mouse
+        const charY = currentY * 6;
+        const charRotate = currentX * 0.8 + nodRot; // rotates slightly, adding speaking nod rotation
+        
+        const fgX = currentX * 25; // foreground UI items shift more dynamically
+        const fgY = currentY * 15;
+        
+        // Write values to CSS Custom Variables
+        document.documentElement.style.setProperty('--mouse-x', `${charX}px`);
+        document.documentElement.style.setProperty('--mouse-y', `${charY}px`);
+        document.documentElement.style.setProperty('--mouse-rot', `${charRotate}deg`);
+        
+        document.documentElement.style.setProperty('--mouse-bg-x', `${bgX}px`);
+        document.documentElement.style.setProperty('--mouse-bg-y', `${bgY}px`);
+        
+        document.documentElement.style.setProperty('--mouse-fg-x', `${fgX}px`);
+        document.documentElement.style.setProperty('--mouse-fg-y', `${fgY}px`);
+        
+        document.documentElement.style.setProperty('--head-bounce', `${currentBounce}px`);
+        
+        requestAnimationFrame(renderParallax);
+    }
+    
+    // Start animation loop
+    requestAnimationFrame(renderParallax);
+})();

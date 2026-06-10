@@ -473,6 +473,7 @@ body {
     border-radius: 20px;
     padding: 0.6rem 1.2rem;
     box-shadow: var(--shadow-glass);
+    transform: translate(var(--mouse-fg-x, 0px), var(--mouse-fg-y, 0px));
 }
 
 .avatar-title-info {
@@ -610,15 +611,16 @@ body {
 
 .avatar-bg-desk {
     position: absolute;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
+    inset: -20px; /* Expand slightly to cover boundaries during movement */
+    width: calc(100vw + 40px);
+    height: calc(100vh + 40px);
     background-image: url('assets/office_bg.png') !important;
     background-size: cover !important;
     background-position: center !important;
     z-index: 1 !important;
     opacity: 0.95;
     filter: brightness(0.4) saturate(1.1);
+    transform: translate(var(--mouse-bg-x, 0px), var(--mouse-bg-y, 0px));
 }
 
 .avatar-bg-desk::before {
@@ -690,7 +692,7 @@ body {
     align-items: flex-end;
     justify-content: center;
     z-index: 3;
-    transform: translateX(-50%) scale(1);
+    transform: translateX(calc(-50% + var(--mouse-x, 0px))) translateY(calc(var(--mouse-y, 0px) + var(--head-bounce, 0px))) rotate(var(--mouse-rot, 0deg)) scale(1);
     transform-origin: bottom center;
     animation: assistant-breathe 5.5s ease-in-out infinite;
 }
@@ -732,6 +734,8 @@ body {
 
 /* 2D Realistic blinking animation eyelids */
 .eyelid {
+    display: none !important; /* Hide skin-colored eyelids until proper assets are integrated */
+    opacity: 0 !important;
     position: absolute;
     top: 40.5%;
     width: 3.4%;
@@ -755,8 +759,10 @@ body {
     height: 2.2%;
 }
 
-/* Mouth overlay lip-sync animation */
+/* Mouth overlay lip-sync animation - hidden for B-level upgrade */
 .mouth-overlay {
+    display: none !important; /* Hide old red mouth overlays completely */
+    opacity: 0 !important;
     position: absolute;
     top: 50.8%;
     left: 48.5%;
@@ -765,13 +771,13 @@ body {
     background: #6a1a15; 
     border-radius: 50%;
     z-index: 4;
-    opacity: 0;
     transition: height 0.08s ease, opacity 0.08s ease;
     border-bottom: 2px solid #8e2b24;
 }
 
 .mouth-overlay.speaking {
-    opacity: 0.9;
+    display: none !important;
+    opacity: 0 !important;
 }
 
 /* HUD elements inside Viewport */
@@ -783,6 +789,7 @@ body {
     display: flex;
     gap: 0.85rem;
     pointer-events: none;
+    transform: translate(var(--mouse-fg-x, 0px), var(--mouse-fg-y, 0px));
 }
 
 .hud-item {
@@ -920,6 +927,7 @@ body {
     gap: 1rem;
     pointer-events: auto;
     transition: var(--transition-premium);
+    transform: translate(var(--mouse-fg-x, 0px), var(--mouse-fg-y, 0px));
 }
 
 .chat-messages-container {
@@ -1324,8 +1332,8 @@ body {
 }
 
 @keyframes assistant-breathe {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.008); }
+    0%, 100% { transform: translateX(calc(-50% + var(--mouse-x, 0px))) translateY(calc(var(--mouse-y, 0px) + var(--head-bounce, 0px))) rotate(var(--mouse-rot, 0deg)) scale(1); }
+    50% { transform: translateX(calc(-50% + var(--mouse-x, 0px))) translateY(calc(var(--mouse-y, 0px) + var(--head-bounce, 0px))) rotate(var(--mouse-rot, 0deg)) scale(1.004); }
 }
 
 @keyframes assistant-float {
