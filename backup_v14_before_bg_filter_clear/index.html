@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -36,11 +36,11 @@
             </a>
             <nav class="main-nav">
                 <ul>
-                    <li><a href="#" class="nav-link active" data-section="home">Home</a></li>
-                    <li><a href="#" class="nav-link" data-section="about">About</a></li>
-                    <li><a href="#" class="nav-link" data-section="features">Features</a></li>
-                    <li><a href="#" class="nav-link" data-section="portfolio">Use Cases</a></li>
-                    <li><a href="#" class="nav-link" data-section="contact">Contact</a></li>
+                    <li><a href="#home" class="nav-link active">Home</a></li>
+                    <li><a href="#about" class="nav-link">About</a></li>
+                    <li><a href="#features" class="nav-link">Features</a></li>
+                    <li><a href="#portfolio" class="nav-link">Use Cases</a></li>
+                    <li><a href="#contact" class="nav-link">Contact</a></li>
                 </ul>
             </nav>
             <div class="header-actions">
@@ -52,11 +52,11 @@
     </header>
 
     <!-- Hero / Workspace Section -->
-    <section id="home" class="hero-section page-section active-section">
+    <section id="home" class="hero-section">
         <div class="container hero-container">
             <!-- Left: Strategic Executive Content -->
             <div class="hero-text-content">
-                <div class="badge"><i class="fa-solid fa-user-tie"></i> 數位助理</div>
+                <div class="badge"><i class="fa-solid fa-user-tie"></i> 數字秘書</div>
                 <h1 class="hero-title">新星人工智慧</h1>
                 <h2 class="hero-subtitle">您的智慧數字人助手</h2>
                 <div class="hero-principles">
@@ -65,12 +65,12 @@
                     <span><i class="fa-solid fa-brain"></i> 能夠理解你的記憶</span>
                 </div>
                 <p class="hero-description">
-                    NOVA 是新一代數位人助手，旨在幫助您進行研究、分析、學習、整理和提高日常工作效率。
+                    NOVA 是一款新一代數位人助手，旨在幫助您進行研究、分析、學習、整理和提高日常工作效率。
                 </p>
                 <div class="hero-cta-buttons">
                     <button class="btn btn-primary" onclick="focusChat();">開始對話 <i class="fa-solid fa-comments"></i></button>
                     <button class="btn btn-secondary" onclick="focusChat();">啟動助手 <i class="fa-solid fa-circle-play"></i></button>
-                    <button type="button" class="btn btn-secondary section-switch-btn" data-section="portfolio">查看作品集 <i class="fa-solid fa-arrow-right"></i></button>
+                    <a href="#portfolio" class="btn btn-secondary">查看作品集 <i class="fa-solid fa-arrow-right"></i></a>
                 </div>
             </div>
 
@@ -124,7 +124,7 @@
                                 <span class="pulse-dot"></span> <span id="state-text">IDLE</span>
                             </div>
                             <div class="hud-item settings-pill">
-                                <span id="hud-gender">Female</span> ??<span id="hud-age">28</span> yrs
+                                <span id="hud-gender">Female</span> • <span id="hud-age">28</span> yrs
                             </div>
                             <div class="hud-item memory-pill" id="hud-memory">
                                 <i class="fa-solid fa-brain" style="color: #38bdf8;"></i> <span id="hud-memory-text">Memory: Active</span>
@@ -195,7 +195,7 @@
     </section>
 
     <!-- About Subsystems -->
-    <section id="about" class="about-section page-section">
+    <section id="about" class="about-section">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">The Three-Layer Architecture</h2>
@@ -224,7 +224,7 @@
     </section>
 
     <!-- Executive Features -->
-    <section id="features" class="features-section page-section">
+    <section id="features" class="features-section">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Executive Capabilities</h2>
@@ -264,7 +264,7 @@
     </section>
 
     <!-- Use Cases / Portfolio -->
-    <section id="portfolio" class="portfolio-section page-section">
+    <section id="portfolio" class="portfolio-section">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Corporate Use Cases</h2>
@@ -306,7 +306,7 @@
     </section>
 
     <!-- Contact Form -->
-    <section id="contact" class="contact-section page-section">
+    <section id="contact" class="contact-section">
         <div class="container">
             <div class="section-header">
                 <h2 class="section-title">Connect with NOVA</h2>
@@ -345,7 +345,7 @@
             <div class="footer-links">
                 <a href="#">Privacy Policy</a>
                 <a href="#">Terms of Service</a>
-                <a href="#" class="section-switch-btn" data-section="about">Documentation</a>
+                <a href="#about">Documentation</a>
             </div>
         </div>
     </footer>
@@ -356,6 +356,7 @@
             const chatInput = document.getElementById("chat-input");
             if (chatInput) {
                 chatInput.focus();
+                chatInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }
         }
     </script>

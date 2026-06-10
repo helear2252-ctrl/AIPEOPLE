@@ -479,36 +479,26 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     });
 
-    // In-page section switching without URL hashes or scroll jumps
-    const sections = document.querySelectorAll(".page-section");
+    // Navigation links highlight on scroll
+    const sections = document.querySelectorAll("section");
     const navLinks = document.querySelectorAll(".nav-link");
-    const sectionControls = document.querySelectorAll("[data-section], a[href^='#']");
 
-    function showSection(sectionId) {
+    window.addEventListener("scroll", () => {
+        let current = "";
         sections.forEach(section => {
-            section.classList.toggle("active-section", section.id === sectionId);
+            const sectionTop = section.offsetTop;
+            if (window.scrollY >= sectionTop - 120) {
+                current = section.getAttribute("id");
+            }
         });
 
         navLinks.forEach(link => {
-            link.classList.toggle("active", link.dataset.section === sectionId);
-        });
-    }
-
-    sectionControls.forEach(control => {
-        control.addEventListener("click", (event) => {
-            const hashTarget = control.getAttribute("href");
-            const target = control.dataset.section || (hashTarget && hashTarget.startsWith("#") ? hashTarget.slice(1) : "");
-
-            if (!target) return;
-            const sectionExists = Array.from(sections).some(section => section.id === target);
-            if (!sectionExists) return;
-
-            event.preventDefault();
-            showSection(target);
+            link.classList.remove("active");
+            if (link.getAttribute("href") === `#${current}`) {
+                link.classList.add("active");
+            }
         });
     });
-
-    showSection("home");
 });
 
 // Necessary voice list load listener for Chrome speech synthesis

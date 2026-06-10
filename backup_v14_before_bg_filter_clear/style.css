@@ -303,18 +303,6 @@ body {
     justify-content: center;
 }
 
-.page-section {
-    display: none !important;
-}
-
-.page-section.active-section {
-    display: block !important;
-}
-
-.hero-section.active-section {
-    display: flex !important;
-}
-
 /* Hero & Workstation Section */
 .hero-section {
     padding: 0;
@@ -1340,7 +1328,7 @@ body {
 
 /* V1 Digital Human Landing refinements */
 .hero-section {
-    padding: 0;
+    padding: 2rem 0;
 }
 
 .hero-container {
@@ -1474,7 +1462,7 @@ body {
     background-position: 58% center !important;
     z-index: 1 !important;
     opacity: 0.95 !important;
-    filter: blur(0px) brightness(0.58) saturate(1.08) !important;
+    filter: blur(3px) brightness(0.36) saturate(1.0) !important;
     transform: scale(1.04) !important;
 }
 
