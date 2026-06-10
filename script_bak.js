@@ -18,7 +18,7 @@ let systemSettings = {
     speaking_style: "Clear, Formal, Reassuring",
     voice_enabled: true,
     avatar_images: {
-        Female: "assets/nova_avatar.png",
+        Female: "assets/avatar_female.png",
         Male: "assets/avatar_male.png"
     }
 };
@@ -146,7 +146,7 @@ function startLipSyncAnimation() {
         
         // Also apply a micro bounce to the head wrapper synchronized with speech
         const headBounce = (Math.random() * 1 - 0.5).toFixed(1);
-        avatarWrapper.style.transform = `scale(1.35) translateY(${headBounce}px)`;
+        avatarWrapper.style.transform = `translateY(${headBounce}px)`;
     }, 90);
 }
 
@@ -159,7 +159,7 @@ function stopLipSyncAnimation() {
     mouthOverlay.classList.remove("speaking");
     mouthOverlay.style.height = "0px";
     speechWaves.classList.remove("active");
-    avatarWrapper.style.transform = "scale(1.35) translateY(0px)";
+    avatarWrapper.style.transform = "translateY(0px)";
     updateAvatarState("IDLE");
 }
 

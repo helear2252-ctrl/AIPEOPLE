@@ -14,7 +14,7 @@
   "search_provider": "Tavily",
   "search_api_key": "",
   "avatar_images": {
-    "Female": "assets/avatar_female.png",
+    "Female": "assets/nova_avatar.png",
     "Male": "assets/avatar_male.png"
   }
 }
