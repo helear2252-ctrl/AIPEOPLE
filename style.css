@@ -539,10 +539,53 @@ body {
     width: 100vw;
     height: 12vh;
     background: linear-gradient(to bottom, #0d121f 0%, #030509 100%);
-    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-top: 1px solid rgba(0, 163, 255, 0.08); /* environmental blue reflection line */
     z-index: 4;
     pointer-events: none;
     box-shadow: 0 -10px 30px rgba(0,0,0,0.5);
+}
+
+/* Soft desk lamp bloom overlay to melt character contour into the light source */
+.desk-lamp-flare {
+    position: absolute;
+    bottom: 15vh;
+    right: 4%;
+    width: 420px;
+    height: 420px;
+    background: radial-gradient(circle at 45% 55%, rgba(255, 170, 10, 0.16) 0%, rgba(255, 170, 10, 0.04) 45%, transparent 70%);
+    border-radius: 50%;
+    z-index: 5; /* Higher than character z-index: 4, below HUD z-index: 10 */
+    pointer-events: none;
+    mix-blend-mode: screen;
+    filter: blur(6px);
+}
+
+/* Skyline reflection flare to blend character left edges with background skyline */
+.skyline-reflection-flare {
+    position: absolute;
+    bottom: 20vh;
+    right: 22%;
+    width: 480px;
+    height: 480px;
+    background: radial-gradient(circle at 55% 50%, rgba(56, 189, 248, 0.1) 0%, rgba(56, 189, 248, 0.02) 40%, transparent 70%);
+    border-radius: 50%;
+    z-index: 5;
+    pointer-events: none;
+    mix-blend-mode: screen;
+    filter: blur(10px);
+}
+
+/* Ambient contact shadow on top of desk cover to anchor character base */
+.avatar-contact-shadow {
+    position: absolute;
+    bottom: 11vh;
+    right: 17%;
+    width: 320px;
+    height: 25px;
+    background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.82) 0%, rgba(0, 0, 0, 0) 75%);
+    z-index: 5;
+    pointer-events: none;
+    transform: rotate(-2deg);
 }
 
 .avatar-bg-desk {
@@ -630,6 +673,21 @@ body {
     animation: assistant-breathe 5.5s ease-in-out infinite;
 }
 
+/* Ambient contact shadow on table surface right under the avatar body */
+.avatar-wrapper::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 15%;
+    right: 15%;
+    height: 20px;
+    background: rgba(0, 0, 0, 0.88);
+    border-radius: 50%;
+    filter: blur(10px);
+    z-index: -1; /* behind character image, on top of desk background */
+    pointer-events: none;
+}
+
 .avatar-img {
     height: 100% !important;
     width: auto !important;
@@ -638,6 +696,15 @@ body {
     object-position: center bottom !important;
     pointer-events: none;
     transition: var(--transition-premium);
+    filter: brightness(0.86) contrast(1.02) saturate(0.85)
+            /* Sharp amber rim light on the right edge */
+            drop-shadow(3px -1px 3px rgba(255, 170, 10, 0.55))
+            /* Sharp blue rim light on the left edge */
+            drop-shadow(-3px 1px 3px rgba(56, 189, 248, 0.45))
+            /* Soft ambient amber glow on the right */
+            drop-shadow(12px -4px 20px rgba(255, 170, 10, 0.22))
+            /* Soft ambient blue glow on the left */
+            drop-shadow(-12px 4px 20px rgba(56, 189, 248, 0.15));
 }
 
 /* 2D Realistic blinking animation eyelids */
@@ -1233,8 +1300,8 @@ body {
 }
 
 @keyframes assistant-breathe {
-    0%, 100% { transform: scale(1.35); }
-    50% { transform: scale(1.365); }
+    0%, 100% { transform: scale(1.35) translateY(0); }
+    50% { transform: scale(1.365) translateY(0); }
 }
 
 @keyframes assistant-float {
@@ -1258,8 +1325,8 @@ body {
 }
 
 .hero-title {
-    font-size: clamp(4rem, 8vw, 7.2rem);
-    line-height: 0.95;
+    font-size: 3.0rem;
+    line-height: 1.15;
 }
 
 .hero-subtitle {
@@ -1301,9 +1368,9 @@ body {
 }
 
 .avatar-view-container {
-    height: min(62vh, 620px);
-    min-height: 500px;
-    border-radius: 8px;
+    height: 100vh !important;
+    min-height: 100vh !important;
+    border-radius: 0 !important;
 }
 
 .avatar-bg-desk {
@@ -1374,9 +1441,9 @@ body {
 
 .avatar-wrapper {
     width: auto;
-    height: 82%;
+    height: 88vh;
     z-index: 4;
-    animation: assistant-breathe 5.5s ease-in-out infinite, assistant-float 7s ease-in-out infinite;
+    animation: assistant-breathe 5.5s ease-in-out infinite;
 }
 
 .speech-waves {
