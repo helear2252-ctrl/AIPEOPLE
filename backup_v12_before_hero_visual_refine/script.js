@@ -146,7 +146,7 @@ function startLipSyncAnimation() {
         
         // Also apply a micro bounce to the head wrapper synchronized with speech
         const headBounce = (Math.random() * 1 - 0.5).toFixed(1);
-        avatarWrapper.style.transform = `translateX(-50%) scale(1) translateY(${headBounce}px)`;
+        avatarWrapper.style.transform = `translate(-50%, -50%) scale(1) translateY(${headBounce}px)`;
     }, 90);
 }
 
@@ -159,7 +159,7 @@ function stopLipSyncAnimation() {
     mouthOverlay.classList.remove("speaking");
     mouthOverlay.style.height = "0px";
     speechWaves.classList.remove("active");
-    avatarWrapper.style.transform = "translateX(-50%) scale(1) translateY(0px)";
+    avatarWrapper.style.transform = "translate(-50%, -50%) scale(1) translateY(0px)";
     updateAvatarState("IDLE");
 }
 

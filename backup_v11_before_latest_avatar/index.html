@@ -108,7 +108,7 @@
                             <div class="mouth-overlay" id="mouth-overlay"></div>
 
                             <!-- Avatar image frame -->
-                            <img src="assets/assets/nova_avatar_cutout.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img">
+                            <img src="assets/nova_avatar_cutout_hd.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img">
                         </div>
                         
                         <!-- Desk Lamp Flare overlay -->
@@ -364,13 +364,13 @@
     <script src="script.js"></script>
     <script>
         (() => {
-            const cutoutSrc = "assets/assets/nova_avatar_cutout.png";
+            const avatarSrc = "assets/nova_avatar_cutout_hd.png";
             if (typeof systemSettings !== "undefined" && systemSettings.avatar_images) {
-                systemSettings.avatar_images.Female = cutoutSrc;
+                systemSettings.avatar_images.Female = avatarSrc;
             }
-            const cutoutAvatar = document.getElementById("avatar-img");
-            if (cutoutAvatar) {
-                cutoutAvatar.src = cutoutSrc;
+            const avatar = document.getElementById("avatar-img");
+            if (avatar) {
+                avatar.src = avatarSrc;
             }
         })();
     </script>

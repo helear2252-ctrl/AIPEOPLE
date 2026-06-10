@@ -70,9 +70,8 @@ body {
     width: 700px;
     height: 700px;
     top: -200px;
-    left: -360px;
+    left: -200px;
     background: radial-gradient(circle, var(--primary) 0%, rgba(56, 189, 248, 0) 70%);
-    opacity: 0.04;
 }
 
 .glow-2 {
@@ -329,20 +328,25 @@ body {
     left: 0;
     top: 0;
     height: 100vh;
-    width: min(42vw, 520px);
+    width: 30%; /* limit left text width to 30% */
     min-width: 350px;
-    max-width: 520px;
+    max-width: 420px;
     z-index: 10;
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-    padding: 0 0 0 clamp(2rem, 5vw, 5.5rem);
-    background: transparent;
+    padding: 0 3.5rem;
+    background: linear-gradient(
+      90deg,
+      rgba(3, 7, 18, 0.85) 0%,
+      rgba(3, 7, 18, 0.45) 65%,
+      rgba(3, 7, 18, 0) 100%
+    );
     border: none;
     box-shadow: none;
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     pointer-events: auto;
 }
 
@@ -668,17 +672,15 @@ body {
 
 .avatar-wrapper {
     position: absolute;
-    top: auto;
-    left: 58.5%;
     bottom: 0;
-    right: auto;
+    right: 15%;
     height: 88vh; /* character height occupies 88% of Hero area (85%~90%) */
     width: fit-content;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     z-index: 3;
-    transform: translateX(-50%) scale(1);
+    transform: scale(1.35) translateY(0);
     transform-origin: bottom center;
     animation: assistant-breathe 5.5s ease-in-out infinite;
 }
@@ -704,7 +706,6 @@ body {
     max-width: none !important; /* relaxed to prevent layout squeeze */
     object-fit: cover !important; /* cropped zoom cover */
     object-position: center bottom !important;
-    background: transparent !important;
     pointer-events: none;
     transition: var(--transition-premium);
     filter: brightness(0.86) contrast(1.02) saturate(0.85)
@@ -1312,8 +1313,8 @@ body {
 }
 
 @keyframes assistant-breathe {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.008); }
+    0%, 100% { transform: scale(1.42) translateY(0); }
+    50% { transform: scale(1.435) translateY(0); }
 }
 
 @keyframes assistant-float {
@@ -1459,7 +1460,7 @@ body {
     inset: -10px !important;
     background-image: url('assets/office_bg.png') !important;
     background-size: cover !important;
-    background-position: 58% center !important;
+    background-position: center !important;
     z-index: 1 !important;
     opacity: 0.95 !important;
     filter: blur(3px) brightness(0.36) saturate(1.0) !important;
@@ -1482,13 +1483,10 @@ body {
 
 .avatar-wrapper {
     width: auto;
-    height: 112vh !important;
-    left: 58.5% !important;
-    top: -76px !important;
-    right: auto !important;
-    bottom: auto !important;
+    height: 92vh !important;
+    right: 12% !important;
     z-index: 4;
-    transform-origin: top center;
+    transform-origin: bottom center;
     animation: assistant-breathe 6s ease-in-out infinite !important;
 }
 

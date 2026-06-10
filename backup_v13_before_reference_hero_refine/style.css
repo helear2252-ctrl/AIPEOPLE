@@ -669,7 +669,7 @@ body {
 .avatar-wrapper {
     position: absolute;
     top: auto;
-    left: 58.5%;
+    left: 60%;
     bottom: 0;
     right: auto;
     height: 88vh; /* character height occupies 88% of Hero area (85%~90%) */
@@ -1313,7 +1313,7 @@ body {
 
 @keyframes assistant-breathe {
     0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.008); }
+    50% { transform: translateX(-50%) scale(1.012); }
 }
 
 @keyframes assistant-float {
@@ -1482,13 +1482,13 @@ body {
 
 .avatar-wrapper {
     width: auto;
-    height: 112vh !important;
-    left: 58.5% !important;
-    top: -76px !important;
+    height: calc(100vh - 32px) !important;
+    left: 62% !important;
+    top: auto !important;
     right: auto !important;
-    bottom: auto !important;
+    bottom: 0 !important;
     z-index: 4;
-    transform-origin: top center;
+    transform-origin: bottom center;
     animation: assistant-breathe 6s ease-in-out infinite !important;
 }
 

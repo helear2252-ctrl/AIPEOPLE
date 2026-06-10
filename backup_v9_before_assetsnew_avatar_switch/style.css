@@ -668,17 +668,15 @@ body {
 
 .avatar-wrapper {
     position: absolute;
-    top: auto;
-    left: 58.5%;
     bottom: 0;
-    right: auto;
+    right: 15%;
     height: 88vh; /* character height occupies 88% of Hero area (85%~90%) */
     width: fit-content;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     z-index: 3;
-    transform: translateX(-50%) scale(1);
+    transform: scale(1.28) translateY(0);
     transform-origin: bottom center;
     animation: assistant-breathe 5.5s ease-in-out infinite;
 }
@@ -1312,8 +1310,8 @@ body {
 }
 
 @keyframes assistant-breathe {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.008); }
+    0%, 100% { transform: scale(1.28) translateY(0); }
+    50% { transform: scale(1.295) translateY(0); }
 }
 
 @keyframes assistant-float {
@@ -1482,13 +1480,10 @@ body {
 
 .avatar-wrapper {
     width: auto;
-    height: 112vh !important;
-    left: 58.5% !important;
-    top: -76px !important;
-    right: auto !important;
-    bottom: auto !important;
+    height: 82vh !important;
+    right: 12% !important;
     z-index: 4;
-    transform-origin: top center;
+    transform-origin: bottom center;
     animation: assistant-breathe 6s ease-in-out infinite !important;
 }
 
