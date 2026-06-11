@@ -3,7 +3,9 @@ import base64
 import html
 import json
 import os
+import re
 import time
+import streamlit.components.v1 as components
 
 # Import custom modules
 from modules.avatar_interface import AvatarInterface
@@ -454,6 +456,60 @@ def get_avatar_data_uri(settings):
         encoded = base64.b64encode(avatar_file.read()).decode("ascii")
     return f"data:image/png;base64,{encoded}"
 
+def file_to_data_uri(relative_path):
+    app_dir = os.path.dirname(__file__)
+    abs_path = os.path.normpath(os.path.join(app_dir, relative_path))
+    if not abs_path.startswith(app_dir) or not os.path.exists(abs_path):
+        return relative_path
+
+    ext = os.path.splitext(abs_path)[1].lower()
+    mime_type = {
+        ".png": "image/png",
+        ".jpg": "image/jpeg",
+        ".jpeg": "image/jpeg",
+        ".gif": "image/gif",
+        ".svg": "image/svg+xml",
+        ".webp": "image/webp",
+    }.get(ext, "application/octet-stream")
+
+    with open(abs_path, "rb") as asset_file:
+        encoded = base64.b64encode(asset_file.read()).decode("ascii")
+    return f"data:{mime_type};base64,{encoded}"
+
+def inline_frontend_assets(content):
+    def replace_asset(match):
+        path = match.group(1)
+        return file_to_data_uri(path)
+
+    return re.sub(r"assets/[A-Za-z0-9_./-]+", replace_asset, content)
+
+def build_homepage_preview_html():
+    app_dir = os.path.dirname(__file__)
+    index_path = os.path.join(app_dir, "index.html")
+    style_path = os.path.join(app_dir, "style.css")
+    script_path = os.path.join(app_dir, "script.js")
+
+    with open(index_path, "r", encoding="utf-8") as index_file:
+        page_html = index_file.read()
+    with open(style_path, "r", encoding="utf-8") as style_file:
+        page_css = inline_frontend_assets(style_file.read())
+    with open(script_path, "r", encoding="utf-8") as script_file:
+        page_js = inline_frontend_assets(script_file.read())
+
+    page_html = re.sub(
+        r'\s*<link rel="stylesheet" href="style\.css">\s*',
+        f"\n<style>\n{page_css}\n</style>\n",
+        page_html,
+        count=1,
+    )
+    page_html = re.sub(
+        r'\s*<script src="script\.js"></script>\s*',
+        f"\n<script>\n{page_js}\n</script>\n",
+        page_html,
+        count=1,
+    )
+    return inline_frontend_assets(page_html)
+
 if "page" not in st.session_state:
     st.session_state.page = "Home"
 
@@ -492,6 +548,10 @@ if st.session_state.page == "Home":
 
     if st.query_params.get("view") == "portfolio":
         st.info("Portfolio is available in the static GitHub Pages frontend demo. Admin tools remain available from the sidebar.")
+
+    st.markdown("### NOVA AI Homepage Preview")
+    components.html(build_homepage_preview_html(), height=920, scrolling=True)
+    st.write("---")
 
     st.markdown(f"""
         <div class="nova-home">
