@@ -732,6 +732,23 @@ body {
             drop-shadow(-12px 4px 20px rgba(56, 189, 248, 0.15));
 }
 
+/* Desk foreground layer — sits in front of avatar, behind HUD.
+   Fixed position, does NOT participate in breathing/nodding/mouse-follow. */
+.desk-foreground-layer {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    height: 32vh;
+    object-fit: cover;
+    object-position: center top;
+    z-index: 6;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
 /* 2D Realistic blinking animation eyelids */
 .eyelid {
     display: none !important; /* Hide skin-colored eyelids until proper assets are integrated */
@@ -1502,13 +1519,13 @@ body {
 
 .avatar-wrapper {
     width: auto;
-    height: 112vh !important;
-    left: 58.5% !important;
-    top: -76px !important;
+    height: 86vh !important;
+    left: 56% !important;
+    top: auto !important;
     right: auto !important;
-    bottom: auto !important;
+    bottom: 14vh !important;
     z-index: 4;
-    transform-origin: top center;
+    transform-origin: bottom center;
     animation: assistant-breathe 6s ease-in-out infinite !important;
 }
 

@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -108,9 +108,12 @@
                             <div class="mouth-overlay" id="mouth-overlay"></div>
 
                             <!-- Avatar image frame -->
-                            <img src="assets/assets/nova_avatar_cutout.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img">
+                            <img src="assets/new_nova.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img">
                         </div>
                         
+                        <!-- Desk foreground layer (Layer 3: in front of character) -->
+                        <img src="assets/desk.png" id="desk-foreground" alt="" class="desk-foreground-layer">
+
                         <!-- Desk Lamp Flare overlay -->
                         <div class="desk-lamp-flare"></div>
                         <div class="skyline-reflection-flare"></div>
@@ -363,7 +366,7 @@
     <script src="script.js"></script>
     <script>
         (() => {
-            const cutoutSrc = "assets/assets/nova_avatar_cutout.png";
+            const cutoutSrc = "assets/new_nova.png";
             if (typeof systemSettings !== "undefined" && systemSettings.avatar_images) {
                 systemSettings.avatar_images.Female = cutoutSrc;
             }

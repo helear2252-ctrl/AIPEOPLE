@@ -18,7 +18,7 @@ let systemSettings = {
     speaking_style: "Clear, Formal, Reassuring",
     voice_enabled: true,
     avatar_images: {
-        Female: "assets/nova_avatar.png",
+        Female: "assets/new_nova.png",
         Male: "assets/avatar_male.png"
     }
 };
