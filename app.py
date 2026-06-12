@@ -448,7 +448,15 @@ config_data = avatar_interface.load_settings()
 
 def get_avatar_data_uri(settings):
     gender = settings.get("gender", "Female")
-    avatar_path = settings.get("avatar_images", {}).get(gender, "assets/avatar_female.png")
+    avatar_images = settings.get("avatar_images", {})
+    avatar_path = settings.get("avatar_static_image") if gender == "Female" else None
+    avatar_path = avatar_path or avatar_images.get(gender, "assets/new_nova.png" if gender == "Female" else "assets/avatar_male.png")
+    fallback_paths = settings.get("avatar_fallback_images", {}).get(gender, [])
+    for candidate_path in [avatar_path, *fallback_paths]:
+        abs_avatar_path = os.path.join(os.path.dirname(__file__), candidate_path)
+        if os.path.exists(abs_avatar_path):
+            avatar_path = candidate_path
+            break
     abs_avatar_path = os.path.join(os.path.dirname(__file__), avatar_path)
     with open(abs_avatar_path, "rb") as avatar_file:
         encoded = base64.b64encode(avatar_file.read()).decode("ascii")
@@ -619,9 +627,17 @@ with tab_settings:
             "voice_enabled": voice_enabled,
             "search_provider": search_provider,
             "search_api_key": search_api_key,
+            "avatar_engine": config_data.get("avatar_engine", "image"),
+            "avatar_static_image": config_data.get("avatar_static_image", "assets/new_nova.png"),
+            "avatar_idle_video": config_data.get("avatar_idle_video", ""),
+            "avatar_talking_video": config_data.get("avatar_talking_video", ""),
             "avatar_images": config_data.get("avatar_images", {
-                "Female": "assets/avatar_female.png",
+                "Female": "assets/new_nova.png",
                 "Male": "assets/avatar_male.png"
+            }),
+            "avatar_fallback_images": config_data.get("avatar_fallback_images", {
+                "Female": ["assets/avatar_female.png", "assets/nova_avatar.png"],
+                "Male": ["assets/avatar_male.png"]
             })
         }
         

@@ -13,8 +13,21 @@
   "voice_enabled": true,
   "search_provider": "Tavily",
   "search_api_key": "",
+  "avatar_engine": "image",
+  "avatar_static_image": "assets/new_nova.png",
+  "avatar_idle_video": "",
+  "avatar_talking_video": "",
   "avatar_images": {
-    "Female": "assets/nova_avatar.png",
+    "Female": "assets/new_nova.png",
     "Male": "assets/avatar_male.png"
+  },
+  "avatar_fallback_images": {
+    "Female": [
+      "assets/avatar_female.png",
+      "assets/nova_avatar.png"
+    ],
+    "Male": [
+      "assets/avatar_male.png"
+    ]
   }
 }
