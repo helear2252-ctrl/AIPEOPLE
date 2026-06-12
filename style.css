@@ -693,9 +693,10 @@ body {
     align-items: flex-end;
     justify-content: center;
     z-index: 3;
-    transform: translateX(calc(-50% + var(--mouse-x, 0px))) translateY(calc(var(--mouse-y, 0px) + var(--head-bounce, 0px))) rotate(var(--mouse-rot, 0deg)) scale(1);
-    transform-origin: bottom center;
-    animation: assistant-breathe 5.5s ease-in-out infinite;
+    translate: -50% 0;
+    transform: none;
+    transform-origin: center bottom;
+    animation: none;
 }
 
 /* Ambient contact shadow on table surface right under the avatar body */
@@ -713,6 +714,7 @@ body {
     pointer-events: none;
 }
 
+.avatar-video,
 .avatar-img {
     height: 100% !important;
     width: auto !important;
@@ -721,6 +723,9 @@ body {
     object-position: center bottom !important;
     background: transparent !important;
     pointer-events: none;
+    transform: scaleX(1) scaleY(1);
+    transform-origin: center bottom;
+    animation: assistant-breathe 4s ease-in-out infinite;
     transition: var(--transition-premium);
     filter: brightness(0.86) contrast(1.02) saturate(0.85)
             /* Sharp amber rim light on the right edge */
@@ -731,6 +736,22 @@ body {
             drop-shadow(12px -4px 20px rgba(255, 170, 10, 0.22))
             /* Soft ambient blue glow on the left */
             drop-shadow(-12px 4px 20px rgba(56, 189, 248, 0.15));
+}
+
+.avatar-video {
+    display: block;
+}
+
+.avatar-fallback-img {
+    display: none;
+}
+
+.avatar-wrapper.video-fallback .avatar-video {
+    display: none;
+}
+
+.avatar-wrapper.video-fallback .avatar-fallback-img {
+    display: block;
 }
 
 /* Desk foreground layer — sits in front of avatar, behind HUD.
@@ -1348,8 +1369,9 @@ body {
 }
 
 @keyframes assistant-breathe {
-    0%, 100% { transform: translateX(calc(-50% + var(--mouse-x, 0px))) translateY(calc(var(--mouse-y, 0px) + var(--head-bounce, 0px))) rotate(var(--mouse-rot, 0deg)) scale(1); }
-    50% { transform: translateX(calc(-50% + var(--mouse-x, 0px))) translateY(calc(var(--mouse-y, 0px) + var(--head-bounce, 0px))) rotate(var(--mouse-rot, 0deg)) scale(1.004); }
+    0% { transform: scaleX(1) scaleY(1); }
+    50% { transform: scaleX(1) scaleY(1.006); }
+    100% { transform: scaleX(1) scaleY(1); }
 }
 
 @keyframes assistant-float {
@@ -1530,8 +1552,10 @@ body {
     right: auto !important;
     bottom: calc(19vh + 105px) !important;
     z-index: 7;
-    transform-origin: bottom center;
-    animation: assistant-breathe 6s ease-in-out infinite !important;
+    translate: -50% 0;
+    transform: none;
+    transform-origin: center bottom;
+    animation: none !important;
 }
 
 .speech-waves {

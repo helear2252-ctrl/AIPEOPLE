@@ -110,7 +110,7 @@
                         <div class="desk-keyboard"></div>
                         <div class="desk-notebook"></div>
                         <div class="desk-coffee"></div>
-                        <div class="avatar-wrapper" id="avatar-wrapper">
+                        <div class="avatar-wrapper video-fallback" id="avatar-wrapper">
                             <!-- Eye blink masks -->
                             <div class="eyelid eye-left" id="eye-left"></div>
                             <div class="eyelid eye-right" id="eye-right"></div>
@@ -118,12 +118,22 @@
                             <!-- Speaking mouth overlay -->
                             <div class="mouth-overlay" id="mouth-overlay"></div>
 
-                            <!-- Avatar image frame -->
-                            <img src="assets/new_nova.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img">
+                            <!-- Avatar media frame -->
+                            <video
+                                id="avatar-video"
+                                class="avatar-video"
+                                src="assets/liveportrait/nova/video/nova_idle_loop.mp4"
+                                muted
+                                loop
+                                playsinline
+                                autoplay
+                                preload="auto"
+                                aria-label="NOVA LivePortrait digital human"></video>
+                            <img src="assets/liveportrait/nova/fallback/nova_idle_alpha_still_v2.png" id="avatar-img" alt="NOVA - Executive Secretary" class="avatar-img avatar-fallback-img">
                         </div>
                         
                         <!-- Desk foreground layer (Layer 3: in front of character) -->
-                        <img src="assets/desk_layer_v2.png" id="desk-foreground" alt="" class="desk-foreground-layer">
+                        <img src="assets/desk_foreground.png" id="desk-foreground" alt="" class="desk-foreground-layer">
 
                         <!-- Desk Lamp Flare overlay -->
                         <div class="desk-lamp-flare"></div>
@@ -367,6 +377,9 @@
     <!-- Helper script to trigger input focus -->
     <script>
         function focusChat() {
+            if (window.playAvatarTalkingOnce) {
+                window.playAvatarTalkingOnce();
+            }
             const chatInput = document.getElementById("chat-input");
             if (chatInput) {
                 chatInput.focus();
