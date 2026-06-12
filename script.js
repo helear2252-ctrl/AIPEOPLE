@@ -17,8 +17,12 @@ let systemSettings = {
     personality: "Efficient, Professional, Courteous",
     speaking_style: "Clear, Formal, Reassuring",
     voice_enabled: true,
+    avatar_engine: "image",
+    avatar_static_image: "assets/liveportrait/nova/fallback/nova_idle_alpha_still_v2.png",
+    avatar_idle_video: "assets/liveportrait/nova/video/nova_idle_loop.mp4",
+    avatar_talking_video: "assets/liveportrait/nova/video/nova_talking_loop.mp4",
     avatar_images: {
-        Female: "assets/new_nova.png",
+        Female: "assets/liveportrait/nova/fallback/nova_idle_alpha_still_v2.png",
         Male: "assets/avatar_male.png"
     }
 };
@@ -31,6 +35,7 @@ let lipSyncInterval = null;
 
 // DOM Elements
 const backendStatusBadge = document.getElementById("backend-status-badge");
+const avatarVideo = document.getElementById("avatar-video");
 const avatarImg = document.getElementById("avatar-img");
 const eyeLeft = document.getElementById("eye-left");
 const eyeRight = document.getElementById("eye-right");
@@ -49,6 +54,19 @@ const metaSpeech = document.getElementById("meta-speech");
 const avatarNameEl = document.getElementById("avatar-name");
 const avatarRoleEl = document.getElementById("avatar-role");
 const hudMemoryText = document.getElementById("hud-memory-text");
+
+let avatarVideoMode = "idle";
+let avatarVideoAvailable = Boolean(avatarVideo);
+const AVATAR_NORMAL_IMAGE = "assets/liveportrait/nova/fallback/nova_idle_alpha_still_v2.png";
+const IDLE_SEQUENCE_DIR = "assets/liveportrait/nova/idle_sequence";
+const IDLE_SEQUENCE_PREFIX = "idle_";
+const IDLE_SEQUENCE_EXT = ".png";
+const IDLE_SEQUENCE_FRAME_COUNT = 342;
+const IDLE_SEQUENCE_FPS = 24;
+let idleSequenceFrame = 1;
+let idleSequenceTimerId = null;
+let idleSequenceActive = false;
+let idleSequenceAvailable = true;
 
 // Hero KPI Elements
 const kpiUptime = document.getElementById("kpi-uptime");
@@ -79,51 +97,73 @@ setInterval(() => {
 // ==========================================================================
 
 /**
- * Simulates a single blink action (fast shut, fast open)
+ * Returns an idle sequence frame path such as idle_0001.png.
  */
-function triggerBlink() {
-    if (isSpeaking) return; // Skip blink during speech transitions occasionally
-    
-    eyeLeft.classList.add("blink");
-    eyeRight.classList.add("blink");
-    
-    setTimeout(() => {
-        eyeLeft.classList.remove("blink");
-        eyeRight.classList.remove("blink");
-    }, 120); // Blink duration 120ms
+function getIdleSequenceFramePath(frameNumber) {
+    const padded = String(frameNumber).padStart(4, "0");
+    return `${IDLE_SEQUENCE_DIR}/${IDLE_SEQUENCE_PREFIX}${padded}${IDLE_SEQUENCE_EXT}`;
 }
 
 /**
- * Dynamic Eye Blinking Engine (random intervals between 3s and 6s)
+ * Stops the idle PNG sequence and optionally returns to the static fallback.
  */
-function startBlinkEngine() {
-    const minDelay = 3000;
-    const maxDelay = 6000;
-    
-    function scheduleNextBlink() {
-        const nextDelay = Math.random() * (maxDelay - minDelay) + minDelay;
-        setTimeout(() => {
-            triggerBlink();
-            scheduleNextBlink();
-        }, nextDelay);
+function stopIdleSequence(showFallback = false) {
+    idleSequenceActive = false;
+    if (idleSequenceTimerId) {
+        clearTimeout(idleSequenceTimerId);
+        idleSequenceTimerId = null;
     }
-    scheduleNextBlink();
+
+    if (showFallback && avatarImg) {
+        avatarImg.onerror = null;
+        avatarImg.src = systemSettings.avatar_static_image || AVATAR_NORMAL_IMAGE;
+    }
+}
+
+function showIdleSequenceFrame() {
+    if (!avatarImg || !idleSequenceActive || !idleSequenceAvailable) return;
+
+    avatarImg.onerror = () => {
+        idleSequenceAvailable = false;
+        stopIdleSequence(true);
+    };
+    avatarImg.src = getIdleSequenceFramePath(idleSequenceFrame);
 }
 
 /**
- * Posture Shifting & Micro-movements (slight rotation & shift to look lifelike)
+ * Idle Sequence Engine: loops idle_0001.png through idle_0342.png.
+ */
+function startIdleSequence() {
+    if (!avatarImg || systemSettings.avatar_engine !== "image") return;
+
+    if (!idleSequenceAvailable) {
+        avatarImg.onerror = null;
+        avatarImg.src = systemSettings.avatar_static_image || AVATAR_NORMAL_IMAGE;
+        return;
+    }
+
+    stopIdleSequence(false);
+    idleSequenceActive = true;
+    showIdleSequenceFrame();
+
+    function scheduleNextFrame() {
+        if (!idleSequenceActive || !idleSequenceAvailable) return;
+
+        idleSequenceTimerId = setTimeout(() => {
+            idleSequenceFrame = idleSequenceFrame >= IDLE_SEQUENCE_FRAME_COUNT ? 1 : idleSequenceFrame + 1;
+            showIdleSequenceFrame();
+            scheduleNextFrame();
+        }, 1000 / IDLE_SEQUENCE_FPS);
+    }
+
+    scheduleNextFrame();
+}
+
+/**
+ * Posture Shifting disabled for alpha PNG avatar stability.
  */
 function startPostureShiftEngine() {
-    setInterval(() => {
-        if (isSpeaking) return; // Keep posture focused during speech
-        
-        // Micro scale, rotation (within 0.6 deg) and translation (within 1.5px)
-        const angle = (Math.random() * 0.8 - 0.4).toFixed(2);
-        const shiftX = (Math.random() * 2 - 1).toFixed(1);
-        const shiftY = (Math.random() * 1.5 - 0.75).toFixed(1);
-        
-        avatarImg.style.transform = `rotate(${angle}deg) translate(${shiftX}px, ${shiftY}px)`;
-    }, 3000);
+    return;
 }
 
 /**
@@ -136,6 +176,8 @@ function startLipSyncAnimation() {
     }
     
     // mouthOverlay.classList.add("speaking"); // Disabled for B-level upgrade
+    stopIdleSequence(true);
+    setAvatarVideoMode("talking");
     speechWaves.classList.add("active");
     updateAvatarState("SPEAKING");
     
@@ -150,9 +192,83 @@ function stopLipSyncAnimation() {
     
     // mouthOverlay.classList.remove("speaking"); // Disabled for B-level upgrade
     // mouthOverlay.style.height = "0px"; // Disabled for B-level upgrade
+    setAvatarVideoMode("idle");
+    startIdleSequence();
     speechWaves.classList.remove("active");
     updateAvatarState("IDLE");
 }
+
+function getAvatarVideoPath(mode) {
+    if (mode === "talking") {
+        return systemSettings.avatar_talking_video || "assets/liveportrait/nova/video/nova_talking_loop.mp4";
+    }
+    return systemSettings.avatar_idle_video || "assets/liveportrait/nova/video/nova_idle_loop.mp4";
+}
+
+function enableAvatarFallback() {
+    avatarVideoAvailable = false;
+    if (avatarWrapper) {
+        avatarWrapper.classList.add("video-fallback");
+    }
+    if (avatarImg) {
+        const imagePath = systemSettings.gender === "Female" ?
+            (systemSettings.avatar_static_image || systemSettings.avatar_images.Female) :
+            systemSettings.avatar_images.Male;
+        avatarImg.src = imagePath;
+    }
+}
+
+function setAvatarVideoMode(mode) {
+    if (!avatarVideo || systemSettings.avatar_engine === "image") {
+        return;
+    }
+
+    const nextMode = mode === "talking" ? "talking" : "idle";
+    const nextSrc = getAvatarVideoPath(nextMode);
+    if (!nextSrc) {
+        enableAvatarFallback();
+        return;
+    }
+
+    const currentSrc = avatarVideo.getAttribute("src") || "";
+    if (avatarVideoMode !== nextMode || currentSrc !== nextSrc) {
+        avatarVideoMode = nextMode;
+        avatarVideo.loop = nextMode === "idle";
+        avatarVideo.setAttribute("src", nextSrc);
+        avatarVideo.load();
+    }
+
+    if (nextMode === "talking") {
+        avatarVideo.currentTime = 0;
+    }
+
+    avatarVideo.play().catch(() => {
+        enableAvatarFallback();
+    });
+}
+
+if (avatarVideo) {
+    avatarVideo.addEventListener("error", enableAvatarFallback);
+    avatarVideo.addEventListener("ended", () => {
+        if (avatarVideoMode === "talking") {
+            isSpeaking = false;
+            setAvatarVideoMode("idle");
+        }
+    });
+    avatarVideo.addEventListener("canplay", () => {
+        avatarVideoAvailable = true;
+        if (avatarWrapper && systemSettings.avatar_engine !== "image") {
+            avatarWrapper.classList.remove("video-fallback");
+        }
+    });
+}
+
+function playAvatarTalkingOnce() {
+    isSpeaking = true;
+    setAvatarVideoMode("talking");
+}
+
+window.playAvatarTalkingOnce = playAvatarTalkingOnce;
 
 /**
  * Updates HUD state text and colors
@@ -231,10 +347,21 @@ function applySettingsUI() {
     avatarNameEl.textContent = systemSettings.project_name;
     avatarRoleEl.textContent = systemSettings.persona;
     
-    // Set avatar photo
-    const imagePath = systemSettings.gender === "Female" ? 
-        systemSettings.avatar_images.Female : systemSettings.avatar_images.Male;
-    avatarImg.src = imagePath;
+    if (!idleSequenceActive && avatarImg) {
+        const imagePath = systemSettings.gender === "Female" ? 
+            (systemSettings.avatar_static_image || systemSettings.avatar_images.Female) : systemSettings.avatar_images.Male;
+        avatarImg.src = imagePath;
+    }
+
+    if (systemSettings.gender === "Female" && systemSettings.avatar_engine !== "image") {
+        avatarVideoAvailable = Boolean(avatarVideo);
+        if (avatarWrapper) {
+            avatarWrapper.classList.remove("video-fallback");
+        }
+        setAvatarVideoMode(isSpeaking ? "talking" : "idle");
+    } else if (!idleSequenceActive) {
+        enableAvatarFallback();
+    }
     
     // Adjust colors slightly for gender skin tones for the eyelids blink overlays
     if (systemSettings.gender === "Female") {
@@ -425,9 +552,10 @@ function simulateLocalResponse(text) {
 document.addEventListener("DOMContentLoaded", () => {
     // Initial UI apply
     applySettingsUI();
+    setAvatarVideoMode("idle");
     
     // Start animation engines
-    startBlinkEngine();
+    startIdleSequence();
     startPostureShiftEngine();
     
     // Connect to backend
@@ -459,7 +587,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // Manual sync button
     settingsSyncBtn.addEventListener("click", () => {
         fetchBackendSettings();
-        triggerBlink(); // micro eye blink to show interaction
     });
 
     // Preset buttons clicks
