@@ -377,9 +377,6 @@
     <!-- Helper script to trigger input focus -->
     <script>
         function focusChat() {
-            if (window.playAvatarTalkingOnce) {
-                window.playAvatarTalkingOnce();
-            }
             const chatInput = document.getElementById("chat-input");
             if (chatInput) {
                 chatInput.focus();
@@ -387,7 +384,7 @@
         }
     </script>
     <!-- Main Script Sheet -->
-    <script src="script.js"></script>
+    <script src="script.js?v=debug-stop-voice-001"></script>
     <script>
         (() => {
             const cutoutSrc = "assets/new_nova.png";

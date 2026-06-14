@@ -726,7 +726,7 @@ body {
     transform: scaleX(1) scaleY(1);
     transform-origin: center bottom;
     animation: assistant-breathe 4s ease-in-out infinite;
-    transition: var(--transition-premium);
+    transition: opacity 200ms ease, transform 200ms ease, filter 220ms ease;
     filter: brightness(0.86) contrast(1.02) saturate(0.85)
             /* Sharp amber rim light on the right edge */
             drop-shadow(3px -1px 3px rgba(255, 170, 10, 0.55))
@@ -736,6 +736,50 @@ body {
             drop-shadow(12px -4px 20px rgba(255, 170, 10, 0.22))
             /* Soft ambient blue glow on the left */
             drop-shadow(-12px 4px 20px rgba(56, 189, 248, 0.15));
+}
+
+.avatar-img.avatar-image-switching {
+    opacity: 0 !important;
+    transform: translateY(1px) scale(0.998) !important;
+}
+
+.avatar-wrapper.nova-state-idle .avatar-img,
+.avatar-wrapper.nova-state-idle .avatar-video {
+    opacity: 1;
+    animation: assistant-breathe 4s ease-in-out infinite;
+    transform: scaleX(1) scaleY(1);
+}
+
+.avatar-wrapper.nova-state-intro .avatar-img,
+.avatar-wrapper.nova-state-intro .avatar-video {
+    opacity: 1;
+    animation: none;
+    transform: translateY(-0.5px) scale(1.001);
+}
+
+.avatar-wrapper.nova-state-listening .avatar-img,
+.avatar-wrapper.nova-state-listening .avatar-video {
+    opacity: 1;
+    animation: none;
+    transform: translateY(-1px) scale(1.002);
+}
+
+.avatar-wrapper.nova-state-thinking .avatar-img,
+.avatar-wrapper.nova-state-thinking .avatar-video {
+    opacity: 0.96;
+    animation: none;
+    transform: translateY(-1px) rotate(-0.2deg) scale(1.001);
+    filter: brightness(0.78) contrast(1.08) saturate(0.82)
+            drop-shadow(3px -1px 3px rgba(255, 170, 10, 0.45))
+            drop-shadow(-3px 1px 3px rgba(56, 189, 248, 0.42))
+            drop-shadow(12px -4px 20px rgba(255, 170, 10, 0.18))
+            drop-shadow(-12px 4px 20px rgba(56, 189, 248, 0.14));
+}
+
+.avatar-wrapper.nova-state-talking .avatar-img,
+.avatar-wrapper.nova-state-talking .avatar-video {
+    opacity: 1;
+    animation: nova-talking-float 1.45s ease-in-out infinite;
 }
 
 .avatar-video {
@@ -865,6 +909,38 @@ body {
     background: #10b981;
     box-shadow: 0 0 8px #10b981;
     animation: pulse-dot 1s infinite;
+}
+
+.state-badge.intro {
+    border-color: #a78bfa;
+    box-shadow: 0 0 10px rgba(167, 139, 250, 0.15);
+}
+
+.state-badge.intro .pulse-dot {
+    background: #a78bfa;
+    box-shadow: 0 0 8px #a78bfa;
+    animation: pulse-dot 1.1s infinite;
+}
+
+.state-badge.thinking {
+    border-color: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.14);
+}
+
+.state-badge.thinking .pulse-dot {
+    background: #38bdf8;
+    box-shadow: 0 0 8px #38bdf8;
+    animation: pulse-dot 1.25s infinite;
+}
+
+.state-badge.talking {
+    border-color: #f59e0b;
+}
+
+.state-badge.talking .pulse-dot {
+    background: #f59e0b;
+    box-shadow: 0 0 8px #f59e0b;
+    animation: pulse-dot 0.95s infinite;
 }
 
 .state-badge.speaking {
@@ -1372,6 +1448,11 @@ body {
     0% { transform: scaleX(1) scaleY(1); }
     50% { transform: scaleX(1) scaleY(1.006); }
     100% { transform: scaleX(1) scaleY(1); }
+}
+
+@keyframes nova-talking-float {
+    0%, 100% { transform: translateY(0) scaleX(1) scaleY(1); }
+    50% { transform: translateY(-1.2px) scaleX(1) scaleY(1.003); }
 }
 
 @keyframes assistant-float {
