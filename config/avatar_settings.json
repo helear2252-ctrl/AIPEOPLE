@@ -1,0 +1,20 @@
+{
+  "brand_name": "NOVA AI",
+  "hero_title": "NOVA AI",
+  "hero_subtitle": "Your Intelligent Digital Human Assistant",
+  "hero_description": "Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation.",
+  "primary_color": "#0f172a",
+  "secondary_color": "#1e293b",
+  "accent_color": "#38bdf8",
+  "avatar_name": "NOVA",
+  "avatar_role": "Executive Digital Secretary",
+  "default_state": "Idle_Working",
+  "demo_mode": true,
+  "video_paths": {
+    "Idle_Working": "assets/avatar/nova_typing_loop.mp4",
+    "Turn_To_User": "assets/avatar/nova_turn_to_user.mp4",
+    "Talking": "assets/avatar/nova_talk_loop.mp4",
+    "Return_To_Desk": "assets/avatar/nova_turn_back.mp4",
+    "Fallback": "assets/avatar/nova_working_placeholder.png"
+  }
+}
