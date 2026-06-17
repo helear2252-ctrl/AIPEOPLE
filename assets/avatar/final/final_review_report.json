@@ -1,0 +1,46 @@
+{
+  "output": "assets\\avatar\\final\\final_review.mp4",
+  "fps": 24.0,
+  "size": [
+    968,
+    720
+  ],
+  "timeline": [
+    {
+      "clip": "assets/avatar/final/nova_work_loop.mp4",
+      "start": 0.0,
+      "end": 4.0,
+      "frames": 96,
+      "duration": 4.0
+    },
+    {
+      "clip": "assets/avatar/final/nova_turn_to_user.mp4",
+      "start": 4.0,
+      "end": 10.208333333333332,
+      "frames": 149,
+      "duration": 6.208333333333333
+    },
+    {
+      "clip": "assets/avatar/final/nova_talk_loop_v2.mp4",
+      "start": 10.208333333333332,
+      "end": 14.625,
+      "frames": 106,
+      "duration": 4.416666666666667
+    },
+    {
+      "clip": "assets/avatar/final/nova_return_to_work.mp4",
+      "start": 14.625,
+      "end": 24.416666666666664,
+      "frames": 235,
+      "duration": 9.791666666666666
+    },
+    {
+      "clip": "assets/avatar/final/nova_work_loop.mp4",
+      "start": 24.416666666666664,
+      "end": 28.416666666666664,
+      "frames": 96,
+      "duration": 4.0
+    }
+  ],
+  "total_duration": 28.416666666666664
+}

@@ -1,0 +1,46 @@
+{
+  "nova_work_loop.mp4": {
+    "source": "assets/avatar/raw/analysis/video_618783340745195760-Tr2nS5dR.mp4",
+    "start": 1.0,
+    "end": 5.0,
+    "fps": 24.0,
+    "frames": 96,
+    "duration": 4.0,
+    "output": "assets\\avatar\\final\\nova_work_loop.mp4",
+    "first_frame": "assets\\avatar\\final\\nova_work_loop_first.jpg",
+    "last_frame": "assets\\avatar\\final\\nova_work_loop_last.jpg"
+  },
+  "nova_turn_to_user.mp4": {
+    "source": "assets/avatar/raw/analysis/video_618783342959264102-YqpNROfz.mp4",
+    "start": 0,
+    "end": 6.2,
+    "fps": 24.0,
+    "frames": 149,
+    "duration": 6.208333333333333,
+    "output": "assets\\avatar\\final\\nova_turn_to_user.mp4",
+    "first_frame": "assets\\avatar\\final\\nova_turn_to_user_first.jpg",
+    "last_frame": "assets\\avatar\\final\\nova_turn_to_user_last.jpg"
+  },
+  "nova_talk_loop_v2.mp4": {
+    "source": "assets/avatar/raw/analysis/2V3F5TLfLRDE9CciMC0B0YZzA0lFERKogFUtCK0tGSw(1).mp4",
+    "start": 0.5,
+    "end": 4.9,
+    "fps": 24.0,
+    "frames": 106,
+    "duration": 4.416666666666667,
+    "output": "assets\\avatar\\final\\nova_talk_loop_v2.mp4",
+    "first_frame": "assets\\avatar\\final\\nova_talk_loop_v2_first.jpg",
+    "last_frame": "assets\\avatar\\final\\nova_talk_loop_v2_last.jpg"
+  },
+  "nova_return_to_work.mp4": {
+    "source": "assets/avatar/raw/analysis/video_618783344351773052-UisBkirz.mp4",
+    "start": 0,
+    "end": 9.8,
+    "fps": 24.0,
+    "frames": 235,
+    "duration": 9.791666666666666,
+    "output": "assets\\avatar\\final\\nova_return_to_work.mp4",
+    "first_frame": "assets\\avatar\\final\\nova_return_to_work_first.jpg",
+    "last_frame": "assets\\avatar\\final\\nova_return_to_work_last.jpg"
+  }
+}

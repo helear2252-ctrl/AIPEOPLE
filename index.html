@@ -4,30 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NOVA AI - Your Intelligent Digital Human Assistant</title>
-  <!-- SEO Meta Tags -->
   <meta name="description" content="Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation.">
   <meta name="keywords" content="NOVA AI, Digital Human, LLM, Gemini, OpenAI, LipSync, TTS, STT">
   <meta name="author" content="NOVA AI Labs">
-  
-  <!-- Premium Typography: Outfit & Inter from Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-  <!-- FontAwesome for Premium Icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  
-  <!-- Custom Styling -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
-
-  <!-- Background Office Overlay -->
   <div class="app-background"></div>
   <div class="glass-overlay"></div>
 
   <div class="app-container">
-    <!-- Main Header -->
     <header class="app-header">
       <div class="logo-area">
         <i class="fa-solid fa-bolt logo-icon"></i>
@@ -35,80 +25,18 @@
       </div>
       <div class="system-status-header">
         <span class="pulse-dot green"></span>
-        <span class="status-text-header">Demo Mode Active</span>
+        <span class="status-text-header">Demo Mode</span>
       </div>
     </header>
 
-    <!-- App Layout -->
     <main class="app-layout">
-      
-      <!-- Left Column: Branding / Info Panel -->
-      <section class="info-panel">
-        <div class="hero-content">
-          <h1 id="hero-title">NOVA AI</h1>
-          <h2 id="hero-subtitle">Your Intelligent Digital Human Assistant</h2>
-          <p id="hero-description" class="hero-desc">
-            Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation.
-          </p>
-        </div>
-
-        <!-- System Architecture Cards -->
-        <div class="feature-grid">
-          <div class="feature-card">
-            <div class="card-icon"><i class="fa-solid fa-brain"></i></div>
-            <div class="card-info">
-              <h3>LLM Processing</h3>
-              <p>Dual integration with OpenAI GPT-4 & Google Gemini models.</p>
-            </div>
-          </div>
-          <div class="feature-card">
-            <div class="card-icon"><i class="fa-solid fa-microphone"></i></div>
-            <div class="card-info">
-              <h3>Voice Sync</h3>
-              <p>Advanced TTS audio generation coupled with real-time STT streaming.</p>
-            </div>
-          </div>
-          <div class="feature-card">
-            <div class="card-icon"><i class="fa-solid fa-video"></i></div>
-            <div class="card-info">
-              <h3>LipSync Engine</h3>
-              <p>Synchronous mouth animation driver using Wav2Lip neural layers.</p>
-            </div>
-          </div>
-          <div class="feature-card">
-            <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
-            <div class="card-info">
-              <h3>Local Fallbacks</h3>
-              <p>Dual backup system for seamless presentation without connection failures.</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Quick Status Metrics -->
-        <div class="metrics-panel">
-          <div class="metric-item">
-            <span class="metric-label">API Latency</span>
-            <span class="metric-value">142ms</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Lipsync FPS</span>
-            <span class="metric-value">30 FPS</span>
-          </div>
-          <div class="metric-item">
-            <span class="metric-label">Status</span>
-            <span class="metric-value status-ok">ONLINE</span>
-          </div>
-        </div>
-      </section>
-
-      <!-- Right Column: Digital Human Workspace -->
       <section class="workspace-panel">
         <div class="workspace-header">
           <div class="workspace-title-group">
-            <h3>Digital Human Workspace</h3>
-            <p>Direct Interactive Session</p>
+            <h3 id="hero-title">NOVA AI</h3>
+            <p id="hero-subtitle">Your Intelligent Digital Human Assistant</p>
+            <span id="hero-description" class="hero-desc">Digital human demo experience.</span>
           </div>
-          <!-- Dynamic Status Badge -->
           <div class="status-badge-container">
             <span class="status-badge" id="avatar-status-badge">
               <i class="fa-solid fa-computer status-badge-icon"></i>
@@ -117,22 +45,19 @@
           </div>
         </div>
 
-        <!-- The Interactive Digital Human Screen -->
         <div class="avatar-window-container" id="avatar-window-container">
-          <!-- Office BG element inside container for alignment -->
+          <video class="avatar-video-blur-bg" src="assets/avatar/final_web/nova_work_loop.mp4" playsinline muted autoplay loop preload="auto" aria-hidden="true"></video>
           <div class="avatar-screen-bg"></div>
 
-          <!-- Video Players (Preloaded and swapped dynamically) -->
           <div class="video-wrapper" id="video-wrapper">
-            <video id="avatar-video" playsinline muted style="display: none;"></video>
+            <video id="avatar-video-a" class="avatar-video-layer is-active" playsinline muted preload="auto"></video>
+            <video id="avatar-video-b" class="avatar-video-layer is-standby" playsinline muted preload="auto"></video>
           </div>
 
-          <!-- First Level Fallback: Static Image -->
           <div class="image-fallback-container" id="image-fallback-container" style="display: none;">
             <img id="avatar-fallback-img" src="assets/avatar/nova_working_placeholder.png" alt="NOVA Placeholder Avatar">
           </div>
 
-          <!-- Second Level Fallback: CSS Animated Avatar Workspace (Ultimate Fallback) -->
           <div class="css-fallback-container" id="css-fallback-container" style="display: none;">
             <div class="css-avatar-circle">
               <div class="css-avatar-pulse ring-1"></div>
@@ -147,33 +72,30 @@
               <p>Rendering CSS Fallback Engine</p>
             </div>
           </div>
-          
-          <!-- Subtitles Overlay -->
+
           <div class="subtitles-overlay" id="subtitles-overlay" style="display: none;">
             <span class="subtitle-text" id="subtitle-text"></span>
           </div>
         </div>
 
-        <!-- Chat Output Logs -->
         <div class="chat-history-container" id="chat-history">
           <div class="message assistant-message">
             <div class="message-sender">NOVA</div>
-            <div class="message-text">哈囉！我是您的智慧數位助理 NOVA。請在下方輸入任何訊息，我會為您進行展示。</div>
+            <div class="message-text">Hello, I am NOVA. Type a message to start the demo.</div>
           </div>
         </div>
 
-        <!-- Chat Inputs and Actions -->
         <div class="chat-input-panel">
           <div class="input-row">
-            <input type="text" id="chat-input" placeholder="對 NOVA 說點什麼..." autocomplete="off">
-            <button id="btn-send" title="傳送訊息">
+            <input type="text" id="chat-input" placeholder="Type a message to NOVA..." autocomplete="off">
+            <button id="btn-send" title="Send">
               <i class="fa-solid fa-paper-plane"></i>
-              <span>傳送</span>
+              <span>Send</span>
             </button>
           </div>
           <div class="action-row">
             <button id="btn-clear" class="btn-secondary">
-              <i class="fa-solid fa-trash-can"></i> 清除對話
+              <i class="fa-solid fa-trash-can"></i> Clear
             </button>
             <span class="mode-info">
               <i class="fa-solid fa-circle-info"></i> DEMO MODE ACTIVE
@@ -181,16 +103,9 @@
           </div>
         </div>
       </section>
-
     </main>
-    
-    <!-- Footer Credits -->
-    <footer class="app-footer">
-      <p>&copy; 2026 NOVA AI Inc. All rights reserved. Version 1.0.0 (Skeleton Build)</p>
-    </footer>
   </div>
 
-  <!-- Main JavaScript File -->
   <script src="script.js"></script>
 </body>
 </html>

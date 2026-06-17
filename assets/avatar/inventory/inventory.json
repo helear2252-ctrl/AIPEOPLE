@@ -1,0 +1,86 @@
+[
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_attention_intro.mp4",
+    "duration": 10.041666666666666,
+    "frames": 241,
+    "resolution": "968x720",
+    "avg_r": 26.8,
+    "avg_g": 17.5,
+    "avg_b": 15.0,
+    "brightness": 20.0,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  },
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_return_to_work.mp4",
+    "duration": 5.041666666666667,
+    "frames": 121,
+    "resolution": "968x720",
+    "avg_r": 24.4,
+    "avg_g": 16.0,
+    "avg_b": 14.7,
+    "brightness": 18.3,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  },
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_talk_intro.mp4",
+    "duration": 10.041666666666666,
+    "frames": 241,
+    "resolution": "968x720",
+    "avg_r": 26.8,
+    "avg_g": 17.5,
+    "avg_b": 15.0,
+    "brightness": 20.0,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  },
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_talk_loop.mp4",
+    "duration": 10.041666666666666,
+    "frames": 241,
+    "resolution": "968x720",
+    "avg_r": 24.1,
+    "avg_g": 16.1,
+    "avg_b": 14.8,
+    "brightness": 18.3,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  },
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_talk_loop_v2.mp4",
+    "duration": 8.875,
+    "frames": 213,
+    "resolution": "968x720",
+    "avg_r": 23.5,
+    "avg_g": 15.9,
+    "avg_b": 14.0,
+    "brightness": 17.9,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  },
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_turn_to_user.mp4",
+    "duration": 5.041666666666667,
+    "frames": 121,
+    "resolution": "968x720",
+    "avg_r": 26.8,
+    "avg_g": 17.4,
+    "avg_b": 16.1,
+    "brightness": 20.0,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  },
+  {
+    "dir": "assets/avatar",
+    "filename": "nova_work_loop.mp4",
+    "duration": 5.041666666666667,
+    "frames": 121,
+    "resolution": "968x720",
+    "avg_r": 23.6,
+    "avg_g": 16.2,
+    "avg_b": 15.1,
+    "brightness": 18.3,
+    "style": "\u591c\u666f\u8fa6\u516c\u5ba4 (\u7b46\u96fb / \u91d1\u878d\u5206\u6790\u5e2b / \u53f0\u5317101\u98a8\u683c)"
+  }
+]

@@ -1,0 +1,94 @@
+{
+  "videos": [
+    {
+      "name": "nova_work_loop.mp4",
+      "fps": 24.0,
+      "frames": 121,
+      "duration": 5.042,
+      "width": 968,
+      "height": 720
+    },
+    {
+      "name": "nova_attention_intro.mp4",
+      "fps": 24.0,
+      "frames": 241,
+      "duration": 10.042,
+      "width": 968,
+      "height": 720
+    },
+    {
+      "name": "nova_talk_loop.mp4",
+      "fps": 24.0,
+      "frames": 241,
+      "duration": 10.042,
+      "width": 968,
+      "height": 720
+    },
+    {
+      "name": "nova_return_to_work.mp4",
+      "fps": 24.0,
+      "frames": 121,
+      "duration": 5.042,
+      "width": 968,
+      "height": 720
+    }
+  ],
+  "transitions": [
+    {
+      "transition": "Work\u2192Attention",
+      "from": "work_loop",
+      "to": "attention_intro",
+      "score": 95.4,
+      "overall_sim": 95.4,
+      "face_diff": 14.14,
+      "body_diff": 11.79,
+      "hand_diff": 10.08,
+      "scene_diff": 11.76,
+      "bright_src": 18.42,
+      "bright_dst": 20.51,
+      "bright_diff": 2.09
+    },
+    {
+      "transition": "Attention\u2192Talk",
+      "from": "attention_intro",
+      "to": "talk_loop",
+      "score": 95.7,
+      "overall_sim": 95.6,
+      "face_diff": 13.25,
+      "body_diff": 10.13,
+      "hand_diff": 8.83,
+      "scene_diff": 12.39,
+      "bright_src": 19.26,
+      "bright_dst": 20.72,
+      "bright_diff": 1.46
+    },
+    {
+      "transition": "Talk\u2192Return",
+      "from": "talk_loop",
+      "to": "return_to_work",
+      "score": 95.4,
+      "overall_sim": 95.4,
+      "face_diff": 13.76,
+      "body_diff": 11.68,
+      "hand_diff": 10.65,
+      "scene_diff": 11.98,
+      "bright_src": 18.64,
+      "bright_dst": 20.82,
+      "bright_diff": 2.18
+    },
+    {
+      "transition": "Return\u2192Work",
+      "from": "return_to_work",
+      "to": "work_loop",
+      "score": 93.9,
+      "overall_sim": 94.1,
+      "face_diff": 18.46,
+      "body_diff": 15.92,
+      "hand_diff": 16.39,
+      "scene_diff": 13.73,
+      "bright_src": 17.89,
+      "bright_dst": 20.84,
+      "bright_diff": 2.95
+    }
+  ]
+}
