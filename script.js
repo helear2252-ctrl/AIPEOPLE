@@ -4,9 +4,12 @@
  */
 
 const AVATAR_STATES = {
+  INTRO: "Intro",
   WORK_LOOP: "WorkLoop",
+  LISTENING: "Listening",
+  THINKING: "Thinking",
   TURN_TO_USER: "TurnToUser",
-  TALK_LOOP: "TalkLoop",
+  TALKING: "Talking",
   RETURN_TO_WORK: "ReturnToWork"
 };
 
@@ -182,7 +185,8 @@ class AvatarController {
       avatar_name: "NOVA",
       demo_mode: true,
       video_paths: {
-        WorkLoop: "assets/avatar/approved/nkW3UfMc-6Gy-0As9S-bkP4vgVdJ3RCGSzaPdKSGUGE.mp4",
+        Intro: "assets/avatar/final/nova_intro_look_to_typing.mp4",
+        WorkLoop: "assets/avatar/final/nova_typing_work_loop.mp4",
         TurnToUser: "assets/avatar/approved/video_618783342959264102-YqpNROfz.mp4",
         TalkLoop: "assets/avatar/approved/2.mp4",
         ReturnToWork: "assets/avatar/approved/video_618783344351773052-UisBkirz.mp4",
@@ -234,7 +238,7 @@ class AvatarController {
     this.initDebugPanel();
 
     if (this.videoAvailable) {
-      await this.enterWorkLoop(false);
+      await this.playIntroThenIdle();
     } else {
       this.showFallbackAvatar();
       this.updateStatus(AVATAR_STATES.WORK_LOOP);
@@ -271,6 +275,7 @@ class AvatarController {
 
   async verifyRequiredVideos() {
     const checks = [
+      this.config.video_paths.Intro,
       this.config.video_paths.WorkLoop,
       this.config.video_paths.TurnToUser,
       this.config.video_paths.TalkLoop,
@@ -310,6 +315,8 @@ class AvatarController {
 
   bindEvents() {
     this.btnSend.addEventListener("click", () => this.handleSendMessageFlow());
+    this.chatInput.addEventListener("focus", () => this.enterListeningState());
+    this.chatInput.addEventListener("input", () => this.enterListeningState());
     this.chatInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
@@ -327,6 +334,7 @@ class AvatarController {
     this.chatInput.value = "";
     this.setInputsDisabled(true);
     this.appendMessage("user", message);
+    this.updateStatus(AVATAR_STATES.THINKING);
 
     try {
       await this.runDemoConversation(message);
@@ -342,7 +350,7 @@ class AvatarController {
 
   async runDemoConversation(userMessage) {
     if (!this.videoAvailable) {
-      this.updateStatus(AVATAR_STATES.TALK_LOOP);
+      this.updateStatus(AVATAR_STATES.TALKING);
       this.showDemoReply(userMessage);
       await this.wait(3000);
       this.updateStatus(AVATAR_STATES.WORK_LOOP);
@@ -359,10 +367,16 @@ class AvatarController {
   }
 
   async waitForWorkLoopCycle() {
-    if (this.currentState !== AVATAR_STATES.WORK_LOOP) return;
+    const workStates = [AVATAR_STATES.WORK_LOOP, AVATAR_STATES.LISTENING, AVATAR_STATES.THINKING];
+    if (!workStates.includes(this.currentState)) return;
 
     this.statusText.innerText = "Finishing Work Loop";
     const active = this.crossfade.activeVideo;
+    if (Number.isFinite(active.duration) && active.duration > 12) {
+      await this.wait(350);
+      return;
+    }
+
     active.loop = false;
 
     if (active.readyState < HTMLMediaElement.HAVE_METADATA) {
@@ -371,6 +385,18 @@ class AvatarController {
     }
 
     await this.crossfade.waitForEnded(active);
+  }
+
+  async playIntroThenIdle() {
+    const src = this.config.video_paths.Intro;
+    this.logVideoTransition(this.currentState, AVATAR_STATES.INTRO, src, false);
+    this.updateDebugPanel(AVATAR_STATES.INTRO, src);
+    this.updateStatus(AVATAR_STATES.INTRO);
+
+    const video = await this.crossfade.showInitial(src, { loop: false });
+    this.updateDebugPanel(AVATAR_STATES.INTRO, video.getAttribute("src") || src);
+    await this.crossfade.waitForEnded(video);
+    await this.enterWorkLoop(true);
   }
 
   async playOneShot(state, src, fadeMs) {
@@ -386,14 +412,21 @@ class AvatarController {
   async enterTalkLoop() {
     const fromState = this.currentState;
     const src = this.config.video_paths.TalkLoop;
-    this.logVideoTransition(fromState, AVATAR_STATES.TALK_LOOP, src, true);
-    this.updateDebugPanel(AVATAR_STATES.TALK_LOOP, src);
-    this.updateStatus(AVATAR_STATES.TALK_LOOP);
+    this.logVideoTransition(fromState, AVATAR_STATES.TALKING, src, true);
+    this.updateDebugPanel(AVATAR_STATES.TALKING, src);
+    this.updateStatus(AVATAR_STATES.TALKING);
     const video = await this.crossfade.crossfadeTo(src, {
       loop: true,
       duration: this.config.crossfade_ms.TurnToUserToTalkLoop
     });
-    this.updateDebugPanel(AVATAR_STATES.TALK_LOOP, video.getAttribute("src") || src);
+    this.updateDebugPanel(AVATAR_STATES.TALKING, video.getAttribute("src") || src);
+  }
+
+  enterListeningState() {
+    if (this.isBusy || !this.videoAvailable) return;
+    if (this.currentState === AVATAR_STATES.INTRO || this.currentState === AVATAR_STATES.WORK_LOOP || this.currentState === AVATAR_STATES.LISTENING) {
+      this.updateStatus(AVATAR_STATES.LISTENING);
+    }
   }
 
   async enterWorkLoop(withFade) {
@@ -423,9 +456,12 @@ class AvatarController {
     this.currentState = state;
 
     const styles = {
+      [AVATAR_STATES.INTRO]: ["Starting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.WORK_LOOP]: ["Idle Working", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
+      [AVATAR_STATES.LISTENING]: ["Listening", "rgba(125, 211, 252, 0.1)", "#7dd3fc", "0 0 10px rgba(125, 211, 252, 0.25)"],
+      [AVATAR_STATES.THINKING]: ["Thinking", "rgba(129, 140, 248, 0.1)", "#818cf8", "0 0 10px rgba(129, 140, 248, 0.25)"],
       [AVATAR_STATES.TURN_TO_USER]: ["Turn To User", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
-      [AVATAR_STATES.TALK_LOOP]: ["Speaking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
+      [AVATAR_STATES.TALKING]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
       [AVATAR_STATES.RETURN_TO_WORK]: ["Returning to Work", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
     };
 
@@ -434,6 +470,9 @@ class AvatarController {
     this.statusBadge.style.background = background;
     this.statusBadge.style.color = color;
     this.statusBadge.style.boxShadow = shadow;
+    if (this.debugStateText) {
+      this.debugStateText.innerText = state;
+    }
   }
 
   initDebugPanel() {

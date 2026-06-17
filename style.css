@@ -905,6 +905,10 @@ body {
   pointer-events: none;
 }
 
+.avatar-video-preload {
+  display: none;
+}
+
 .video-wrapper {
   display: block;
   z-index: 3;

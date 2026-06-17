@@ -46,12 +46,13 @@
         </div>
 
         <div class="avatar-window-container" id="avatar-window-container">
-          <video class="avatar-video-blur-bg" src="assets/avatar/approved/nkW3UfMc-6Gy-0As9S-bkP4vgVdJ3RCGSzaPdKSGUGE.mp4" playsinline muted autoplay loop preload="auto" aria-hidden="true"></video>
+          <video id="novaIntroVideo" class="avatar-video-preload" src="assets/avatar/final/nova_intro_look_to_typing.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
+          <video id="novaIdleVideo" class="avatar-video-blur-bg" src="assets/avatar/final/nova_typing_work_loop.mp4" muted loop playsinline preload="auto" aria-hidden="true"></video>
           <div class="avatar-screen-bg"></div>
 
           <div class="video-wrapper" id="video-wrapper">
-            <video id="avatar-video-a" class="avatar-video-layer is-active" playsinline muted preload="auto"></video>
-            <video id="avatar-video-b" class="avatar-video-layer is-standby" playsinline muted preload="auto"></video>
+            <video id="avatar-video-a" class="avatar-video-layer is-active" autoplay muted loop playsinline preload="auto"></video>
+            <video id="avatar-video-b" class="avatar-video-layer is-standby" autoplay muted loop playsinline preload="auto"></video>
           </div>
 
           <div class="image-fallback-container" id="image-fallback-container" style="display: none;">
