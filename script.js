@@ -5,7 +5,7 @@
 
 const AVATAR_STATES = {
   WORK_LOOP: "WorkLoop",
-  ATTENTION_INTRO: "AttentionIntro",
+  TURN_TO_USER: "TurnToUser",
   TALK_LOOP: "TalkLoop",
   RETURN_TO_WORK: "ReturnToWork"
 };
@@ -182,15 +182,15 @@ class AvatarController {
       avatar_name: "NOVA",
       demo_mode: true,
       video_paths: {
-        WorkLoop: "assets/avatar/final_web/nova_work_loop.mp4",
-        AttentionIntro: "assets/avatar/final_web/nova_turn_to_user.mp4",
-        TalkLoop: "assets/avatar/final_web/nova_talk_loop_v2.mp4",
-        ReturnToWork: "assets/avatar/final_web/nova_return_to_work.mp4",
+        WorkLoop: "assets/avatar/approved/nkW3UfMc-6Gy-0As9S-bkP4vgVdJ3RCGSzaPdKSGUGE.mp4",
+        TurnToUser: "assets/avatar/approved/video_618783342959264102-YqpNROfz.mp4",
+        TalkLoop: "assets/avatar/approved/2.mp4",
+        ReturnToWork: "assets/avatar/approved/video_618783344351773052-UisBkirz.mp4",
         Fallback: "assets/avatar/nova_working_placeholder.png"
       },
       crossfade_ms: {
-        WorkLoopToAttentionIntro: 250,
-        AttentionIntroToTalkLoop: 220,
+        WorkLoopToTurnToUser: 250,
+        TurnToUserToTalkLoop: 220,
         TalkLoopToReturnToWork: 250,
         ReturnToWorkToWorkLoop: 250
       }
@@ -228,7 +228,7 @@ class AvatarController {
     this.applyBranding();
 
     this.videoAvailable = await this.verifyRequiredVideos();
-    this.imageFallbackExists = await this.checkImageExists(this.config.video_paths.Fallback);
+    this.imageFallbackExists = this.videoAvailable ? false : await this.checkImageExists(this.config.video_paths.Fallback);
     this.setupVisualMode();
     this.bindEvents();
     this.initDebugPanel();
@@ -272,7 +272,7 @@ class AvatarController {
   async verifyRequiredVideos() {
     const checks = [
       this.config.video_paths.WorkLoop,
-      this.config.video_paths.AttentionIntro,
+      this.config.video_paths.TurnToUser,
       this.config.video_paths.TalkLoop,
       this.config.video_paths.ReturnToWork
     ];
@@ -350,7 +350,7 @@ class AvatarController {
     }
 
     await this.waitForWorkLoopCycle();
-    await this.playOneShot(AVATAR_STATES.ATTENTION_INTRO, this.config.video_paths.AttentionIntro, this.config.crossfade_ms.WorkLoopToAttentionIntro);
+    await this.playOneShot(AVATAR_STATES.TURN_TO_USER, this.config.video_paths.TurnToUser, this.config.crossfade_ms.WorkLoopToTurnToUser);
     await this.enterTalkLoop();
     this.showDemoReply(userMessage);
     await this.wait(3000);
@@ -391,7 +391,7 @@ class AvatarController {
     this.updateStatus(AVATAR_STATES.TALK_LOOP);
     const video = await this.crossfade.crossfadeTo(src, {
       loop: true,
-      duration: this.config.crossfade_ms.AttentionIntroToTalkLoop
+      duration: this.config.crossfade_ms.TurnToUserToTalkLoop
     });
     this.updateDebugPanel(AVATAR_STATES.TALK_LOOP, video.getAttribute("src") || src);
   }
@@ -424,7 +424,7 @@ class AvatarController {
 
     const styles = {
       [AVATAR_STATES.WORK_LOOP]: ["Idle Working", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
-      [AVATAR_STATES.ATTENTION_INTRO]: ["Attention", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
+      [AVATAR_STATES.TURN_TO_USER]: ["Turn To User", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
       [AVATAR_STATES.TALK_LOOP]: ["Speaking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
       [AVATAR_STATES.RETURN_TO_WORK]: ["Returning to Work", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
     };
