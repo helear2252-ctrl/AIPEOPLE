@@ -212,6 +212,11 @@ class AvatarController {
     this.isBusy = false;
     this.replyTimer = null;
     this.currentRequestId = 0;
+    this.activeRequestId = 0;
+    this.isWaitingForResponse = false;
+    this.responseReady = false;
+    this.thinkingTimer = null;
+    this.thinkingTransition = null;
     this.replyCount = 0;
     this.nextTalkingVariant = AVATAR_STATES.TALKING_A_HD;
 
@@ -343,23 +348,39 @@ class AvatarController {
     if (!message || this.isBusy) return;
 
     const requestId = ++this.currentRequestId;
+    this.activeRequestId = requestId;
+    this.isWaitingForResponse = true;
+    this.responseReady = false;
+    this.clearThinkingTimer();
     this.isBusy = true;
     this.chatInput.value = "";
     this.setInputsDisabled(true);
     this.appendMessage("user", message);
+    const requestStartedAt = performance.now();
 
     try {
-      const replyPromise = this.prepareDemoReply(message, requestId);
+      const replyPromise = this.prepareDemoReply(message, requestId).then((replyText) => {
+        if (!this.isCurrentRequest(requestId)) return null;
+        this.responseReady = true;
+        this.isWaitingForResponse = false;
+        this.clearThinkingTimer();
+        return replyText;
+      });
 
       if (this.videoAvailable) {
         await this.playAcknowledge(requestId);
         if (!this.isCurrentRequest(requestId)) return;
 
-        const responseReady = await this.enterProcessing(requestId, replyPromise);
+        await this.enterProcessing(requestId);
         if (!this.isCurrentRequest(requestId)) return;
 
-        const replyText = responseReady ?? await this.enterThinkingIfStillWaiting(requestId, replyPromise);
+        if (this.isWaitingForResponse && !this.responseReady) {
+          this.scheduleThinkingTimer(requestId, requestStartedAt);
+        }
+        const replyText = await replyPromise;
         if (!this.isCurrentRequest(requestId)) return;
+        if (this.thinkingTransition) await this.thinkingTransition;
+        if (!replyText) return;
 
         await this.enterTalking(replyText, requestId);
         if (!this.isCurrentRequest(requestId)) return;
@@ -377,10 +398,15 @@ class AvatarController {
       console.error("[NOVA Engine] Conversation flow failed.", error);
       if (this.isCurrentRequest(requestId)) {
         this.appendMessage("assistant", "Demo response failed. Please try again.");
+        this.isWaitingForResponse = false;
+        this.responseReady = true;
+        this.clearThinkingTimer();
         await this.enterWaiting(requestId);
       }
     } finally {
       if (this.isCurrentRequest(requestId)) {
+        this.isWaitingForResponse = false;
+        this.clearThinkingTimer();
         this.setInputsDisabled(false);
         this.isBusy = false;
       }
@@ -407,7 +433,6 @@ class AvatarController {
     const loop = Boolean(options.loop);
     const duration = options.duration ?? this.config.crossfade_ms;
 
-    this.logVideoTransition(this.currentState, state, src, loop);
     this.updateDebugPanel(state, src);
     this.updateStatus(state);
 
@@ -445,16 +470,15 @@ class AvatarController {
     await this.playOneShotState(AVATAR_STATES.ACKNOWLEDGE_HD, this.config.acknowledge_ms, requestId);
   }
 
-  async enterProcessing(requestId, replyPromise) {
+  async enterProcessing(requestId) {
     if (!this.isCurrentRequest(requestId)) return null;
     await this.playState(AVATAR_STATES.PROCESSING_HD, { loop: true });
-    return await this.waitForReplyOrTimeout(replyPromise, this.config.processing_min_ms, requestId);
   }
 
-  async enterThinkingIfStillWaiting(requestId, replyPromise) {
+  async enterThinkingIfStillWaiting(requestId) {
     if (!this.isCurrentRequest(requestId)) return null;
+    if (!this.isWaitingForResponse || this.responseReady) return null;
     await this.playState(AVATAR_STATES.THINKING_HD, { loop: true });
-    return await replyPromise;
   }
 
   async enterTalking(replyText, requestId) {
@@ -562,15 +586,6 @@ class AvatarController {
     this.debugVideoText.innerText = this.getFileName(videoPath || this.getActiveVideoPath());
   }
 
-  logVideoTransition(fromState, toState, videoPath, loop) {
-    console.log("[NOVA Debug] Video transition", {
-      fromState,
-      toState,
-      videoPath,
-      loop
-    });
-  }
-
   getActiveVideoPath() {
     const activeVideo = document.querySelector(".avatar-video-layer.is-active");
     return activeVideo ? activeVideo.getAttribute("src") : "";
@@ -633,7 +648,7 @@ class AvatarController {
   }
 
   isCurrentRequest(requestId) {
-    return requestId === this.currentRequestId;
+    return requestId === this.activeRequestId;
   }
 
   wait(ms) {
@@ -648,15 +663,28 @@ class AvatarController {
     });
   }
 
-  waitForReplyOrTimeout(replyPromise, timeoutMs, requestId) {
-    const timeoutPromise = new Promise((resolve) => {
-      window.setTimeout(() => resolve(null), timeoutMs);
-    });
+  clearThinkingTimer() {
+    if (this.thinkingTimer) {
+      clearTimeout(this.thinkingTimer);
+      this.thinkingTimer = null;
+    }
+  }
 
-    return Promise.race([
-      replyPromise.then((replyText) => (this.isCurrentRequest(requestId) ? replyText : null)),
-      timeoutPromise
-    ]);
+  scheduleThinkingTimer(requestId, requestStartedAt) {
+    this.clearThinkingTimer();
+    const elapsed = performance.now() - requestStartedAt;
+    const delay = Math.max(0, this.config.thinking_threshold_ms - elapsed);
+
+    this.thinkingTimer = window.setTimeout(() => {
+      this.thinkingTimer = null;
+      if (!this.isCurrentRequest(requestId)) return;
+      if (!this.isWaitingForResponse || this.responseReady) return;
+      this.thinkingTransition = this.enterThinkingIfStillWaiting(requestId)
+        .catch((error) => console.error("[NOVA Engine] Thinking transition failed.", error))
+        .finally(() => {
+          if (this.isCurrentRequest(requestId)) this.thinkingTransition = null;
+        });
+    }, delay);
   }
 
   estimateSpeakingDuration(replyText) {
