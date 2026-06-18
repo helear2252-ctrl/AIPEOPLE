@@ -9,14 +9,16 @@ const AVATAR_STATES = {
   ACKNOWLEDGE_HD: "ACKNOWLEDGE_HD",
   PROCESSING_HD: "PROCESSING_HD",
   THINKING_HD: "THINKING_HD",
+  TALKING_ENTRY_HD: "TALKING_ENTRY_HD",
   TALKING_A_HD: "TALKING_A_HD",
   TALKING_B_HD: "TALKING_B_HD",
   FINISH_HD: "FINISH_HD",
+  RETURN_TO_IDLE_HD: "RETURN_TO_IDLE_HD",
   LISTENING: "LISTENING"
 };
 
 class CrossfadeController {
-  constructor(videoA, videoB, defaultDuration = 200) {
+  constructor(videoA, videoB, defaultDuration = 450) {
     this.layers = [videoA, videoB];
     this.activeIndex = 0;
     this.defaultDuration = defaultDuration;
@@ -70,8 +72,6 @@ class CrossfadeController {
 
     await this.wait(duration);
     previous.pause();
-    previous.removeAttribute("src");
-    previous.load();
 
     this.activeIndex = 1 - this.activeIndex;
     return next;
@@ -107,6 +107,7 @@ class CrossfadeController {
       let timeoutId;
       const cleanup = () => {
         clearTimeout(timeoutId);
+        video.removeEventListener("canplaythrough", handleReady);
         video.removeEventListener("canplay", handleReady);
         video.removeEventListener("error", handleError);
       };
@@ -120,6 +121,7 @@ class CrossfadeController {
         resolve();
       };
 
+      video.addEventListener("canplaythrough", handleReady, { once: true });
       video.addEventListener("canplay", handleReady, { once: true });
       video.addEventListener("error", handleError, { once: true });
       timeoutId = setTimeout(handleReady, 3000);
@@ -187,17 +189,19 @@ class AvatarController {
       avatar_name: "NOVA",
       demo_mode: true,
       video_paths: {
-        INTRO_HD: "assets/avatar/final_hd/INTRO_HD.mp4",
-        WAITING_HD: "assets/avatar/final_hd/WAITING_HD.mp4",
-        ACKNOWLEDGE_HD: "assets/avatar/final_hd/ACKNOWLEDGE_HD.mp4",
-        PROCESSING_HD: "assets/avatar/final_hd/PROCESSING_HD.mp4",
-        THINKING_HD: "assets/avatar/final_hd/THINKING_HD.mp4",
-        TALKING_A_HD: "assets/avatar/final_hd/TALKING_A_HD.mp4",
-        TALKING_B_HD: "assets/avatar/final_hd/TALKING_B_HD.mp4",
-        FINISH_HD: "assets/avatar/final_hd/FINISH_HD.mp4",
+        INTRO_HD: "assets/avatar/final_hd_ultra_smooth/INTRO_009_TEST.mp4",
+        WAITING_HD: "assets/avatar/final_hd_ultra_smooth/WAITING_HD.mp4",
+        ACKNOWLEDGE_HD: "assets/avatar/final_hd_ultra_smooth/ACKNOWLEDGE_HD.mp4",
+        PROCESSING_HD: "assets/avatar/final_hd_ultra_smooth/PROCESSING_HD.mp4",
+        THINKING_HD: "assets/avatar/final_hd_ultra_smooth/THINKING_HD.mp4",
+        TALKING_ENTRY_HD: "assets/avatar/final_hd_ultra_smooth/TALKING_ENTRY_HD.mp4",
+        TALKING_A_HD: "assets/avatar/final_hd_ultra_smooth/TALKING_A_HD.mp4",
+        TALKING_B_HD: "assets/avatar/final_hd_ultra_smooth/TALKING_B_HD.mp4",
+        FINISH_HD: "assets/avatar/final_hd_ultra_smooth/FINISH_HD.mp4",
+        RETURN_TO_IDLE_HD: "assets/avatar/final_hd_ultra_smooth/RETURN_TO_IDLE_HD.mp4",
         Fallback: "assets/avatar/nova_working_placeholder.png"
       },
-      crossfade_ms: 200,
+      crossfade_ms: 450,
       acknowledge_ms: 1000,
       processing_min_ms: 2200,
       thinking_threshold_ms: 3000,
@@ -252,7 +256,7 @@ class AvatarController {
     this.initDebugPanel();
 
     if (this.videoAvailable) {
-      await this.playIntroThenWaiting();
+      await this.enterWaiting();
     } else {
       this.showFallbackAvatar();
       this.updateStatus(AVATAR_STATES.WAITING_HD);
@@ -294,9 +298,11 @@ class AvatarController {
       AVATAR_STATES.ACKNOWLEDGE_HD,
       AVATAR_STATES.PROCESSING_HD,
       AVATAR_STATES.THINKING_HD,
+      AVATAR_STATES.TALKING_ENTRY_HD,
       AVATAR_STATES.TALKING_A_HD,
       AVATAR_STATES.TALKING_B_HD,
-      AVATAR_STATES.FINISH_HD
+      AVATAR_STATES.FINISH_HD,
+      AVATAR_STATES.RETURN_TO_IDLE_HD
     ];
 
     const results = await Promise.all(requiredStates.map((state) => this.checkVideoExists(this.config.video_paths[state])));
@@ -484,6 +490,8 @@ class AvatarController {
   async enterTalking(replyText, requestId) {
     if (!this.isCurrentRequest(requestId)) return;
     const talkingState = this.chooseTalkingVariant(replyText);
+    await this.playOneShotState(AVATAR_STATES.TALKING_ENTRY_HD, null, requestId);
+    if (!this.isCurrentRequest(requestId)) return;
     await this.playState(talkingState, { loop: true });
     if (!this.isCurrentRequest(requestId)) return;
 
@@ -495,6 +503,8 @@ class AvatarController {
   async playFinishThenWaiting(requestId) {
     if (!this.isCurrentRequest(requestId)) return;
     await this.playOneShotState(AVATAR_STATES.FINISH_HD, this.config.finish_ms, requestId);
+    if (!this.isCurrentRequest(requestId)) return;
+    await this.playOneShotState(AVATAR_STATES.RETURN_TO_IDLE_HD, null, requestId);
     if (!this.isCurrentRequest(requestId)) return;
     await this.enterWaiting(requestId);
   }
@@ -528,9 +538,11 @@ class AvatarController {
       [AVATAR_STATES.ACKNOWLEDGE_HD]: ["Acknowledged", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
       [AVATAR_STATES.PROCESSING_HD]: ["Processing", "rgba(129, 140, 248, 0.1)", "#818cf8", "0 0 10px rgba(129, 140, 248, 0.25)"],
       [AVATAR_STATES.THINKING_HD]: ["Thinking", "rgba(129, 140, 248, 0.14)", "#a5b4fc", "0 0 12px rgba(129, 140, 248, 0.35)"],
+      [AVATAR_STATES.TALKING_ENTRY_HD]: ["Preparing", "rgba(16, 185, 129, 0.08)", "#10b981", "0 0 10px rgba(16, 185, 129, 0.25)"],
       [AVATAR_STATES.TALKING_A_HD]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
       [AVATAR_STATES.TALKING_B_HD]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
-      [AVATAR_STATES.FINISH_HD]: ["Finishing", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
+      [AVATAR_STATES.FINISH_HD]: ["Finishing", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"],
+      [AVATAR_STATES.RETURN_TO_IDLE_HD]: ["Returning", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
     };
 
     const [label, background, color, shadow] = styles[state] || styles[AVATAR_STATES.WAITING_HD];
