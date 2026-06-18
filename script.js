@@ -4,17 +4,19 @@
  */
 
 const AVATAR_STATES = {
-  INTRO: "Intro",
-  WORK_LOOP: "WorkLoop",
-  LISTENING: "Listening",
-  THINKING: "Thinking",
-  TURN_TO_USER: "TurnToUser",
-  TALKING: "Talking",
-  RETURN_TO_WORK: "ReturnToWork"
+  INTRO_HD: "INTRO_HD",
+  WAITING_HD: "WAITING_HD",
+  ACKNOWLEDGE_HD: "ACKNOWLEDGE_HD",
+  PROCESSING_HD: "PROCESSING_HD",
+  THINKING_HD: "THINKING_HD",
+  TALKING_A_HD: "TALKING_A_HD",
+  TALKING_B_HD: "TALKING_B_HD",
+  FINISH_HD: "FINISH_HD",
+  LISTENING: "LISTENING"
 };
 
 class CrossfadeController {
-  constructor(videoA, videoB, defaultDuration = 250) {
+  constructor(videoA, videoB, defaultDuration = 200) {
     this.layers = [videoA, videoB];
     this.activeIndex = 0;
     this.defaultDuration = defaultDuration;
@@ -185,26 +187,33 @@ class AvatarController {
       avatar_name: "NOVA",
       demo_mode: true,
       video_paths: {
-        Intro: "assets/avatar/final/nova_intro_look_to_typing.mp4",
-        WorkLoop: "assets/avatar/final/nova_typing_work_loop.mp4",
-        TurnToUser: "assets/avatar/approved/video_618783342959264102-YqpNROfz.mp4",
-        TalkLoop: "assets/avatar/approved/2.mp4",
-        ReturnToWork: "assets/avatar/approved/video_618783344351773052-UisBkirz.mp4",
+        INTRO_HD: "assets/avatar/final_hd/INTRO_HD.mp4",
+        WAITING_HD: "assets/avatar/final_hd/WAITING_HD.mp4",
+        ACKNOWLEDGE_HD: "assets/avatar/final_hd/ACKNOWLEDGE_HD.mp4",
+        PROCESSING_HD: "assets/avatar/final_hd/PROCESSING_HD.mp4",
+        THINKING_HD: "assets/avatar/final_hd/THINKING_HD.mp4",
+        TALKING_A_HD: "assets/avatar/final_hd/TALKING_A_HD.mp4",
+        TALKING_B_HD: "assets/avatar/final_hd/TALKING_B_HD.mp4",
+        FINISH_HD: "assets/avatar/final_hd/FINISH_HD.mp4",
         Fallback: "assets/avatar/nova_working_placeholder.png"
       },
-      crossfade_ms: {
-        WorkLoopToTurnToUser: 250,
-        TurnToUserToTalkLoop: 220,
-        TalkLoopToReturnToWork: 250,
-        ReturnToWorkToWorkLoop: 250
-      }
+      crossfade_ms: 200,
+      acknowledge_ms: 1000,
+      processing_min_ms: 2200,
+      thinking_threshold_ms: 3000,
+      finish_ms: 2000,
+      reply_latency_ms: 1800,
+      long_reply_chars: 90
     };
 
-    this.currentState = AVATAR_STATES.WORK_LOOP;
+    this.currentState = AVATAR_STATES.WAITING_HD;
     this.videoAvailable = false;
     this.imageFallbackExists = false;
     this.isBusy = false;
     this.replyTimer = null;
+    this.currentRequestId = 0;
+    this.replyCount = 0;
+    this.nextTalkingVariant = AVATAR_STATES.TALKING_A_HD;
 
     this.videoWrapper = document.getElementById("video-wrapper");
     this.videoA = document.getElementById("avatar-video-a");
@@ -223,11 +232,11 @@ class AvatarController {
     this.debugStateText = null;
     this.debugVideoText = null;
 
-    this.crossfade = new CrossfadeController(this.videoA, this.videoB, 250);
+    this.crossfade = new CrossfadeController(this.videoA, this.videoB, this.config.crossfade_ms);
   }
 
   async init() {
-    console.log("[NOVA Engine] Initializing Avatar Controller...");
+    console.log("[NOVA Engine] Initializing HD Avatar Controller...");
     await this.loadOptionalConfig();
     this.applyBranding();
 
@@ -238,10 +247,10 @@ class AvatarController {
     this.initDebugPanel();
 
     if (this.videoAvailable) {
-      await this.playIntroThenIdle();
+      await this.playIntroThenWaiting();
     } else {
       this.showFallbackAvatar();
-      this.updateStatus(AVATAR_STATES.WORK_LOOP);
+      this.updateStatus(AVATAR_STATES.WAITING_HD);
     }
   }
 
@@ -274,17 +283,20 @@ class AvatarController {
   }
 
   async verifyRequiredVideos() {
-    const checks = [
-      this.config.video_paths.Intro,
-      this.config.video_paths.WorkLoop,
-      this.config.video_paths.TurnToUser,
-      this.config.video_paths.TalkLoop,
-      this.config.video_paths.ReturnToWork
+    const requiredStates = [
+      AVATAR_STATES.INTRO_HD,
+      AVATAR_STATES.WAITING_HD,
+      AVATAR_STATES.ACKNOWLEDGE_HD,
+      AVATAR_STATES.PROCESSING_HD,
+      AVATAR_STATES.THINKING_HD,
+      AVATAR_STATES.TALKING_A_HD,
+      AVATAR_STATES.TALKING_B_HD,
+      AVATAR_STATES.FINISH_HD
     ];
 
-    const results = await Promise.all(checks.map((src) => this.checkVideoExists(src)));
+    const results = await Promise.all(requiredStates.map((state) => this.checkVideoExists(this.config.video_paths[state])));
     const allFound = results.every(Boolean);
-    console.log(`[NOVA Engine] Video assets check: ${allFound ? "FOUND" : "INCOMPLETE"}`);
+    console.log(`[NOVA Engine] HD video assets check: ${allFound ? "FOUND" : "INCOMPLETE"}`);
     return allFound;
   }
 
@@ -330,125 +342,155 @@ class AvatarController {
     const message = this.chatInput.value.trim();
     if (!message || this.isBusy) return;
 
+    const requestId = ++this.currentRequestId;
     this.isBusy = true;
     this.chatInput.value = "";
     this.setInputsDisabled(true);
     this.appendMessage("user", message);
-    this.updateStatus(AVATAR_STATES.THINKING);
 
     try {
-      await this.runDemoConversation(message);
+      const replyPromise = this.prepareDemoReply(message, requestId);
+
+      if (this.videoAvailable) {
+        await this.playAcknowledge(requestId);
+        if (!this.isCurrentRequest(requestId)) return;
+
+        const responseReady = await this.enterProcessing(requestId, replyPromise);
+        if (!this.isCurrentRequest(requestId)) return;
+
+        const replyText = responseReady ?? await this.enterThinkingIfStillWaiting(requestId, replyPromise);
+        if (!this.isCurrentRequest(requestId)) return;
+
+        await this.enterTalking(replyText, requestId);
+        if (!this.isCurrentRequest(requestId)) return;
+
+        await this.playFinishThenWaiting(requestId);
+      } else {
+        const replyText = await replyPromise;
+        if (!this.isCurrentRequest(requestId)) return;
+        this.updateStatus(AVATAR_STATES.TALKING_A_HD);
+        this.showDemoReply(replyText);
+        await this.waitForRequest(3000, requestId);
+        this.updateStatus(AVATAR_STATES.WAITING_HD);
+      }
     } catch (error) {
       console.error("[NOVA Engine] Conversation flow failed.", error);
-      this.appendMessage("assistant", "Demo 流程發生播放中斷，已回到工作狀態。");
-      await this.enterWorkLoop(true);
+      if (this.isCurrentRequest(requestId)) {
+        this.appendMessage("assistant", "Demo response failed. Please try again.");
+        await this.enterWaiting(requestId);
+      }
     } finally {
-      this.setInputsDisabled(false);
-      this.isBusy = false;
+      if (this.isCurrentRequest(requestId)) {
+        this.setInputsDisabled(false);
+        this.isBusy = false;
+      }
     }
   }
 
-  async runDemoConversation(userMessage) {
-    if (!this.videoAvailable) {
-      this.updateStatus(AVATAR_STATES.TALKING);
-      this.showDemoReply(userMessage);
-      await this.wait(3000);
-      this.updateStatus(AVATAR_STATES.WORK_LOOP);
-      return;
-    }
-
-    await this.waitForWorkLoopCycle();
-    await this.playOneShot(AVATAR_STATES.TURN_TO_USER, this.config.video_paths.TurnToUser, this.config.crossfade_ms.WorkLoopToTurnToUser);
-    await this.enterTalkLoop();
-    this.showDemoReply(userMessage);
-    await this.wait(3000);
-    await this.playOneShot(AVATAR_STATES.RETURN_TO_WORK, this.config.video_paths.ReturnToWork, this.config.crossfade_ms.TalkLoopToReturnToWork);
-    await this.enterWorkLoop(true);
+  prepareDemoReply(userMessage, requestId) {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        if (!this.isCurrentRequest(requestId)) return;
+        resolve(`I heard you: "${userMessage}". This is NOVA's HD demo response flow.`);
+      }, this.config.reply_latency_ms);
+    });
   }
 
-  async waitForWorkLoopCycle() {
-    const workStates = [AVATAR_STATES.WORK_LOOP, AVATAR_STATES.LISTENING, AVATAR_STATES.THINKING];
-    if (!workStates.includes(this.currentState)) return;
-
-    this.statusText.innerText = "Finishing Work Loop";
-    const active = this.crossfade.activeVideo;
-    if (Number.isFinite(active.duration) && active.duration > 12) {
-      await this.wait(350);
-      return;
-    }
-
-    active.loop = false;
-
-    if (active.readyState < HTMLMediaElement.HAVE_METADATA) {
-      await this.wait(500);
-      return;
-    }
-
-    await this.crossfade.waitForEnded(active);
+  async playIntroThenWaiting() {
+    await this.playState(AVATAR_STATES.INTRO_HD, { loop: false, initial: true });
+    await this.crossfade.waitForEnded(this.crossfade.activeVideo);
+    await this.enterWaiting(this.currentRequestId);
   }
 
-  async playIntroThenIdle() {
-    const src = this.config.video_paths.Intro;
-    this.logVideoTransition(this.currentState, AVATAR_STATES.INTRO, src, false);
-    this.updateDebugPanel(AVATAR_STATES.INTRO, src);
-    this.updateStatus(AVATAR_STATES.INTRO);
+  async playState(state, options = {}) {
+    const src = this.config.video_paths[state];
+    const loop = Boolean(options.loop);
+    const duration = options.duration ?? this.config.crossfade_ms;
 
-    const video = await this.crossfade.showInitial(src, { loop: false });
-    this.updateDebugPanel(AVATAR_STATES.INTRO, video.getAttribute("src") || src);
-    await this.crossfade.waitForEnded(video);
-    await this.enterWorkLoop(true);
-  }
-
-  async playOneShot(state, src, fadeMs) {
-    const fromState = this.currentState;
-    this.logVideoTransition(fromState, state, src, false);
+    this.logVideoTransition(this.currentState, state, src, loop);
     this.updateDebugPanel(state, src);
     this.updateStatus(state);
-    const video = await this.crossfade.crossfadeTo(src, { loop: false, duration: fadeMs });
+
+    const video = options.initial
+      ? await this.crossfade.showInitial(src, { loop })
+      : await this.crossfade.crossfadeTo(src, { loop, duration });
+
     this.updateDebugPanel(state, video.getAttribute("src") || src);
-    await this.crossfade.waitForEnded(video);
+    return video;
   }
 
-  async enterTalkLoop() {
-    const fromState = this.currentState;
-    const src = this.config.video_paths.TalkLoop;
-    this.logVideoTransition(fromState, AVATAR_STATES.TALKING, src, true);
-    this.updateDebugPanel(AVATAR_STATES.TALKING, src);
-    this.updateStatus(AVATAR_STATES.TALKING);
-    const video = await this.crossfade.crossfadeTo(src, {
-      loop: true,
-      duration: this.config.crossfade_ms.TurnToUserToTalkLoop
-    });
-    this.updateDebugPanel(AVATAR_STATES.TALKING, video.getAttribute("src") || src);
+  async playOneShotState(state, durationMs, requestId) {
+    const video = await this.playState(state, { loop: false });
+    if (!this.isCurrentRequest(requestId)) return video;
+
+    if (durationMs) {
+      await this.waitForRequest(durationMs, requestId);
+    } else {
+      await this.crossfade.waitForEnded(video);
+    }
+    return video;
+  }
+
+  async enterWaiting(requestId = this.currentRequestId) {
+    if (!this.videoAvailable) {
+      this.showFallbackAvatar();
+      this.updateStatus(AVATAR_STATES.WAITING_HD);
+      return;
+    }
+    if (!this.isCurrentRequest(requestId)) return;
+    await this.playState(AVATAR_STATES.WAITING_HD, { loop: true });
+  }
+
+  async playAcknowledge(requestId) {
+    await this.playOneShotState(AVATAR_STATES.ACKNOWLEDGE_HD, this.config.acknowledge_ms, requestId);
+  }
+
+  async enterProcessing(requestId, replyPromise) {
+    if (!this.isCurrentRequest(requestId)) return null;
+    await this.playState(AVATAR_STATES.PROCESSING_HD, { loop: true });
+    return await this.waitForReplyOrTimeout(replyPromise, this.config.processing_min_ms, requestId);
+  }
+
+  async enterThinkingIfStillWaiting(requestId, replyPromise) {
+    if (!this.isCurrentRequest(requestId)) return null;
+    await this.playState(AVATAR_STATES.THINKING_HD, { loop: true });
+    return await replyPromise;
+  }
+
+  async enterTalking(replyText, requestId) {
+    if (!this.isCurrentRequest(requestId)) return;
+    const talkingState = this.chooseTalkingVariant(replyText);
+    await this.playState(talkingState, { loop: true });
+    if (!this.isCurrentRequest(requestId)) return;
+
+    this.showDemoReply(replyText);
+    const speakingMs = this.estimateSpeakingDuration(replyText);
+    await this.waitForRequest(speakingMs, requestId);
+  }
+
+  async playFinishThenWaiting(requestId) {
+    if (!this.isCurrentRequest(requestId)) return;
+    await this.playOneShotState(AVATAR_STATES.FINISH_HD, this.config.finish_ms, requestId);
+    if (!this.isCurrentRequest(requestId)) return;
+    await this.enterWaiting(requestId);
+  }
+
+  chooseTalkingVariant(replyText = "") {
+    this.replyCount += 1;
+    const shouldUseB = replyText.length >= this.config.long_reply_chars || this.replyCount > 1;
+    if (!shouldUseB) return AVATAR_STATES.TALKING_A_HD;
+
+    const selected = this.nextTalkingVariant;
+    this.nextTalkingVariant = selected === AVATAR_STATES.TALKING_A_HD
+      ? AVATAR_STATES.TALKING_B_HD
+      : AVATAR_STATES.TALKING_A_HD;
+    return selected;
   }
 
   enterListeningState() {
     if (this.isBusy || !this.videoAvailable) return;
-    if (this.currentState === AVATAR_STATES.INTRO || this.currentState === AVATAR_STATES.WORK_LOOP || this.currentState === AVATAR_STATES.LISTENING) {
+    if (this.currentState === AVATAR_STATES.INTRO_HD || this.currentState === AVATAR_STATES.WAITING_HD || this.currentState === AVATAR_STATES.LISTENING) {
       this.updateStatus(AVATAR_STATES.LISTENING);
-    }
-  }
-
-  async enterWorkLoop(withFade) {
-    const fromState = this.currentState;
-    const src = this.config.video_paths.WorkLoop;
-    this.logVideoTransition(fromState, AVATAR_STATES.WORK_LOOP, src, true);
-    this.updateDebugPanel(AVATAR_STATES.WORK_LOOP, src);
-    this.updateStatus(AVATAR_STATES.WORK_LOOP);
-    if (!this.videoAvailable) {
-      this.showFallbackAvatar();
-      return;
-    }
-
-    if (withFade) {
-      const video = await this.crossfade.crossfadeTo(src, {
-        loop: true,
-        duration: this.config.crossfade_ms.ReturnToWorkToWorkLoop
-      });
-      this.updateDebugPanel(AVATAR_STATES.WORK_LOOP, video.getAttribute("src") || src);
-    } else {
-      const video = await this.crossfade.showInitial(src, { loop: true });
-      this.updateDebugPanel(AVATAR_STATES.WORK_LOOP, video.getAttribute("src") || src);
     }
   }
 
@@ -456,16 +498,18 @@ class AvatarController {
     this.currentState = state;
 
     const styles = {
-      [AVATAR_STATES.INTRO]: ["Starting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
-      [AVATAR_STATES.WORK_LOOP]: ["Idle Working", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
+      [AVATAR_STATES.INTRO_HD]: ["Starting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
+      [AVATAR_STATES.WAITING_HD]: ["Waiting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.LISTENING]: ["Listening", "rgba(125, 211, 252, 0.1)", "#7dd3fc", "0 0 10px rgba(125, 211, 252, 0.25)"],
-      [AVATAR_STATES.THINKING]: ["Thinking", "rgba(129, 140, 248, 0.1)", "#818cf8", "0 0 10px rgba(129, 140, 248, 0.25)"],
-      [AVATAR_STATES.TURN_TO_USER]: ["Turn To User", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
-      [AVATAR_STATES.TALKING]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
-      [AVATAR_STATES.RETURN_TO_WORK]: ["Returning to Work", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
+      [AVATAR_STATES.ACKNOWLEDGE_HD]: ["Acknowledged", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
+      [AVATAR_STATES.PROCESSING_HD]: ["Processing", "rgba(129, 140, 248, 0.1)", "#818cf8", "0 0 10px rgba(129, 140, 248, 0.25)"],
+      [AVATAR_STATES.THINKING_HD]: ["Thinking", "rgba(129, 140, 248, 0.14)", "#a5b4fc", "0 0 12px rgba(129, 140, 248, 0.35)"],
+      [AVATAR_STATES.TALKING_A_HD]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
+      [AVATAR_STATES.TALKING_B_HD]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
+      [AVATAR_STATES.FINISH_HD]: ["Finishing", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
     };
 
-    const [label, background, color, shadow] = styles[state];
+    const [label, background, color, shadow] = styles[state] || styles[AVATAR_STATES.WAITING_HD];
     this.statusText.innerText = label;
     this.statusBadge.style.background = background;
     this.statusBadge.style.color = color;
@@ -537,8 +581,7 @@ class AvatarController {
     return path.split("/").pop() || path;
   }
 
-  showDemoReply(userMessage) {
-    const replyText = `收到：「${userMessage}」。這是 NOVA 的 Demo 回覆，完整 Gemini、TTS 與 LipSync 可接在保留的介面上。`;
+  showDemoReply(replyText) {
     this.appendMessage("assistant", replyText);
     this.subtitlesOverlay.style.display = "block";
     this.subtitleText.innerText = replyText;
@@ -569,7 +612,7 @@ class AvatarController {
 
   clearChat() {
     this.chatHistory.innerHTML = "";
-    this.appendMessage("assistant", "您好，我是 NOVA。請輸入訊息開始 Demo 對話。");
+    this.appendMessage("assistant", "Cleared. NOVA is ready for a new demo message.");
     this.subtitlesOverlay.style.display = "none";
   }
 
@@ -589,8 +632,36 @@ class AvatarController {
     this.btnSend.disabled = disabled;
   }
 
+  isCurrentRequest(requestId) {
+    return requestId === this.currentRequestId;
+  }
+
   wait(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  waitForRequest(ms, requestId) {
+    return new Promise((resolve) => {
+      window.setTimeout(() => {
+        resolve(this.isCurrentRequest(requestId));
+      }, ms);
+    });
+  }
+
+  waitForReplyOrTimeout(replyPromise, timeoutMs, requestId) {
+    const timeoutPromise = new Promise((resolve) => {
+      window.setTimeout(() => resolve(null), timeoutMs);
+    });
+
+    return Promise.race([
+      replyPromise.then((replyText) => (this.isCurrentRequest(requestId) ? replyText : null)),
+      timeoutPromise
+    ]);
+  }
+
+  estimateSpeakingDuration(replyText) {
+    const byLength = Math.max(1800, Math.min(6500, replyText.length * 45));
+    return byLength;
   }
 
   connectGemini() {
