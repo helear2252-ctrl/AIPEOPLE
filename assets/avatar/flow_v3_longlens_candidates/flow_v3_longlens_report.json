@@ -1,0 +1,148 @@
+{
+  "built": [
+    {
+      "label": "candidate_A_minimal",
+      "file": "assets\\avatar\\flow_v3_longlens_candidates\\candidate_A_minimal.mp4",
+      "flow": [
+        "WAITING=009",
+        "FLOW_RESPONSE=019",
+        "FINISH=013",
+        "WAITING=009"
+      ],
+      "junction_count": 3,
+      "metrics": {
+        "boundaries": [
+          {
+            "frame_diff": 4.717188910590278,
+            "brightness_jump": 1.9788297526041703,
+            "dark_frame": false,
+            "mouth_mismatch": 5.313782972472376,
+            "background_delta": 4.827567418981482
+          },
+          {
+            "frame_diff": 7.119163773148148,
+            "brightness_jump": 5.490074869791666,
+            "dark_frame": false,
+            "mouth_mismatch": 5.842046833539457,
+            "background_delta": 8.04113220164609
+          },
+          {
+            "frame_diff": 6.759239547164351,
+            "brightness_jump": 3.685463541666671,
+            "dark_frame": false,
+            "mouth_mismatch": 12.95497221689979,
+            "background_delta": 5.980171183770576
+          }
+        ],
+        "max_frame_diff": 7.119163773148148,
+        "max_brightness_jump": 5.490074869791666,
+        "dark_frame": false,
+        "ghost_exposure": 23.936016334561472,
+        "mouth_mismatch": 12.95497221689979,
+        "background_stability": 37.170430652006175,
+        "eye_stability": 59.29044698064011
+      }
+    },
+    {
+      "label": "candidate_B_019_split",
+      "file": "assets\\avatar\\flow_v3_longlens_candidates\\candidate_B_019_split.mp4",
+      "flow": [
+        "WAITING=009",
+        "019_front_0_2",
+        "019_main_2_10",
+        "FINISH=013",
+        "WAITING=009"
+      ],
+      "junction_count": 4,
+      "metrics": {
+        "boundaries": [
+          {
+            "frame_diff": 4.717188910590278,
+            "brightness_jump": 1.9788297526041703,
+            "dark_frame": false,
+            "mouth_mismatch": 5.313782972472376,
+            "background_delta": 4.827567418981482
+          },
+          {
+            "frame_diff": 2.040225441261574,
+            "brightness_jump": 0.027851888020830273,
+            "dark_frame": false,
+            "mouth_mismatch": 5.809821921069286,
+            "background_delta": 1.618523453575103
+          },
+          {
+            "frame_diff": 7.119163773148148,
+            "brightness_jump": 5.490074869791666,
+            "dark_frame": false,
+            "mouth_mismatch": 5.842046833539457,
+            "background_delta": 8.04113220164609
+          },
+          {
+            "frame_diff": 6.759239547164351,
+            "brightness_jump": 3.685463541666671,
+            "dark_frame": false,
+            "mouth_mismatch": 12.95497221689979,
+            "background_delta": 5.980171183770576
+          }
+        ],
+        "max_frame_diff": 7.119163773148148,
+        "max_brightness_jump": 5.490074869791666,
+        "dark_frame": false,
+        "ghost_exposure": 23.936016334561472,
+        "mouth_mismatch": 12.95497221689979,
+        "background_stability": 48.83151435506687,
+        "eye_stability": 59.29044698064011
+      }
+    },
+    {
+      "label": "candidate_C_auto",
+      "file": "assets\\avatar\\flow_v3_longlens_candidates\\candidate_C_auto.mp4",
+      "flow": [
+        "009.mp4",
+        "005.mp4",
+        "009.mp4",
+        "009.mp4"
+      ],
+      "junction_count": 3,
+      "metrics": {
+        "boundaries": [
+          {
+            "frame_diff": 5.066816044560185,
+            "brightness_jump": 2.185923828125002,
+            "dark_frame": false,
+            "mouth_mismatch": 5.50240902994304,
+            "background_delta": 5.264565715020576
+          },
+          {
+            "frame_diff": 4.043175672743056,
+            "brightness_jump": 1.7204888237847236,
+            "dark_frame": false,
+            "mouth_mismatch": 10.19333263657847,
+            "background_delta": 3.4719379983281895
+          },
+          {
+            "frame_diff": 4.020220015914352,
+            "brightness_jump": 1.4564128689236142,
+            "dark_frame": false,
+            "mouth_mismatch": 4.668121142445726,
+            "background_delta": 4.108606513631688
+          }
+        ],
+        "max_frame_diff": 5.066816044560185,
+        "max_brightness_jump": 2.185923828125002,
+        "dark_frame": false,
+        "ghost_exposure": 25.10756004294447,
+        "mouth_mismatch": 10.19333263657847,
+        "background_stability": 57.18296591006515,
+        "eye_stability": 81.91148905230546
+      }
+    }
+  ],
+  "auto_search": {
+    "score": 39.0184673478314,
+    "waiting": "009.mp4",
+    "response": "005.mp4",
+    "finish": "009.mp4"
+  },
+  "sheet": "assets\\avatar\\flow_v3_longlens_candidates\\flow_v3_longlens_candidates_sheet.jpg"
+}

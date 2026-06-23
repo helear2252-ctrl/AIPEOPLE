@@ -6,12 +6,7 @@
 const AVATAR_STATES = {
   INTRO_HD: "INTRO_HD",
   WAITING_HD: "WAITING_HD",
-  ACKNOWLEDGE_HD: "ACKNOWLEDGE_HD",
-  PROCESSING_HD: "PROCESSING_HD",
-  THINKING_HD: "THINKING_HD",
-  TALKING_ENTRY_HD: "TALKING_ENTRY_HD",
-  TALKING_A_HD: "TALKING_A_HD",
-  TALKING_B_HD: "TALKING_B_HD",
+  FLOW_RESPONSE_HD: "FLOW_RESPONSE_HD",
   FINISH_HD: "FINISH_HD",
   RETURN_TO_IDLE_HD: "RETURN_TO_IDLE_HD",
   LISTENING: "LISTENING"
@@ -190,21 +185,13 @@ class AvatarController {
       demo_mode: true,
       video_paths: {
         INTRO_HD: "assets/avatar/final_hd_ultra_smooth/INTRO_009_TEST.mp4",
-        WAITING_HD: "assets/avatar/final_hd_ultra_smooth/WAITING_HD.mp4",
-        ACKNOWLEDGE_HD: "assets/avatar/final_hd_ultra_smooth/ACKNOWLEDGE_HD.mp4",
-        PROCESSING_HD: "assets/avatar/final_hd_ultra_smooth/PROCESSING_HD.mp4",
-        THINKING_HD: "assets/avatar/final_hd_ultra_smooth/THINKING_HD.mp4",
-        TALKING_ENTRY_HD: "assets/avatar/final_hd_ultra_smooth/TALKING_ENTRY_HD.mp4",
-        TALKING_A_HD: "assets/avatar/final_hd_ultra_smooth/TALKING_A_HD.mp4",
-        TALKING_B_HD: "assets/avatar/final_hd_ultra_smooth/TALKING_B_HD.mp4",
-        FINISH_HD: "assets/avatar/final_hd_ultra_smooth/FINISH_HD.mp4",
-        RETURN_TO_IDLE_HD: "assets/avatar/final_hd_ultra_smooth/RETURN_TO_IDLE_HD.mp4",
+        WAITING_HD: "assets/avatar/nova_hd_flow_v3_candidate/WAITING_HD.mp4",
+        FLOW_RESPONSE_HD: "assets/avatar/nova_hd_flow_v3_candidate/FLOW_RESPONSE_HD.mp4",
+        FINISH_HD: "assets/avatar/nova_hd_flow_v3_candidate/FINISH_HD.mp4",
+        RETURN_TO_IDLE_HD: "assets/avatar/nova_hd_flow_v3_candidate/RETURN_TO_IDLE_HD.mp4",
         Fallback: "assets/avatar/nova_working_placeholder.png"
       },
       crossfade_ms: 450,
-      acknowledge_ms: 1000,
-      processing_min_ms: 2200,
-      thinking_threshold_ms: 3000,
       finish_ms: 2000,
       reply_latency_ms: 1800,
       long_reply_chars: 90
@@ -217,12 +204,11 @@ class AvatarController {
     this.replyTimer = null;
     this.currentRequestId = 0;
     this.activeRequestId = 0;
+    this.debugFlowEvents = [];
+    this.debugRequestStartedAt = 0;
     this.isWaitingForResponse = false;
     this.responseReady = false;
-    this.thinkingTimer = null;
-    this.thinkingTransition = null;
     this.replyCount = 0;
-    this.nextTalkingVariant = AVATAR_STATES.TALKING_A_HD;
 
     this.videoWrapper = document.getElementById("video-wrapper");
     this.videoA = document.getElementById("avatar-video-a");
@@ -295,14 +281,8 @@ class AvatarController {
     const requiredStates = [
       AVATAR_STATES.INTRO_HD,
       AVATAR_STATES.WAITING_HD,
-      AVATAR_STATES.ACKNOWLEDGE_HD,
-      AVATAR_STATES.PROCESSING_HD,
-      AVATAR_STATES.THINKING_HD,
-      AVATAR_STATES.TALKING_ENTRY_HD,
-      AVATAR_STATES.TALKING_A_HD,
-      AVATAR_STATES.TALKING_B_HD,
-      AVATAR_STATES.FINISH_HD,
-      AVATAR_STATES.RETURN_TO_IDLE_HD
+      AVATAR_STATES.FLOW_RESPONSE_HD,
+      AVATAR_STATES.FINISH_HD
     ];
 
     const results = await Promise.all(requiredStates.map((state) => this.checkVideoExists(this.config.video_paths[state])));
@@ -357,35 +337,29 @@ class AvatarController {
     this.activeRequestId = requestId;
     this.isWaitingForResponse = true;
     this.responseReady = false;
-    this.clearThinkingTimer();
     this.isBusy = true;
     this.chatInput.value = "";
     this.setInputsDisabled(true);
     this.appendMessage("user", message);
     const requestStartedAt = performance.now();
+    this.debugRequestStartedAt = requestStartedAt;
+    this.logFlowEvent("request:start", {
+      fromState: this.currentState,
+      toState: this.currentState,
+      requestId
+    });
 
     try {
       const replyPromise = this.prepareDemoReply(message, requestId).then((replyText) => {
         if (!this.isCurrentRequest(requestId)) return null;
         this.responseReady = true;
         this.isWaitingForResponse = false;
-        this.clearThinkingTimer();
         return replyText;
       });
 
       if (this.videoAvailable) {
-        await this.playAcknowledge(requestId);
-        if (!this.isCurrentRequest(requestId)) return;
-
-        await this.enterProcessing(requestId);
-        if (!this.isCurrentRequest(requestId)) return;
-
-        if (this.isWaitingForResponse && !this.responseReady) {
-          this.scheduleThinkingTimer(requestId, requestStartedAt);
-        }
         const replyText = await replyPromise;
         if (!this.isCurrentRequest(requestId)) return;
-        if (this.thinkingTransition) await this.thinkingTransition;
         if (!replyText) return;
 
         await this.enterTalking(replyText, requestId);
@@ -395,7 +369,7 @@ class AvatarController {
       } else {
         const replyText = await replyPromise;
         if (!this.isCurrentRequest(requestId)) return;
-        this.updateStatus(AVATAR_STATES.TALKING_A_HD);
+        this.updateStatus(AVATAR_STATES.FLOW_RESPONSE_HD);
         this.showDemoReply(replyText);
         await this.waitForRequest(3000, requestId);
         this.updateStatus(AVATAR_STATES.WAITING_HD);
@@ -406,13 +380,11 @@ class AvatarController {
         this.appendMessage("assistant", "Demo response failed. Please try again.");
         this.isWaitingForResponse = false;
         this.responseReady = true;
-        this.clearThinkingTimer();
         await this.enterWaiting(requestId);
       }
     } finally {
       if (this.isCurrentRequest(requestId)) {
         this.isWaitingForResponse = false;
-        this.clearThinkingTimer();
         this.setInputsDisabled(false);
         this.isBusy = false;
       }
@@ -438,6 +410,19 @@ class AvatarController {
     const src = this.config.video_paths[state];
     const loop = Boolean(options.loop);
     const duration = options.duration ?? this.config.crossfade_ms;
+    const previousState = this.currentState;
+    const activeVideo = this.crossfade.activeVideo;
+    const standbyVideo = this.crossfade.standbyVideo;
+
+    this.logFlowEvent("playState:start", {
+      fromState: previousState,
+      toState: state,
+      fromVideo: activeVideo.currentSrc || activeVideo.getAttribute("src") || "",
+      toVideo: src,
+      crossfadeMs: options.initial ? 0 : duration,
+      requestId: this.activeRequestId,
+      videoCurrentTime: activeVideo.currentTime
+    });
 
     this.updateDebugPanel(state, src);
     this.updateStatus(state);
@@ -447,6 +432,15 @@ class AvatarController {
       : await this.crossfade.crossfadeTo(src, { loop, duration });
 
     this.updateDebugPanel(state, video.getAttribute("src") || src);
+    this.logFlowEvent("playState:ready", {
+      fromState: previousState,
+      toState: state,
+      fromVideo: activeVideo.currentSrc || activeVideo.getAttribute("src") || "",
+      toVideo: video.currentSrc || video.getAttribute("src") || src,
+      crossfadeMs: options.initial ? 0 : duration,
+      requestId: this.activeRequestId,
+      videoCurrentTime: video.currentTime
+    });
     return video;
   }
 
@@ -472,53 +466,17 @@ class AvatarController {
     await this.playState(AVATAR_STATES.WAITING_HD, { loop: true });
   }
 
-  async playAcknowledge(requestId) {
-    await this.playOneShotState(AVATAR_STATES.ACKNOWLEDGE_HD, this.config.acknowledge_ms, requestId);
-  }
-
-  async enterProcessing(requestId) {
-    if (!this.isCurrentRequest(requestId)) return null;
-    await this.playState(AVATAR_STATES.PROCESSING_HD, { loop: true });
-  }
-
-  async enterThinkingIfStillWaiting(requestId) {
-    if (!this.isCurrentRequest(requestId)) return null;
-    if (!this.isWaitingForResponse || this.responseReady) return null;
-    await this.playState(AVATAR_STATES.THINKING_HD, { loop: true });
-  }
-
   async enterTalking(replyText, requestId) {
     if (!this.isCurrentRequest(requestId)) return;
-    const talkingState = this.chooseTalkingVariant(replyText);
-    await this.playOneShotState(AVATAR_STATES.TALKING_ENTRY_HD, null, requestId);
-    if (!this.isCurrentRequest(requestId)) return;
-    await this.playState(talkingState, { loop: true });
-    if (!this.isCurrentRequest(requestId)) return;
-
     this.showDemoReply(replyText);
-    const speakingMs = this.estimateSpeakingDuration(replyText);
-    await this.waitForRequest(speakingMs, requestId);
+    await this.playOneShotState(AVATAR_STATES.FLOW_RESPONSE_HD, null, requestId);
   }
 
   async playFinishThenWaiting(requestId) {
     if (!this.isCurrentRequest(requestId)) return;
-    await this.playOneShotState(AVATAR_STATES.FINISH_HD, this.config.finish_ms, requestId);
-    if (!this.isCurrentRequest(requestId)) return;
-    await this.playOneShotState(AVATAR_STATES.RETURN_TO_IDLE_HD, null, requestId);
+    await this.playOneShotState(AVATAR_STATES.FINISH_HD, null, requestId);
     if (!this.isCurrentRequest(requestId)) return;
     await this.enterWaiting(requestId);
-  }
-
-  chooseTalkingVariant(replyText = "") {
-    this.replyCount += 1;
-    const shouldUseB = replyText.length >= this.config.long_reply_chars || this.replyCount > 1;
-    if (!shouldUseB) return AVATAR_STATES.TALKING_A_HD;
-
-    const selected = this.nextTalkingVariant;
-    this.nextTalkingVariant = selected === AVATAR_STATES.TALKING_A_HD
-      ? AVATAR_STATES.TALKING_B_HD
-      : AVATAR_STATES.TALKING_A_HD;
-    return selected;
   }
 
   enterListeningState() {
@@ -529,18 +487,19 @@ class AvatarController {
   }
 
   updateStatus(state) {
+    const previousState = this.currentState;
     this.currentState = state;
+    this.logFlowEvent("state:update", {
+      fromState: previousState,
+      toState: state,
+      requestId: this.activeRequestId
+    });
 
     const styles = {
       [AVATAR_STATES.INTRO_HD]: ["Starting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.WAITING_HD]: ["Waiting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.LISTENING]: ["Listening", "rgba(125, 211, 252, 0.1)", "#7dd3fc", "0 0 10px rgba(125, 211, 252, 0.25)"],
-      [AVATAR_STATES.ACKNOWLEDGE_HD]: ["Acknowledged", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 10px rgba(251, 191, 36, 0.25)"],
-      [AVATAR_STATES.PROCESSING_HD]: ["Processing", "rgba(129, 140, 248, 0.1)", "#818cf8", "0 0 10px rgba(129, 140, 248, 0.25)"],
-      [AVATAR_STATES.THINKING_HD]: ["Thinking", "rgba(129, 140, 248, 0.14)", "#a5b4fc", "0 0 12px rgba(129, 140, 248, 0.35)"],
-      [AVATAR_STATES.TALKING_ENTRY_HD]: ["Preparing", "rgba(16, 185, 129, 0.08)", "#10b981", "0 0 10px rgba(16, 185, 129, 0.25)"],
-      [AVATAR_STATES.TALKING_A_HD]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
-      [AVATAR_STATES.TALKING_B_HD]: ["Talking", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
+      [AVATAR_STATES.FLOW_RESPONSE_HD]: ["Responding", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
       [AVATAR_STATES.FINISH_HD]: ["Finishing", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"],
       [AVATAR_STATES.RETURN_TO_IDLE_HD]: ["Returning", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
     };
@@ -553,6 +512,26 @@ class AvatarController {
     if (this.debugStateText) {
       this.debugStateText.innerText = state;
     }
+  }
+
+  logFlowEvent(type, details = {}) {
+    const now = performance.now();
+    const activeVideo = this.crossfade ? this.crossfade.activeVideo : null;
+    const event = {
+      type,
+      timestamp: Number(now.toFixed(2)),
+      requestElapsedMs: this.debugRequestStartedAt ? Number((now - this.debugRequestStartedAt).toFixed(2)) : null,
+      fromState: details.fromState || this.currentState,
+      toState: details.toState || this.currentState,
+      fromVideo: details.fromVideo || (activeVideo ? activeVideo.currentSrc || activeVideo.getAttribute("src") || "" : ""),
+      toVideo: details.toVideo || "",
+      crossfadeMs: details.crossfadeMs ?? null,
+      requestId: details.requestId ?? this.activeRequestId,
+      videoCurrentTime: Number((details.videoCurrentTime ?? activeVideo?.currentTime ?? 0).toFixed(3))
+    };
+    this.debugFlowEvents.push(event);
+    if (this.debugFlowEvents.length > 300) this.debugFlowEvents.shift();
+    console.debug("[NOVA Flow]", event);
   }
 
   initDebugPanel() {
@@ -673,30 +652,6 @@ class AvatarController {
         resolve(this.isCurrentRequest(requestId));
       }, ms);
     });
-  }
-
-  clearThinkingTimer() {
-    if (this.thinkingTimer) {
-      clearTimeout(this.thinkingTimer);
-      this.thinkingTimer = null;
-    }
-  }
-
-  scheduleThinkingTimer(requestId, requestStartedAt) {
-    this.clearThinkingTimer();
-    const elapsed = performance.now() - requestStartedAt;
-    const delay = Math.max(0, this.config.thinking_threshold_ms - elapsed);
-
-    this.thinkingTimer = window.setTimeout(() => {
-      this.thinkingTimer = null;
-      if (!this.isCurrentRequest(requestId)) return;
-      if (!this.isWaitingForResponse || this.responseReady) return;
-      this.thinkingTransition = this.enterThinkingIfStillWaiting(requestId)
-        .catch((error) => console.error("[NOVA Engine] Thinking transition failed.", error))
-        .finally(() => {
-          if (this.isCurrentRequest(requestId)) this.thinkingTransition = null;
-        });
-    }, delay);
   }
 
   estimateSpeakingDuration(replyText) {

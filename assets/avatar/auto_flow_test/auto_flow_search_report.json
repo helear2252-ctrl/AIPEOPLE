@@ -1,0 +1,191 @@
+{
+  "segment_count": 33,
+  "top10": [
+    {
+      "rank": 1,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "003.mp4:mid_2_5",
+      "MAIN": "002.mp4:front_0_2",
+      "EMPHASIS": "001.mp4:tail_5_8",
+      "FINISH": "006.mp4:mid_2_5",
+      "total": 7.05,
+      "transition": 7.05,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=2.20; emphasisMotion=1.83; finishEndMouth=14.2"
+    },
+    {
+      "rank": 2,
+      "PREP": "009.mp4:tail_5_8",
+      "START": "003.mp4:mid_2_5",
+      "MAIN": "002.mp4:front_0_2",
+      "EMPHASIS": "001.mp4:tail_5_8",
+      "FINISH": "006.mp4:mid_2_5",
+      "total": 7.12,
+      "transition": 7.12,
+      "role_cost": 0.0,
+      "notes": "prepMouth=12.3; mainMotion=2.20; emphasisMotion=1.83; finishEndMouth=14.2"
+    },
+    {
+      "rank": 3,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "003.mp4:mid_2_5",
+      "MAIN": "002.mp4:tail_5_8",
+      "EMPHASIS": "001.mp4:tail_5_8",
+      "FINISH": "006.mp4:mid_2_5",
+      "total": 7.25,
+      "transition": 7.25,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=2.41; emphasisMotion=1.83; finishEndMouth=14.2"
+    },
+    {
+      "rank": 4,
+      "PREP": "009.mp4:tail_5_8",
+      "START": "003.mp4:mid_2_5",
+      "MAIN": "002.mp4:tail_5_8",
+      "EMPHASIS": "001.mp4:tail_5_8",
+      "FINISH": "006.mp4:mid_2_5",
+      "total": 7.33,
+      "transition": 7.33,
+      "role_cost": 0.0,
+      "notes": "prepMouth=12.3; mainMotion=2.41; emphasisMotion=1.83; finishEndMouth=14.2"
+    },
+    {
+      "rank": 5,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "002.mp4:tail_5_8",
+      "MAIN": "003.mp4:mid_2_5",
+      "EMPHASIS": "005.mp4:mid_2_5",
+      "FINISH": "007.mp4:mid_2_5",
+      "total": 7.49,
+      "transition": 7.49,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=0.94; emphasisMotion=1.23; finishEndMouth=12.2"
+    },
+    {
+      "rank": 6,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "002.mp4:tail_5_8",
+      "MAIN": "003.mp4:mid_2_5",
+      "EMPHASIS": "005.mp4:mid_2_5",
+      "FINISH": "004.mp4:tail_5_8",
+      "total": 7.56,
+      "transition": 7.56,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=0.94; emphasisMotion=1.23; finishEndMouth=12.9"
+    },
+    {
+      "rank": 7,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "002.mp4:tail_5_8",
+      "MAIN": "003.mp4:mid_2_5",
+      "EMPHASIS": "005.mp4:mid_2_5",
+      "FINISH": "004.mp4:mid_2_5",
+      "total": 7.61,
+      "transition": 7.61,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=0.94; emphasisMotion=1.23; finishEndMouth=13.2"
+    },
+    {
+      "rank": 8,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "003.mp4:mid_2_5",
+      "MAIN": "002.mp4:mid_2_5",
+      "EMPHASIS": "001.mp4:tail_5_8",
+      "FINISH": "006.mp4:mid_2_5",
+      "total": 7.71,
+      "transition": 7.71,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=1.04; emphasisMotion=1.83; finishEndMouth=14.2"
+    },
+    {
+      "rank": 9,
+      "PREP": "009.mp4:mid_2_5",
+      "START": "005.mp4:mid_2_5",
+      "MAIN": "003.mp4:front_0_2",
+      "EMPHASIS": "001.mp4:tail_5_8",
+      "FINISH": "006.mp4:mid_2_5",
+      "total": 7.75,
+      "transition": 7.75,
+      "role_cost": 0.0,
+      "notes": "prepMouth=11.7; mainMotion=2.08; emphasisMotion=1.83; finishEndMouth=14.2"
+    },
+    {
+      "rank": 10,
+      "PREP": "009.mp4:tail_5_8",
+      "START": "002.mp4:tail_5_8",
+      "MAIN": "003.mp4:mid_2_5",
+      "EMPHASIS": "005.mp4:mid_2_5",
+      "FINISH": "007.mp4:mid_2_5",
+      "total": 7.76,
+      "transition": 7.76,
+      "role_cost": 0.0,
+      "notes": "prepMouth=12.3; mainMotion=0.94; emphasisMotion=1.23; finishEndMouth=12.2"
+    }
+  ],
+  "built": [
+    {
+      "file": "assets\\avatar\\auto_flow_test\\auto_flow_candidate_01.mp4",
+      "path": [
+        "009.mp4:mid_2_5",
+        "003.mp4:mid_2_5",
+        "002.mp4:front_0_2",
+        "001.mp4:tail_5_8",
+        "006.mp4:mid_2_5"
+      ],
+      "score": 7.05,
+      "metrics": {
+        "decode": "PASS",
+        "frames": 316,
+        "duration": 13.166666666666666,
+        "max_frame_diff": 1.6522196903935185,
+        "mean_frame_diff": 0.481947658316799,
+        "brightness_jump": 1.125079210069444,
+        "ghost_exposure": 22.147478876324804,
+        "mouth_mismatch": 3.0130177033798415
+      }
+    },
+    {
+      "file": "assets\\avatar\\auto_flow_test\\auto_flow_candidate_02.mp4",
+      "path": [
+        "009.mp4:tail_5_8",
+        "003.mp4:mid_2_5",
+        "002.mp4:front_0_2",
+        "001.mp4:tail_5_8",
+        "006.mp4:mid_2_5"
+      ],
+      "score": 7.12,
+      "metrics": {
+        "decode": "PASS",
+        "frames": 316,
+        "duration": 13.166666666666666,
+        "max_frame_diff": 1.6522196903935185,
+        "mean_frame_diff": 0.47847258391203706,
+        "brightness_jump": 1.125079210069444,
+        "ghost_exposure": 27.002090192046452,
+        "mouth_mismatch": 3.0130177033798415
+      }
+    },
+    {
+      "file": "assets\\avatar\\auto_flow_test\\auto_flow_candidate_03.mp4",
+      "path": [
+        "009.mp4:mid_2_5",
+        "003.mp4:mid_2_5",
+        "002.mp4:tail_5_8",
+        "001.mp4:tail_5_8",
+        "006.mp4:mid_2_5"
+      ],
+      "score": 7.25,
+      "metrics": {
+        "decode": "PASS",
+        "frames": 340,
+        "duration": 14.166666666666666,
+        "max_frame_diff": 1.6651775896990741,
+        "mean_frame_diff": 0.46964515028371845,
+        "brightness_jump": 1.1268272569444449,
+        "ghost_exposure": 20.314467909554722,
+        "mouth_mismatch": 3.0130177033798415
+      }
+    }
+  ],
+  "preview_sheet": "C:\\Users\\admin\\Desktop\\AIPEOPLE\\assets\\avatar\\auto_flow_test\\auto_flow_candidate_preview_sheet.jpg"
+}
