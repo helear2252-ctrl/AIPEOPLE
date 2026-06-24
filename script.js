@@ -6,6 +6,7 @@
 const AVATAR_STATES = {
   INTRO_HD: "INTRO_HD",
   WAITING_HD: "WAITING_HD",
+  TALK_START: "TALK_START",
   FLOW_RESPONSE_HD: "FLOW_RESPONSE_HD",
   FINISH_HD: "FINISH_HD",
   RETURN_TO_IDLE_HD: "RETURN_TO_IDLE_HD",
@@ -14,6 +15,7 @@ const AVATAR_STATES = {
 
 const INTRO_ONCE_SRC = "assets/avatar/AIPEOPLE/027.mp4";
 const WAITING_SRC = "assets/avatar/AIPEOPLE/026.mp4";
+const TALK_START_SRC = "assets/avatar/AIPEOPLE/029.mp4";
 let introPlayed = false;
 
 class CrossfadeController {
@@ -190,6 +192,7 @@ class AvatarController {
       video_paths: {
         INTRO_HD: INTRO_ONCE_SRC,
         WAITING_HD: WAITING_SRC,
+        TALK_START: TALK_START_SRC,
         FLOW_RESPONSE_HD: "assets/avatar/nova_hd_flow_v3_candidate/FLOW_RESPONSE_HD.mp4",
         FINISH_HD: "assets/avatar/nova_hd_flow_v3_candidate/FINISH_HD.mp4",
         RETURN_TO_IDLE_HD: "assets/avatar/nova_hd_flow_v3_candidate/RETURN_TO_IDLE_HD.mp4",
@@ -285,6 +288,7 @@ class AvatarController {
     const requiredStates = [
       AVATAR_STATES.INTRO_HD,
       AVATAR_STATES.WAITING_HD,
+      AVATAR_STATES.TALK_START,
       AVATAR_STATES.FLOW_RESPONSE_HD,
       AVATAR_STATES.FINISH_HD
     ];
@@ -354,6 +358,11 @@ class AvatarController {
     });
 
     try {
+      if (this.videoAvailable) {
+        await this.playOneShotState(AVATAR_STATES.TALK_START, null, requestId);
+        return;
+      }
+
       const replyPromise = this.prepareDemoReply(message, requestId).then((replyText) => {
         if (!this.isCurrentRequest(requestId)) return null;
         this.responseReady = true;
@@ -508,6 +517,7 @@ class AvatarController {
       [AVATAR_STATES.INTRO_HD]: ["Starting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.WAITING_HD]: ["Waiting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.LISTENING]: ["Listening", "rgba(125, 211, 252, 0.1)", "#7dd3fc", "0 0 10px rgba(125, 211, 252, 0.25)"],
+      [AVATAR_STATES.TALK_START]: ["Talk Start", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
       [AVATAR_STATES.FLOW_RESPONSE_HD]: ["Responding", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
       [AVATAR_STATES.FINISH_HD]: ["Finishing", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"],
       [AVATAR_STATES.RETURN_TO_IDLE_HD]: ["Returning", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
