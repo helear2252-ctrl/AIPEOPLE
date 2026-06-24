@@ -12,6 +12,10 @@ const AVATAR_STATES = {
   LISTENING: "LISTENING"
 };
 
+const INTRO_ONCE_SRC = "assets/avatar/AIPEOPLE/027.mp4";
+const WAITING_SRC = "assets/avatar/AIPEOPLE/026.mp4";
+let introPlayed = false;
+
 class CrossfadeController {
   constructor(videoA, videoB, defaultDuration = 450) {
     this.layers = [videoA, videoB];
@@ -184,8 +188,8 @@ class AvatarController {
       avatar_name: "NOVA",
       demo_mode: true,
       video_paths: {
-        INTRO_HD: "assets/avatar/final_hd_ultra_smooth/INTRO_009_TEST.mp4",
-        WAITING_HD: "assets/avatar/nova_hd_flow_v3_candidate/WAITING_HD.mp4",
+        INTRO_HD: INTRO_ONCE_SRC,
+        WAITING_HD: WAITING_SRC,
         FLOW_RESPONSE_HD: "assets/avatar/nova_hd_flow_v3_candidate/FLOW_RESPONSE_HD.mp4",
         FINISH_HD: "assets/avatar/nova_hd_flow_v3_candidate/FINISH_HD.mp4",
         RETURN_TO_IDLE_HD: "assets/avatar/nova_hd_flow_v3_candidate/RETURN_TO_IDLE_HD.mp4",
@@ -242,7 +246,7 @@ class AvatarController {
     this.initDebugPanel();
 
     if (this.videoAvailable) {
-      await this.enterWaiting();
+      await this.playIntroThenWaiting();
     } else {
       this.showFallbackAvatar();
       this.updateStatus(AVATAR_STATES.WAITING_HD);
@@ -401,6 +405,11 @@ class AvatarController {
   }
 
   async playIntroThenWaiting() {
+    if (introPlayed) {
+      await this.enterWaiting(this.currentRequestId);
+      return;
+    }
+    introPlayed = true;
     await this.playState(AVATAR_STATES.INTRO_HD, { loop: false, initial: true });
     await this.crossfade.waitForEnded(this.crossfade.activeVideo);
     await this.enterWaiting(this.currentRequestId);
