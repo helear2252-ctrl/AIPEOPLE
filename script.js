@@ -15,7 +15,7 @@ const AVATAR_STATES = {
 
 const INTRO_ONCE_SRC = "assets/avatar/AIPEOPLE/027.mp4";
 const WAITING_SRC = "assets/avatar/AIPEOPLE/026.mp4";
-const TALK_START_SRC = "assets/avatar/AIPEOPLE/029.mp4";
+const TALK_START_SRC = "assets/avatar/AIPEOPLE/030.mp4";
 let introPlayed = false;
 
 class CrossfadeController {
@@ -58,6 +58,9 @@ class CrossfadeController {
     const next = this.standbyVideo;
 
     await this.prepareVideo(next, src, options);
+    if (typeof options.beforeSwitch === "function") {
+      options.beforeSwitch(next);
+    }
 
     previous.style.transitionDuration = `${duration}ms`;
     next.style.transitionDuration = `${duration}ms`;
@@ -445,9 +448,15 @@ class AvatarController {
     this.updateDebugPanel(state, src);
     this.updateStatus(state);
 
+    const compensateTalkStart = state === AVATAR_STATES.TALK_START && previousState === AVATAR_STATES.WAITING_HD;
+    const effectiveDuration = compensateTalkStart ? 0 : duration;
     const video = options.initial
       ? await this.crossfade.showInitial(src, { loop })
-      : await this.crossfade.crossfadeTo(src, { loop, duration });
+      : await this.crossfade.crossfadeTo(src, {
+          loop,
+          duration: effectiveDuration,
+          beforeSwitch: null
+        });
 
     this.updateDebugPanel(state, video.getAttribute("src") || src);
     this.logFlowEvent("playState:ready", {
@@ -460,6 +469,22 @@ class AvatarController {
       videoCurrentTime: video.currentTime
     });
     return video;
+  }
+
+  fadeVideoBrightness(video, startBrightness, durationMs) {
+    const startedAt = performance.now();
+    const step = () => {
+      const progress = Math.min((performance.now() - startedAt) / durationMs, 1);
+      const brightness = startBrightness + (1 - startBrightness) * progress;
+      video.style.filter = `brightness(${brightness.toFixed(3)})`;
+      if (progress < 1) {
+        requestAnimationFrame(step);
+      } else {
+        video.style.filter = "brightness(1)";
+      }
+    };
+    video.style.filter = `brightness(${startBrightness})`;
+    requestAnimationFrame(step);
   }
 
   async playOneShotState(state, durationMs, requestId) {
