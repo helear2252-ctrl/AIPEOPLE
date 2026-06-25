@@ -8,3 +8,7 @@ __pycache__/
 .streamlit/
 *.log
 tools/rife_ncnn/*.zip
+assets/cache/
+*.backup
+temp_landmarks.png
+

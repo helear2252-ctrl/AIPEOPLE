@@ -87,12 +87,16 @@ class CrossfadeController {
     video.muted = true;
     video.playsInline = true;
 
-    if (video.getAttribute("src") !== src) {
+    const currentSrcAttr = video.getAttribute("src");
+    const isSameSrc = (currentSrcAttr === src) || 
+                      (video.src && (new URL(video.src, window.location.href).href === new URL(src, window.location.href).href));
+
+    if (!isSameSrc) {
       video.src = src;
+      video.load();
+      await this.waitUntilReady(video);
     }
 
-    video.load();
-    await this.waitUntilReady(video);
     try {
       video.currentTime = 0;
     } catch (error) {
@@ -361,8 +365,51 @@ class AvatarController {
     });
 
     try {
+      if (this.config.NOVA_LANDMARK_ENABLED) {
+        this.updateStatus(AVATAR_STATES.FLOW_RESPONSE_HD);
+        
+        let success = false;
+        let result = null;
+        
+        try {
+          const response = await fetch(this.config.NOVA_LANDMARK_API, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message })
+          });
+          result = await response.json();
+          if (result && result.success && result.video_url) {
+            success = true;
+          }
+        } catch (apiError) {
+          console.warn("[NOVA Engine] Landmark API failed, falling back to 030.mp4", apiError);
+        }
+
+        if (!this.isCurrentRequest(requestId)) return;
+
+        if (success) {
+          this.responseReady = true;
+          this.isWaitingForResponse = false;
+          await this.enterTalking(result.response_text, result.video_url, requestId);
+          if (!this.isCurrentRequest(requestId)) return;
+          await this.enterWaiting(requestId);
+        } else {
+          console.log("[NOVA Engine] Running fallback: playing TALK_START (030.mp4)");
+          this.responseReady = true;
+          this.isWaitingForResponse = false;
+          
+          this.showDemoReply("目前 Landmark API 連線異常，正在使用預設語音進行回答。");
+          await this.playOneShotState(AVATAR_STATES.TALK_START, null, requestId);
+          if (!this.isCurrentRequest(requestId)) return;
+          await this.enterWaiting(requestId);
+        }
+        return;
+      }
+
       if (this.videoAvailable) {
         await this.playOneShotState(AVATAR_STATES.TALK_START, null, requestId);
+        if (!this.isCurrentRequest(requestId)) return;
+        await this.enterWaiting(requestId);
         return;
       }
 
@@ -428,7 +475,7 @@ class AvatarController {
   }
 
   async playState(state, options = {}) {
-    const src = this.config.video_paths[state];
+    const src = options.videoUrlOverride ?? this.config.video_paths[state];
     const loop = Boolean(options.loop);
     const duration = options.duration ?? this.config.crossfade_ms;
     const previousState = this.currentState;
@@ -509,10 +556,24 @@ class AvatarController {
     await this.playState(AVATAR_STATES.WAITING_HD, { loop: true });
   }
 
-  async enterTalking(replyText, requestId) {
+  async enterTalking(replyText, videoUrlOrRequestId, maybeRequestId) {
+    let videoUrl = null;
+    let requestId = null;
+    if (typeof videoUrlOrRequestId === "number") {
+      requestId = videoUrlOrRequestId;
+    } else {
+      videoUrl = videoUrlOrRequestId;
+      requestId = maybeRequestId;
+    }
+
     if (!this.isCurrentRequest(requestId)) return;
     this.showDemoReply(replyText);
-    await this.playOneShotState(AVATAR_STATES.FLOW_RESPONSE_HD, null, requestId);
+    if (videoUrl) {
+      const video = await this.playState(AVATAR_STATES.FLOW_RESPONSE_HD, { loop: false, videoUrlOverride: videoUrl });
+      await this.crossfade.waitForEnded(video);
+    } else {
+      await this.playOneShotState(AVATAR_STATES.FLOW_RESPONSE_HD, null, requestId);
+    }
   }
 
   async playFinishThenWaiting(requestId) {

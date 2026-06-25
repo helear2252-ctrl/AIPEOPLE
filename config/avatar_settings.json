@@ -10,6 +10,8 @@
   "avatar_role": "Executive Digital Secretary",
   "default_state": "Idle_Working",
   "demo_mode": true,
+  "NOVA_LANDMARK_ENABLED": true,
+  "NOVA_LANDMARK_API": "http://localhost:8000/api/nova/talk",
   "video_paths": {
     "Idle_Working": "assets/avatar/nova_typing_loop.mp4",
     "Turn_To_User": "assets/avatar/nova_turn_to_user.mp4",
