@@ -1,2 +1,8 @@
 streamlit>=1.25.0
 watchdog>=3.0.0
+fastapi
+uvicorn
+playwright
+openai
+google-generativeai
+python-multipart

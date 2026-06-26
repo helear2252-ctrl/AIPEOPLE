@@ -12,3 +12,12 @@ assets/cache/
 *.backup
 temp_landmarks.png
 
+.env
+runtime/
+runtime/screenshots/
+screenshots/
+screenshot_*.png
+Desktop/NOVA_Output/
+NOVA_Output/
+
+

@@ -6,16 +6,19 @@
 const AVATAR_STATES = {
   INTRO_HD: "INTRO_HD",
   WAITING_HD: "WAITING_HD",
-  TALK_START: "TALK_START",
-  FLOW_RESPONSE_HD: "FLOW_RESPONSE_HD",
-  FINISH_HD: "FINISH_HD",
-  RETURN_TO_IDLE_HD: "RETURN_TO_IDLE_HD",
+  ACK_TASK: "ACK_TASK",
+  AGENT_PENDING_REVEAL: "AGENT_PENDING_REVEAL",
+  AGENT_WORKBENCH: "AGENT_WORKBENCH",
+  WAITING_USER_APPROVAL: "WAITING_USER_APPROVAL",
+  AGENT_SAVING: "AGENT_SAVING",
+  RETURN_TO_WORK: "RETURN_TO_WORK",
   LISTENING: "LISTENING"
 };
 
 const INTRO_ONCE_SRC = "assets/avatar/AIPEOPLE/027.mp4";
 const WAITING_SRC = "assets/avatar/AIPEOPLE/026.mp4";
-const TALK_START_SRC = "assets/avatar/AIPEOPLE/030.mp4";
+const ACK_TASK_SRC = "assets/avatar/AIPEOPLE/ACK_FROM_026.mp4";
+const RETURN_TO_WORK_SRC = "assets/avatar/AIPEOPLE/RETURN_TO_026.mp4";
 let introPlayed = false;
 
 class CrossfadeController {
@@ -199,30 +202,21 @@ class AvatarController {
       video_paths: {
         INTRO_HD: INTRO_ONCE_SRC,
         WAITING_HD: WAITING_SRC,
-        TALK_START: TALK_START_SRC,
-        FLOW_RESPONSE_HD: "assets/avatar/nova_hd_flow_v3_candidate/FLOW_RESPONSE_HD.mp4",
-        FINISH_HD: "assets/avatar/nova_hd_flow_v3_candidate/FINISH_HD.mp4",
-        RETURN_TO_IDLE_HD: "assets/avatar/nova_hd_flow_v3_candidate/RETURN_TO_IDLE_HD.mp4",
+        ACK_TASK: ACK_TASK_SRC,
+        RETURN_TO_WORK: RETURN_TO_WORK_SRC,
         Fallback: "assets/avatar/nova_working_placeholder.png"
       },
-      crossfade_ms: 450,
-      finish_ms: 2000,
-      reply_latency_ms: 1800,
-      long_reply_chars: 90
+      crossfade_ms: 450
     };
 
     this.currentState = AVATAR_STATES.WAITING_HD;
     this.videoAvailable = false;
     this.imageFallbackExists = false;
     this.isBusy = false;
-    this.replyTimer = null;
     this.currentRequestId = 0;
     this.activeRequestId = 0;
     this.debugFlowEvents = [];
     this.debugRequestStartedAt = 0;
-    this.isWaitingForResponse = false;
-    this.responseReady = false;
-    this.replyCount = 0;
 
     this.videoWrapper = document.getElementById("video-wrapper");
     this.videoA = document.getElementById("avatar-video-a");
@@ -240,6 +234,27 @@ class AvatarController {
     this.debugPanel = null;
     this.debugStateText = null;
     this.debugVideoText = null;
+
+    // Agent overlay elements
+    this.agentOverlay = document.getElementById("agent-overlay");
+    this.agentIframe = document.getElementById("agent-workbench-iframe");
+    this.agentTaskDesc = document.getElementById("agent-overlay-task-desc");
+    this.agentStatusLabel = document.getElementById("agent-overlay-status-label");
+    this.agentFooter = document.getElementById("agent-overlay-footer");
+    this.btnAgentClose = document.getElementById("btn-agent-close");
+    this.btnAgentRetry = document.getElementById("btn-agent-retry");
+    this.btnAgentApprove = document.getElementById("btn-agent-approve");
+    this.btnAgentReadjust = document.getElementById("btn-agent-readjust");
+    
+    this.pollingInterval = null;
+    this.currentTaskName = "";
+    
+    // Timing and reveal control properties
+    this.ackRevealTimer = null;
+    this.overlayRevealAllowed = false;
+    this.overlayShown = false;
+    this.pendingAgentStatus = "";
+    this.pendingAgentResult = null;
 
     this.crossfade = new CrossfadeController(this.videoA, this.videoB, this.config.crossfade_ms);
   }
@@ -292,12 +307,30 @@ class AvatarController {
   }
 
   async verifyRequiredVideos() {
+    // Check if optional sliced files exist, otherwise fallback to 030.mp4
+    const hasAckSlice = await this.checkVideoExists(this.config.video_paths.ACK_TASK);
+    if (!hasAckSlice) {
+      console.warn("[NOVA Engine] ACK_FROM_026.mp4 missing, falling back to 030.mp4");
+      this.config.video_paths.ACK_TASK = "assets/avatar/AIPEOPLE/030.mp4";
+    }
+    
+    const hasReturnSlice = await this.checkVideoExists(this.config.video_paths.RETURN_TO_WORK);
+    if (!hasReturnSlice) {
+      const hasReturnToWork34 = await this.checkVideoExists("assets/avatar/AIPEOPLE/034_RETURN_TO_WORK.mp4");
+      if (hasReturnToWork34) {
+        console.warn("[NOVA Engine] RETURN_TO_026.mp4 missing, falling back to 034_RETURN_TO_WORK.mp4");
+        this.config.video_paths.RETURN_TO_WORK = "assets/avatar/AIPEOPLE/034_RETURN_TO_WORK.mp4";
+      } else {
+        console.warn("[NOVA Engine] RETURN_TO_026.mp4 and 034_RETURN_TO_WORK.mp4 missing, falling back to 030.mp4");
+        this.config.video_paths.RETURN_TO_WORK = "assets/avatar/AIPEOPLE/030.mp4";
+      }
+    }
+
     const requiredStates = [
       AVATAR_STATES.INTRO_HD,
       AVATAR_STATES.WAITING_HD,
-      AVATAR_STATES.TALK_START,
-      AVATAR_STATES.FLOW_RESPONSE_HD,
-      AVATAR_STATES.FINISH_HD
+      AVATAR_STATES.ACK_TASK,
+      AVATAR_STATES.RETURN_TO_WORK
     ];
 
     const results = await Promise.all(requiredStates.map((state) => this.checkVideoExists(this.config.video_paths[state])));
@@ -342,125 +375,319 @@ class AvatarController {
       }
     });
     this.btnClear.addEventListener("click", () => this.clearChat());
+    
+    // Bind overlay buttons
+    this.btnAgentClose.addEventListener("click", () => this.closeAgentOverlay());
+    this.btnAgentRetry.addEventListener("click", () => this.retryAgentTask());
+    this.btnAgentApprove.addEventListener("click", () => this.approveAgentResult());
+    this.btnAgentReadjust.addEventListener("click", () => this.readjustAgentTask());
   }
 
   async handleSendMessageFlow() {
     const message = this.chatInput.value.trim();
     if (!message || this.isBusy) return;
 
-    const requestId = ++this.currentRequestId;
-    this.activeRequestId = requestId;
-    this.isWaitingForResponse = true;
-    this.responseReady = false;
-    this.isBusy = true;
     this.chatInput.value = "";
+    this.currentTaskName = message;
+    this.isBusy = true;
     this.setInputsDisabled(true);
     this.appendMessage("user", message);
-    const requestStartedAt = performance.now();
-    this.debugRequestStartedAt = requestStartedAt;
+
     this.logFlowEvent("request:start", {
       fromState: this.currentState,
-      toState: this.currentState,
-      requestId
+      toState: "ACK_TASK"
     });
 
+    // Reset overlay tracking flags
+    this.overlayRevealAllowed = false;
+    this.overlayShown = false;
+    this.pendingAgentStatus = "";
+    this.pendingAgentResult = null;
+    this.updateStatus(AVATAR_STATES.ACK_TASK);
+
+    // 1. Preload Streamlit iframe immediately
+    this.preloadAgentWorkbenchIframe();
+
     try {
-      if (this.config.NOVA_LANDMARK_ENABLED) {
-        this.updateStatus(AVATAR_STATES.FLOW_RESPONSE_HD);
-        
-        let success = false;
-        let result = null;
-        
-        try {
-          const response = await fetch(this.config.NOVA_LANDMARK_API, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ message })
-          });
-          result = await response.json();
-          if (result && result.success && result.video_url) {
-            success = true;
-          }
-        } catch (apiError) {
-          console.warn("[NOVA Engine] Landmark API failed, falling back to 030.mp4", apiError);
-        }
-
-        if (!this.isCurrentRequest(requestId)) return;
-
-        if (success) {
-          this.responseReady = true;
-          this.isWaitingForResponse = false;
-          await this.enterTalking(result.response_text, result.video_url, requestId);
-          if (!this.isCurrentRequest(requestId)) return;
-          await this.enterWaiting(requestId);
-        } else {
-          console.log("[NOVA Engine] Running fallback: playing TALK_START (030.mp4)");
-          this.responseReady = true;
-          this.isWaitingForResponse = false;
-          
-          this.showDemoReply("目前 Landmark API 連線異常，正在使用預設語音進行回答。");
-          await this.playOneShotState(AVATAR_STATES.TALK_START, null, requestId);
-          if (!this.isCurrentRequest(requestId)) return;
-          await this.enterWaiting(requestId);
-        }
-        return;
+      // 2. Send start task to FastAPI immediately
+      let startResult = null;
+      try {
+        const response = await fetch("http://localhost:8787/api/agent/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ task: message })
+        });
+        startResult = await response.json();
+      } catch (err) {
+        console.error("[NOVA Agent] FastAPI start call failed:", err);
       }
 
+      // 3. Play ACK_TASK (030.mp4) transition once
       if (this.videoAvailable) {
-        await this.playOneShotState(AVATAR_STATES.TALK_START, null, requestId);
-        if (!this.isCurrentRequest(requestId)) return;
-        await this.enterWaiting(requestId);
-        return;
+        await this.playState(AVATAR_STATES.ACK_TASK, { loop: false });
       }
 
-      const replyPromise = this.prepareDemoReply(message, requestId).then((replyText) => {
-        if (!this.isCurrentRequest(requestId)) return null;
-        this.responseReady = true;
-        this.isWaitingForResponse = false;
-        return replyText;
-      });
+      // 4. Force 8 seconds delay (8000ms) before showing overlay
+      const ACK_MIN_PLAY_MS = 8000;
+      if (this.ackRevealTimer) clearTimeout(this.ackRevealTimer);
+      
+      this.ackRevealTimer = setTimeout(() => {
+        this.overlayRevealAllowed = true;
+        this.showAgentOverlay();
+      }, ACK_MIN_PLAY_MS);
 
-      if (this.videoAvailable) {
-        const replyText = await replyPromise;
-        if (!this.isCurrentRequest(requestId)) return;
-        if (!replyText) return;
+      // 5. Start polling status immediately
+      this.startPollingStatus();
 
-        await this.enterTalking(replyText, requestId);
-        if (!this.isCurrentRequest(requestId)) return;
-
-        await this.playFinishThenWaiting(requestId);
-      } else {
-        const replyText = await replyPromise;
-        if (!this.isCurrentRequest(requestId)) return;
-        this.updateStatus(AVATAR_STATES.FLOW_RESPONSE_HD);
-        this.showDemoReply(replyText);
-        await this.waitForRequest(3000, requestId);
-        this.updateStatus(AVATAR_STATES.WAITING_HD);
-      }
     } catch (error) {
       console.error("[NOVA Engine] Conversation flow failed.", error);
-      if (this.isCurrentRequest(requestId)) {
-        this.appendMessage("assistant", "Demo response failed. Please try again.");
-        this.isWaitingForResponse = false;
-        this.responseReady = true;
-        await this.enterWaiting(requestId);
-      }
-    } finally {
-      if (this.isCurrentRequest(requestId)) {
-        this.isWaitingForResponse = false;
-        this.setInputsDisabled(false);
-        this.isBusy = false;
-      }
+      this.appendMessage("assistant", "Failed to initialize Agent Workbench. Please make sure FastAPI backend is running on port 8787.");
+      this.isBusy = false;
+      this.setInputsDisabled(false);
+      this.updateStatus(AVATAR_STATES.WAITING_HD);
+      await this.enterWaiting();
     }
   }
 
-  prepareDemoReply(userMessage, requestId) {
-    return new Promise((resolve) => {
-      window.setTimeout(() => {
-        if (!this.isCurrentRequest(requestId)) return;
-        resolve(`I heard you: "${userMessage}". This is NOVA's HD demo response flow.`);
-      }, this.config.reply_latency_ms);
-    });
+  preloadAgentWorkbenchIframe() {
+    if (!this.agentIframe.src || this.agentIframe.src === "about:blank" || this.agentIframe.src === window.location.href) {
+      this.agentIframe.src = "http://localhost:8501";
+      console.log("[NOVA Engine] Workbench iframe preloading initiated.");
+    }
+  }
+
+  showAgentOverlay() {
+    if (this.overlayShown || !this.overlayRevealAllowed) return;
+    this.overlayShown = true;
+    this.revealTime = Date.now();
+    
+    if (this.ackRevealTimer) clearTimeout(this.ackRevealTimer);
+    
+    // Open Agent Overlay
+    this.agentTaskDesc.innerText = `Task: ${this.currentTaskName}`;
+    
+    // Ensure preloaded src is active
+    this.preloadAgentWorkbenchIframe();
+    
+    // Add classes for visual flow animations
+    this.agentOverlay.classList.remove("ready");
+    this.agentOverlay.classList.add("is-active", "opening");
+    this.agentFooter.style.display = "none";
+    
+    // Once transition completes (600ms), add ready class for heavy glows/blur
+    setTimeout(() => {
+      if (!this.agentOverlay.classList.contains("is-active")) return;
+      this.agentOverlay.classList.remove("opening");
+      this.agentOverlay.classList.add("ready");
+    }, 600);
+    
+    // Apply pending agent status if any has completed/errored early
+    if (this.pendingAgentResult) {
+      this.applyPendingAgentResult();
+    } else {
+      this.agentStatusLabel.innerText = "WORKING";
+      this.updateStatus(AVATAR_STATES.AGENT_WORKBENCH);
+    }
+  }
+
+  applyPendingAgentResult() {
+    const data = this.pendingAgentResult;
+    const status = data.status;
+    this.agentStatusLabel.innerText = "PREPARING";
+    this.updateStatus(AVATAR_STATES.AGENT_PENDING_REVEAL);
+    
+    if (status === "completed") {
+      this.handleAgentCompletedState(data);
+    } else {
+      this.handleAgentFailedState(data);
+    }
+  }
+
+  startPollingStatus() {
+    if (this.pollingInterval) clearInterval(this.pollingInterval);
+
+    this.pollingInterval = setInterval(async () => {
+      try {
+        const response = await fetch("http://localhost:8787/api/agent/status");
+        if (!response.ok) return;
+        const data = await response.json();
+        
+        const status = data.status;
+        
+        if (status === "completed") {
+          clearInterval(this.pollingInterval);
+          this.pollingInterval = null;
+          
+          if (!this.overlayShown) {
+            this.pendingAgentStatus = status;
+            this.pendingAgentResult = data;
+            console.log("[NOVA Engine] Task completed early, caching result.");
+          } else {
+            this.handleAgentCompletedState(data);
+          }
+        } else if (status === "missing_api_key" || status === "error") {
+          clearInterval(this.pollingInterval);
+          this.pollingInterval = null;
+          
+          if (!this.overlayShown) {
+            this.pendingAgentStatus = status;
+            this.pendingAgentResult = data;
+            console.log("[NOVA Engine] Task stopped early with code: " + status);
+          } else {
+            this.handleAgentFailedState(data);
+          }
+        } else {
+          if (!this.overlayShown) {
+            this.pendingAgentStatus = status;
+            this.pendingAgentResult = data;
+          } else {
+            this.agentStatusLabel.innerText = status.toUpperCase();
+          }
+        }
+      } catch (err) {
+        console.error("[NOVA Agent] Polling failed:", err);
+      }
+    }, 1000);
+  }
+
+  handleAgentCompletedState(data) {
+    if (!this.agentOverlay.classList.contains("is-active")) return;
+
+    const elapsed = Date.now() - this.revealTime;
+    const remaining = 600 - elapsed;
+    if (remaining > 0) {
+      setTimeout(() => this.handleAgentCompletedState(data), remaining);
+      return;
+    }
+    
+    this.agentStatusLabel.innerText = "PREVIEW READY";
+    this.updateStatus(AVATAR_STATES.WAITING_USER_APPROVAL);
+    
+    this.agentFooter.style.display = "flex";
+    this.btnAgentApprove.style.display = "inline-block";
+    this.btnAgentReadjust.style.display = "inline-block";
+    this.btnAgentClose.style.display = "none";
+    this.btnAgentRetry.style.display = "none";
+    
+    this.appendMessage("assistant", "已完成初步結果，請確認是否滿意。");
+  }
+
+  handleAgentFailedState(data) {
+    if (!this.agentOverlay.classList.contains("is-active")) return;
+
+    const elapsed = Date.now() - this.revealTime;
+    const remaining = 600 - elapsed;
+    if (remaining > 0) {
+      setTimeout(() => this.handleAgentFailedState(data), remaining);
+      return;
+    }
+    
+    const status = data.status;
+    this.agentStatusLabel.innerText = status === "missing_api_key" ? "MISSING API KEY" : "ERROR";
+    
+    this.agentFooter.style.display = "flex";
+    this.btnAgentApprove.style.display = "none";
+    this.btnAgentReadjust.style.display = "none";
+    this.btnAgentClose.style.display = "inline-block";
+    this.btnAgentRetry.style.display = status === "error" ? "inline-block" : "none";
+    
+    this.appendMessage("assistant", `Agent execution stopped: ${status.toUpperCase()}. Details: ${data.error_message || ""}`);
+  }
+
+  async approveAgentResult() {
+    this.agentStatusLabel.innerText = "SAVING...";
+    this.updateStatus(AVATAR_STATES.AGENT_SAVING);
+    this.btnAgentApprove.disabled = true;
+    this.btnAgentReadjust.disabled = true;
+    
+    setTimeout(async () => {
+      this.agentStatusLabel.innerText = "SAVED";
+      
+      setTimeout(async () => {
+        this.btnAgentApprove.disabled = false;
+        this.btnAgentReadjust.disabled = false;
+        
+        // Hide overlay with smooth closing transitions
+        this.agentOverlay.classList.remove("is-active", "ready", "opening");
+        this.agentIframe.src = "";
+        
+        // Wait for overlay transition to finish (e.g. 500ms)
+        await this.wait(500);
+        
+        // Play RETURN_TO_WORK transition once
+        if (this.videoAvailable) {
+          const video = await this.playState(AVATAR_STATES.RETURN_TO_WORK, { loop: false });
+          await this.crossfade.waitForEnded(video);
+        } else {
+          this.updateStatus(AVATAR_STATES.RETURN_TO_WORK);
+        }
+        
+        await this.enterWaiting();
+        
+        this.isBusy = false;
+        this.setInputsDisabled(false);
+      }, 1000);
+    }, 1000);
+  }
+
+  readjustAgentTask() {
+    alert("重新調整功能將於下一版開放");
+  }
+
+  async closeAgentOverlay() {
+    this.agentOverlay.classList.remove("is-active", "ready", "opening");
+    this.agentIframe.src = "";
+    
+    if (this.pollingInterval) {
+      clearInterval(this.pollingInterval);
+      this.pollingInterval = null;
+    }
+    if (this.ackRevealTimer) clearTimeout(this.ackRevealTimer);
+    
+    try {
+      await fetch("http://localhost:8787/api/agent/stop", { method: "POST" });
+    } catch (e) {}
+
+    // Wait for overlay transition to finish (e.g. 500ms)
+    await this.wait(500);
+
+    if (this.videoAvailable) {
+      const video = await this.playState(AVATAR_STATES.RETURN_TO_WORK, { loop: false });
+      await this.crossfade.waitForEnded(video);
+    }
+    await this.enterWaiting();
+
+    this.isBusy = false;
+    this.setInputsDisabled(false);
+  }
+
+  async retryAgentTask() {
+    this.agentFooter.style.display = "none";
+    this.btnAgentRetry.style.display = "none";
+    this.btnAgentApprove.style.display = "none";
+    this.btnAgentReadjust.style.display = "none";
+    
+    this.overlayRevealAllowed = true;
+    this.overlayShown = true;
+    this.pendingAgentStatus = "running";
+    this.pendingAgentResult = null;
+    this.agentStatusLabel.innerText = "WORKING";
+    this.updateStatus(AVATAR_STATES.AGENT_WORKBENCH);
+    
+    // Refresh Streamlit UI
+    this.agentIframe.src = "http://localhost:8501";
+
+    try {
+      await fetch("http://localhost:8787/api/agent/start", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task: this.currentTaskName })
+      });
+    } catch (e) {
+      console.error("[NOVA Agent] Retry start call failed:", e);
+    }
+
+    this.startPollingStatus();
   }
 
   async playIntroThenWaiting() {
@@ -480,7 +707,6 @@ class AvatarController {
     const duration = options.duration ?? this.config.crossfade_ms;
     const previousState = this.currentState;
     const activeVideo = this.crossfade.activeVideo;
-    const standbyVideo = this.crossfade.standbyVideo;
 
     this.logFlowEvent("playState:start", {
       fromState: previousState,
@@ -495,7 +721,7 @@ class AvatarController {
     this.updateDebugPanel(state, src);
     this.updateStatus(state);
 
-    const compensateTalkStart = state === AVATAR_STATES.TALK_START && previousState === AVATAR_STATES.WAITING_HD;
+    const compensateTalkStart = state === AVATAR_STATES.ACK_TASK && previousState === AVATAR_STATES.WAITING_HD;
     const effectiveDuration = compensateTalkStart ? 0 : duration;
     const video = options.initial
       ? await this.crossfade.showInitial(src, { loop })
@@ -534,53 +760,13 @@ class AvatarController {
     requestAnimationFrame(step);
   }
 
-  async playOneShotState(state, durationMs, requestId) {
-    const video = await this.playState(state, { loop: false });
-    if (!this.isCurrentRequest(requestId)) return video;
-
-    if (durationMs) {
-      await this.waitForRequest(durationMs, requestId);
-    } else {
-      await this.crossfade.waitForEnded(video);
-    }
-    return video;
-  }
-
   async enterWaiting(requestId = this.currentRequestId) {
     if (!this.videoAvailable) {
       this.showFallbackAvatar();
       this.updateStatus(AVATAR_STATES.WAITING_HD);
       return;
     }
-    if (!this.isCurrentRequest(requestId)) return;
     await this.playState(AVATAR_STATES.WAITING_HD, { loop: true });
-  }
-
-  async enterTalking(replyText, videoUrlOrRequestId, maybeRequestId) {
-    let videoUrl = null;
-    let requestId = null;
-    if (typeof videoUrlOrRequestId === "number") {
-      requestId = videoUrlOrRequestId;
-    } else {
-      videoUrl = videoUrlOrRequestId;
-      requestId = maybeRequestId;
-    }
-
-    if (!this.isCurrentRequest(requestId)) return;
-    this.showDemoReply(replyText);
-    if (videoUrl) {
-      const video = await this.playState(AVATAR_STATES.FLOW_RESPONSE_HD, { loop: false, videoUrlOverride: videoUrl });
-      await this.crossfade.waitForEnded(video);
-    } else {
-      await this.playOneShotState(AVATAR_STATES.FLOW_RESPONSE_HD, null, requestId);
-    }
-  }
-
-  async playFinishThenWaiting(requestId) {
-    if (!this.isCurrentRequest(requestId)) return;
-    await this.playOneShotState(AVATAR_STATES.FINISH_HD, null, requestId);
-    if (!this.isCurrentRequest(requestId)) return;
-    await this.enterWaiting(requestId);
   }
 
   enterListeningState() {
@@ -601,12 +787,14 @@ class AvatarController {
 
     const styles = {
       [AVATAR_STATES.INTRO_HD]: ["Starting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
-      [AVATAR_STATES.WAITING_HD]: ["Waiting", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
+      [AVATAR_STATES.WAITING_HD]: ["Working", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
       [AVATAR_STATES.LISTENING]: ["Listening", "rgba(125, 211, 252, 0.1)", "#7dd3fc", "0 0 10px rgba(125, 211, 252, 0.25)"],
-      [AVATAR_STATES.TALK_START]: ["Talk Start", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
-      [AVATAR_STATES.FLOW_RESPONSE_HD]: ["Responding", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
-      [AVATAR_STATES.FINISH_HD]: ["Finishing", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"],
-      [AVATAR_STATES.RETURN_TO_IDLE_HD]: ["Returning", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
+      [AVATAR_STATES.ACK_TASK]: ["Ack Task", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
+      [AVATAR_STATES.AGENT_PENDING_REVEAL]: ["Preparing", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
+      [AVATAR_STATES.AGENT_WORKBENCH]: ["Agent Live", "rgba(56, 189, 248, 0.1)", "var(--accent-color)", "0 0 10px rgba(56, 189, 248, 0.25)"],
+      [AVATAR_STATES.WAITING_USER_APPROVAL]: ["Reviewing", "rgba(251, 191, 36, 0.1)", "#fbbf24", "0 0 12px rgba(251, 191, 36, 0.4)"],
+      [AVATAR_STATES.AGENT_SAVING]: ["Saving", "rgba(16, 185, 129, 0.1)", "#10b981", "0 0 12px rgba(16, 185, 129, 0.4)"],
+      [AVATAR_STATES.RETURN_TO_WORK]: ["Returning", "rgba(148, 163, 184, 0.08)", "#94a3b8", "0 0 10px rgba(148, 163, 184, 0.2)"]
     };
 
     const [label, background, color, shadow] = styles[state] || styles[AVATAR_STATES.WAITING_HD];

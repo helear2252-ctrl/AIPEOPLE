@@ -107,6 +107,35 @@
     </main>
   </div>
 
+  <!-- Agent Overlay -->
+  <div id="agent-overlay" class="agent-overlay">
+    <div class="agent-overlay-card">
+      <div class="agent-overlay-header">
+        <div class="agent-overlay-title-group">
+          <i class="fa-solid fa-robot agent-overlay-icon"></i>
+          <div>
+            <h4 id="agent-overlay-title">NOVA Agent Workbench</h4>
+            <p id="agent-overlay-task-desc">Task: Initializing...</p>
+          </div>
+        </div>
+        <div class="agent-overlay-status-badge" id="agent-overlay-status">
+          <span class="status-dot pulsing"></span>
+          <span id="agent-overlay-status-label">Initializing</span>
+        </div>
+      </div>
+      <div class="agent-overlay-content">
+        <iframe id="agent-workbench-iframe" src="" frameborder="0"></iframe>
+      </div>
+      <div class="agent-overlay-footer" id="agent-overlay-footer" style="display: none;">
+        <button id="btn-agent-approve" class="btn-primary" style="display: none;">滿意，儲存並完成</button>
+        <button id="btn-agent-readjust" class="btn-secondary" style="display: none;">重新調整</button>
+        <button id="btn-agent-close" class="btn-primary" style="display: none;">Close Workbench</button>
+        <button id="btn-agent-retry" class="btn-secondary" style="display: none;">Retry Task</button>
+      </div>
+    </div>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
+
