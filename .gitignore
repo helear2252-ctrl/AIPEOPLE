@@ -20,4 +20,28 @@ screenshot_*.png
 Desktop/NOVA_Output/
 NOVA_Output/
 
+# Python virtual environments
+
+.venv/
+venv/
+env/
+
+# Python cache
+
+**pycache**/
+*.pyc
+*.pyo
+*.pyd
+
+# Local runtime files
+
+runtime/
+*.log
+
+# Environment files
+
+.env
+.env.local
+.env.*.local
+
 
