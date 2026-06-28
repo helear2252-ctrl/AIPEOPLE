@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="data:,">
   <title>NOVA AI - Your Intelligent Digital Human Assistant</title>
   <meta name="description" content="Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation.">
   <meta name="keywords" content="NOVA AI, Digital Human, LLM, Gemini, OpenAI, LipSync, TTS, STT">
@@ -124,7 +125,14 @@
         </div>
       </div>
       <div class="agent-overlay-content">
-        <iframe id="agent-workbench-iframe" src="" frameborder="0"></iframe>
+        <div id="agent-mock-panel" class="agent-mock-panel" role="status" aria-live="polite">
+          <div class="agent-mock-badge">MOCK MODE · NO REAL AGENT CONNECTED</div>
+          <i class="fa-solid fa-gears agent-mock-visual" aria-hidden="true"></i>
+          <h3 id="agent-mock-heading">NOVA is preparing your task</h3>
+          <p id="agent-mock-detail">This workbench is a local visual mock. No external AI service is being called.</p>
+          <p id="agent-completion-text" class="agent-completion-text" hidden>已幫你完成，還有需要幫你做什麼嗎？</p>
+        </div>
+        <iframe id="agent-workbench-iframe" src="" frameborder="0" hidden aria-hidden="true" title="Reserved Agent Workbench"></iframe>
       </div>
       <div class="agent-overlay-footer" id="agent-overlay-footer" style="display: none;">
         <button id="btn-agent-approve" class="btn-primary" style="display: none;">滿意，儲存並完成</button>
