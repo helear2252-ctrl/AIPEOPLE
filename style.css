@@ -1052,7 +1052,7 @@ body::after,
 .agent-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(3, 7, 18, 0.75);
+  background: transparent;
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   display: flex;
@@ -1067,6 +1067,16 @@ body::after,
   will-change: opacity, backdrop-filter;
 }
 
+body.agent-overlay-open {
+  overflow: hidden;
+}
+
+.agent-overlay-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.78);
+}
+
 .agent-overlay.is-active {
   opacity: 1;
   visibility: visible;
@@ -1079,8 +1089,10 @@ body::after,
 }
 
 .agent-overlay-card {
-  width: 90%;
-  max-width: 960px;
+  position: relative;
+  z-index: 1;
+  width: min(94vw, 1120px);
+  max-height: 94vh;
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(56, 189, 248, 0.2);
   border-radius: 16px;
@@ -1113,6 +1125,28 @@ body::after,
   display: flex;
   justify-content: space-between;
   align-items: center;
+}
+
+.agent-overlay-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.agent-overlay-close {
+  padding: 7px 12px;
+  border: 1px solid rgba(251, 113, 133, 0.5);
+  border-radius: 8px;
+  color: #fecdd3;
+  background: rgba(127, 29, 29, 0.28);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.agent-overlay-close:hover {
+  border-color: #fb7185;
+  background: rgba(159, 18, 57, 0.4);
 }
 
 .agent-overlay-title-group {
@@ -1173,13 +1207,16 @@ body::after,
 }
 
 .agent-overlay-content {
-  height: 60vh;
-  min-height: 480px;
+  width: 100%;
+  height: min(68vh, 720px);
+  min-height: 400px;
   background: #0f172a;
   position: relative;
+  overflow: hidden;
 }
 
 .agent-overlay-content iframe {
+  display: block;
   width: 100%;
   height: 100%;
   border: none;
@@ -1258,13 +1295,91 @@ body::after,
   to { transform: rotate(360deg); }
 }
 
+.agent-overlay-message-layer {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  pointer-events: none;
+}
+
+.agent-completion-message,
+.agent-error-message {
+  max-width: 680px;
+  padding: 22px 28px;
+  border-radius: 14px;
+  text-align: center;
+  white-space: pre-line;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.48);
+}
+
+.agent-completion-message {
+  border: 1px solid rgba(52, 211, 153, 0.58);
+  color: #d1fae5;
+  background: rgba(6, 78, 59, 0.9);
+  font-size: clamp(19px, 2.6vw, 28px);
+  font-weight: 800;
+}
+
+.agent-error-message {
+  border: 1px solid rgba(251, 113, 133, 0.58);
+  color: #ffe4e6;
+  background: rgba(76, 5, 25, 0.92);
+  font-size: 16px;
+  line-height: 1.65;
+}
+
+.agent-streamlit-notice {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 14px;
+  padding: 9px 12px;
+  border: 1px solid rgba(251, 191, 36, 0.45);
+  border-radius: 9px;
+  color: #fde68a;
+  background: rgba(69, 26, 3, 0.9);
+  text-align: center;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.agent-completion-message[hidden],
+.agent-error-message[hidden],
+.agent-streamlit-notice[hidden],
+.agent-overlay-close[hidden] {
+  display: none !important;
+}
+
 .agent-overlay-footer {
   padding: 12px 24px;
   background: rgba(15, 23, 42, 0.9);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+}
+
+@media (max-width: 720px) {
+  .agent-overlay-header {
+    padding: 12px 14px;
+  }
+
+  .agent-overlay-header-actions {
+    align-items: flex-end;
+    flex-direction: column;
+  }
+
+  .agent-overlay-content {
+    height: 70vh;
+    min-height: 360px;
+  }
 }
 
 .btn-primary {

@@ -25,10 +25,15 @@ const VIDEO_PATHS = Object.freeze({
 // 026: assets/avatar/AIPEOPLE/026.mp4
 // 030: assets/avatar/AIPEOPLE/030.mp4
 
-const FIRST_ACK_MIN_PLAY_MS = 6000;
-const MOCK_WORK_DURATION_MS = 1800;
+const AGENT_API_BASE = "http://127.0.0.1:8787";
+const STREAMLIT_WORKBENCH_URL = "http://127.0.0.1:8501";
+const FIRST_ACK_MIN_DURATION_MS = 6000;
 const MOCK_COMPLETION_HOLD_MS = 1000;
 const COMPLETION_TEXT = "已幫你完成，還有需要幫你做什麼嗎？";
+
+let hasCompletedFirstTask = false;
+let isAgentRunning = false;
+let agentStatusPollTimer = null;
 
 class CrossfadeController {
   constructor(videoA, videoB, defaultDuration = 450) {
@@ -213,7 +218,7 @@ class AvatarController {
     };
 
     this.currentState = AVATAR_STATES.INITIAL_LOOP_040;
-    this.hasCompletedFirstTask = false;
+    this.hasCompletedFirstTask = hasCompletedFirstTask;
     this.videoAvailable = false;
     this.imageFallbackExists = false;
     this.isBusy = false;
@@ -238,10 +243,14 @@ class AvatarController {
     this.agentOverlay = document.getElementById("agent-overlay");
     this.agentTaskDesc = document.getElementById("agent-overlay-task-desc");
     this.agentStatusLabel = document.getElementById("agent-overlay-status-label");
-    this.agentMockHeading = document.getElementById("agent-mock-heading");
-    this.agentMockDetail = document.getElementById("agent-mock-detail");
-    this.agentCompletionText = document.getElementById("agent-completion-text");
+    this.agentIframe = document.getElementById("agent-workbench-frame");
+    this.agentCompletionText = document.getElementById("agent-completion-message");
+    this.agentErrorText = document.getElementById("agent-error-message");
+    this.agentStreamlitNotice = document.getElementById("agent-streamlit-notice");
+    this.agentCloseButton = document.getElementById("agent-overlay-close");
     this.agentFooter = document.getElementById("agent-overlay-footer");
+    this.agentPollInFlight = false;
+    this.agentCompletionInProgress = false;
 
     this.crossfade = new CrossfadeController(this.videoA, this.videoB, this.config.crossfade_ms);
   }
@@ -289,6 +298,7 @@ class AvatarController {
       }
     });
     this.btnClear.addEventListener("click", () => this.clearChat());
+    this.agentCloseButton.addEventListener("click", () => this.closeAgentOverlayAfterError());
   }
 
   async verifyRequiredVideos() {
@@ -341,7 +351,7 @@ class AvatarController {
 
   async handleSendMessageFlow() {
     const message = this.chatInput.value.trim();
-    if (!message || this.isBusy || !this.videoAvailable) return;
+    if (!message || isAgentRunning || this.isBusy || !this.videoAvailable) return;
 
     this.isBusy = true;
     this.setInputsDisabled(true);
@@ -353,11 +363,11 @@ class AvatarController {
     this.logFlowEvent("task:submitted", { requestId });
 
     try {
-      if (!this.hasCompletedFirstTask) {
+      if (!hasCompletedFirstTask) {
         const ackVideo = await this.playState(AVATAR_STATES.FIRST_ACK_041, { loop: true });
         const ackStartedAt = performance.now();
         this.logFlowEvent("first-ack:started", { requestId, video: ackVideo.currentSrc });
-        await this.wait(FIRST_ACK_MIN_PLAY_MS);
+        await this.wait(FIRST_ACK_MIN_DURATION_MS);
         if (!this.isCurrentRequest(requestId)) return;
         this.logFlowEvent("first-ack:minimum-met", {
           requestId,
@@ -365,46 +375,63 @@ class AvatarController {
         });
       }
 
-      await this.runMockAgentFlow(requestId);
+      await this.startAgentWorkbench(message, requestId);
     } catch (error) {
-      console.error("[NOVA Phase 0.7] Mock flow failed.", error);
-      await this.recoverFromFlowError();
+      console.error("[NOVA Phase A3] Agent integration failed.", error);
+      this.showAgentError("Agent mock integration failed.\nPlease return to NOVA and try again.");
     }
   }
 
-  async runMockAgentFlow(requestId) {
-    if (!this.isCurrentRequest(requestId)) return;
-    this.showAgentOverlay();
+  async startAgentWorkbench(task, requestId) {
+    if (!this.isCurrentRequest(requestId) || isAgentRunning) return;
+    isAgentRunning = true;
+    this.showAgentOverlay(task);
     this.updateStatus(AVATAR_STATES.AGENT_WORKBENCH);
-    await this.wait(MOCK_WORK_DURATION_MS);
-    if (!this.isCurrentRequest(requestId)) return;
+    this.checkStreamlitAvailability();
 
-    this.updateStatus(AVATAR_STATES.AGENT_COMPLETED_TTS);
-    this.showCompletionFallback();
-    await this.playCompletionTTS();
-    await this.wait(MOCK_COMPLETION_HOLD_MS);
-    if (!this.isCurrentRequest(requestId)) return;
+    try {
+      const response = await fetch(`${AGENT_API_BASE}/api/agent/start`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ task })
+      });
+      if (!response.ok) {
+        throw new Error(`FastAPI start returned HTTP ${response.status}`);
+      }
+      const result = await response.json();
+      if (!this.isCurrentRequest(requestId)) return;
 
-    await this.hideAgentOverlay();
-    const transitionVideo = await this.playState(AVATAR_STATES.COMPLETE_TRANSITION_042, { loop: false });
-    await this.crossfade.waitForEnded(transitionVideo);
-    if (!this.isCurrentRequest(requestId)) return;
+      this.agentStatusLabel.innerText = result.status === "completed" ? "MOCK COMPLETE" : "MOCK WORKING";
+      this.logFlowEvent("agent:start", {
+        requestId,
+        sessionId: result.session_id,
+        alreadyRunning: Boolean(result.already_running)
+      });
 
-    await this.playState(AVATAR_STATES.FINAL_LOOP_043, { loop: true });
-    this.hasCompletedFirstTask = true;
-    this.logFlowEvent("task:complete", { requestId, hasCompletedFirstTask: true });
-    this.isBusy = false;
-    this.setInputsDisabled(false);
-    this.chatInput.focus();
+      if (result.status === "completed") {
+        await this.handleAgentCompleted(requestId);
+      } else {
+        this.startAgentStatusPolling(requestId);
+      }
+    } catch (error) {
+      console.warn("[NOVA Agent] FastAPI mock server is unavailable.", error);
+      isAgentRunning = false;
+      this.showAgentError(
+        "FastAPI mock server is not running.\nPlease start localhost:8787 first."
+      );
+    }
   }
 
-  showAgentOverlay() {
-    this.agentTaskDesc.innerText = `Task: ${this.currentTaskName} · LOCAL MOCK`;
-    this.agentStatusLabel.innerText = "MOCK WORKING";
-    this.agentMockHeading.innerText = "NOVA is preparing your task";
-    this.agentMockDetail.innerText = "This workbench is a local visual mock. No external AI service is being called.";
+  showAgentOverlay(task) {
+    this.agentCompletionInProgress = false;
+    this.agentTaskDesc.innerText = `Task: ${task} · MOCK`;
+    this.agentStatusLabel.innerText = "INITIALIZING";
     this.agentCompletionText.hidden = true;
-    this.agentFooter.style.display = "none";
+    this.agentErrorText.hidden = true;
+    this.agentStreamlitNotice.hidden = true;
+    this.agentCloseButton.hidden = true;
+    this.agentIframe.src = STREAMLIT_WORKBENCH_URL;
+    document.body.classList.add("agent-overlay-open");
 
     this.agentOverlay.classList.remove("ready", "is-completing", "is-closing");
     this.agentOverlay.classList.add("is-active", "opening");
@@ -417,10 +444,111 @@ class AvatarController {
     });
   }
 
-  showCompletionFallback() {
+  async checkStreamlitAvailability() {
+    const controller = new AbortController();
+    const timeoutId = window.setTimeout(() => controller.abort(), 2500);
+    try {
+      await fetch(`${STREAMLIT_WORKBENCH_URL}/_stcore/health`, {
+        mode: "no-cors",
+        cache: "no-store",
+        signal: controller.signal
+      });
+      this.agentStreamlitNotice.hidden = true;
+    } catch (error) {
+      console.warn("[NOVA Agent] Streamlit workbench may be unavailable.", error);
+      this.agentStreamlitNotice.hidden = false;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+  }
+
+  startAgentStatusPolling(requestId) {
+    this.clearAgentStatusPolling();
+    this.pollAgentStatus(requestId);
+    agentStatusPollTimer = window.setInterval(() => this.pollAgentStatus(requestId), 1000);
+  }
+
+  async pollAgentStatus(requestId) {
+    if (this.agentPollInFlight || !isAgentRunning || !this.isCurrentRequest(requestId)) return;
+    this.agentPollInFlight = true;
+    try {
+      const response = await fetch(`${AGENT_API_BASE}/api/agent/status`, { cache: "no-store" });
+      if (!response.ok) throw new Error(`FastAPI status returned HTTP ${response.status}`);
+      const result = await response.json();
+      if (!this.isCurrentRequest(requestId)) return;
+
+      if (result.status === "running") {
+        this.agentStatusLabel.innerText = "MOCK WORKING";
+        return;
+      }
+      if (result.status === "completed") {
+        this.clearAgentStatusPolling();
+        await this.handleAgentCompleted(requestId);
+        return;
+      }
+      if (["error", "missing_api_key", "stopped"].includes(result.status)) {
+        this.clearAgentStatusPolling();
+        isAgentRunning = false;
+        this.showAgentError(`Agent mock status: ${result.status}.\nNo completion transition was played.`);
+      }
+    } catch (error) {
+      this.clearAgentStatusPolling();
+      isAgentRunning = false;
+      console.warn("[NOVA Agent] Status polling failed.", error);
+      this.showAgentError(
+        "FastAPI mock server connection was lost.\nNo completion transition was played."
+      );
+    } finally {
+      this.agentPollInFlight = false;
+    }
+  }
+
+  clearAgentStatusPolling() {
+    if (agentStatusPollTimer !== null) {
+      clearInterval(agentStatusPollTimer);
+      agentStatusPollTimer = null;
+    }
+  }
+
+  async handleAgentCompleted(requestId) {
+    if (this.agentCompletionInProgress || !this.isCurrentRequest(requestId)) return;
+    this.agentCompletionInProgress = true;
+    this.clearAgentStatusPolling();
+    this.updateStatus(AVATAR_STATES.AGENT_COMPLETED_TTS);
     this.agentStatusLabel.innerText = "MOCK COMPLETE";
-    this.agentMockHeading.innerText = "Task completed in mock mode";
-    this.agentMockDetail.innerText = "Google Cloud Text-to-Speech is not configured. Showing the required completion text instead.";
+
+    let ttsResult = null;
+    try {
+      const response = await fetch(`${AGENT_API_BASE}/api/agent/tts/completion`, { method: "POST" });
+      if (response.ok) ttsResult = await response.json();
+    } catch (error) {
+      console.warn("[NOVA TTS] Mock completion endpoint was unavailable.", error);
+    }
+    console.info("[NOVA TTS] Completion response is mock-only; no audio playback occurred.", ttsResult);
+
+    this.showCompletionFallback();
+    await this.wait(MOCK_COMPLETION_HOLD_MS);
+    if (!this.isCurrentRequest(requestId)) return;
+
+    await this.hideAgentOverlay();
+    const transitionVideo = await this.playState(AVATAR_STATES.COMPLETE_TRANSITION_042, { loop: false });
+    await this.crossfade.waitForEnded(transitionVideo);
+    if (!this.isCurrentRequest(requestId)) return;
+
+    await this.playState(AVATAR_STATES.FINAL_LOOP_043, { loop: true });
+    hasCompletedFirstTask = true;
+    this.hasCompletedFirstTask = true;
+    isAgentRunning = false;
+    this.agentCompletionInProgress = false;
+    this.logFlowEvent("task:complete", { requestId, hasCompletedFirstTask: true });
+    this.isBusy = false;
+    this.setInputsDisabled(false);
+    this.chatInput.focus();
+  }
+
+  showCompletionFallback() {
+    this.agentErrorText.hidden = true;
+    this.agentCloseButton.hidden = true;
     this.agentCompletionText.innerText = COMPLETION_TEXT;
     this.agentCompletionText.hidden = false;
     this.agentOverlay.classList.add("is-completing");
@@ -428,13 +556,18 @@ class AvatarController {
     this.showSubtitle(COMPLETION_TEXT);
   }
 
-  /**
-   * Phase TTS hook: a future backend will generate and return Google Cloud
-   * Text-to-Speech audio. Phase 0.7 intentionally does not claim playback.
-   */
-  async playCompletionTTS() {
-    console.info("[NOVA TTS] Google Cloud TTS is unavailable; completion text fallback is active.");
-    return { played: false, provider: "google-cloud-text-to-speech", reason: "not-configured" };
+  showAgentError(message) {
+    isAgentRunning = false;
+    if (!this.agentOverlay.classList.contains("is-active")) {
+      this.showAgentOverlay(this.currentTaskName);
+    }
+    this.agentTaskDesc.innerText = `Task: ${this.currentTaskName} · LOCAL MOCK`;
+    this.agentStatusLabel.innerText = "MOCK ERROR";
+    this.agentCompletionText.hidden = true;
+    this.agentErrorText.innerText = message;
+    this.agentErrorText.hidden = false;
+    this.agentCloseButton.hidden = false;
+    this.clearAgentStatusPolling();
   }
 
   async hideAgentOverlay() {
@@ -443,18 +576,25 @@ class AvatarController {
     this.agentOverlay.classList.remove("is-active", "ready", "opening", "is-completing");
     await this.wait(500);
     this.agentOverlay.classList.remove("is-closing");
+    document.body.classList.remove("agent-overlay-open");
+    this.agentIframe.src = "about:blank";
   }
 
-  async recoverFromFlowError() {
-    this.agentOverlay.classList.remove("is-active", "ready", "opening", "is-completing", "is-closing");
-    const recoveryState = this.hasCompletedFirstTask
+  async closeAgentOverlayAfterError() {
+    this.clearAgentStatusPolling();
+    isAgentRunning = false;
+    await this.hideAgentOverlay();
+    const recoveryState = hasCompletedFirstTask
       ? AVATAR_STATES.FINAL_LOOP_043
       : AVATAR_STATES.INITIAL_LOOP_040;
     if (this.videoAvailable) {
       await this.playState(recoveryState, { loop: true });
     }
+    this.agentErrorText.hidden = true;
+    this.agentCloseButton.hidden = true;
     this.isBusy = false;
     this.setInputsDisabled(false);
+    this.chatInput.focus();
   }
 
   async playState(state, options = {}) {

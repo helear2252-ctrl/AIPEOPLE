@@ -110,6 +110,7 @@
 
   <!-- Agent Overlay -->
   <div id="agent-overlay" class="agent-overlay">
+    <div class="agent-overlay-backdrop" aria-hidden="true"></div>
     <div class="agent-overlay-card">
       <div class="agent-overlay-header">
         <div class="agent-overlay-title-group">
@@ -119,26 +120,33 @@
             <p id="agent-overlay-task-desc">Task: Initializing...</p>
           </div>
         </div>
-        <div class="agent-overlay-status-badge" id="agent-overlay-status">
-          <span class="status-dot pulsing"></span>
-          <span id="agent-overlay-status-label">Initializing</span>
+        <div class="agent-overlay-header-actions">
+          <div class="agent-overlay-status-badge" id="agent-overlay-status">
+            <span class="status-dot pulsing"></span>
+            <span id="agent-overlay-status-label">MOCK MODE</span>
+          </div>
+          <button id="agent-overlay-close" class="agent-overlay-close" type="button" hidden>Return to NOVA</button>
         </div>
       </div>
       <div class="agent-overlay-content">
-        <div id="agent-mock-panel" class="agent-mock-panel" role="status" aria-live="polite">
-          <div class="agent-mock-badge">MOCK MODE · NO REAL AGENT CONNECTED</div>
-          <i class="fa-solid fa-gears agent-mock-visual" aria-hidden="true"></i>
-          <h3 id="agent-mock-heading">NOVA is preparing your task</h3>
-          <p id="agent-mock-detail">This workbench is a local visual mock. No external AI service is being called.</p>
-          <p id="agent-completion-text" class="agent-completion-text" hidden>已幫你完成，還有需要幫你做什麼嗎？</p>
+        <iframe
+          id="agent-workbench-frame"
+          src="http://127.0.0.1:8501"
+          title="NOVA Agent Workbench"
+          loading="eager"
+        ></iframe>
+        <div id="agent-overlay-message-layer" class="agent-overlay-message-layer" aria-live="polite">
+          <div id="agent-completion-message" class="agent-completion-message" hidden>
+            已幫你完成，還有需要幫你做什麼嗎？
+          </div>
+          <div id="agent-error-message" class="agent-error-message" hidden></div>
         </div>
-        <iframe id="agent-workbench-iframe" src="" frameborder="0" hidden aria-hidden="true" title="Reserved Agent Workbench"></iframe>
+        <div id="agent-streamlit-notice" class="agent-streamlit-notice" hidden>
+          Streamlit workbench may not be running. Please start localhost:8501.
+        </div>
       </div>
-      <div class="agent-overlay-footer" id="agent-overlay-footer" style="display: none;">
-        <button id="btn-agent-approve" class="btn-primary" style="display: none;">滿意，儲存並完成</button>
-        <button id="btn-agent-readjust" class="btn-secondary" style="display: none;">重新調整</button>
-        <button id="btn-agent-close" class="btn-primary" style="display: none;">Close Workbench</button>
-        <button id="btn-agent-retry" class="btn-secondary" style="display: none;">Retry Task</button>
+      <div class="agent-overlay-footer" id="agent-overlay-footer">
+        <span>MOCK MODE · FastAPI 8787 · Streamlit 8501</span>
       </div>
     </div>
   </div>
