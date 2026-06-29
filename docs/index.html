@@ -1,166 +1,24 @@
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script>
-    // Static hosts may serve 404.html for the extensionless login URL.
-    // Canonicalize it to the generated login directory without affecting other routes.
-    if (window.location.pathname.endsWith('/login')) {
-      window.location.replace(
-        window.location.pathname + '/' + window.location.search + window.location.hash
-      );
-    }
-  </script>
-  <link rel="icon" href="data:,">
-  <title>NOVA AI - Your Intelligent Digital Human Assistant</title>
-  <meta name="description" content="Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation.">
-  <meta name="keywords" content="NOVA AI, Digital Human, LLM, Gemini, OpenAI, LipSync, TTS, STT">
-  <meta name="author" content="NOVA AI Labs">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" crossorigin href="/AIPEOPLE/assets/main-Bqn-3tPE.css">
-</head>
-<body>
-  <div class="app-background"></div>
-  <div class="glass-overlay" aria-hidden="true"></div>
-
-  <div class="app-container">
-    <header class="app-header">
-      <div class="logo-area">
-        <i class="fa-solid fa-bolt logo-icon"></i>
-        <span class="logo-text">NOVA AI</span>
-      </div>
-      <div class="system-status-header">
-        <span class="pulse-dot green"></span>
-        <span class="status-text-header">Demo Mode</span>
-      </div>
-    </header>
-
-    <main class="app-layout">
-      <section class="workspace-panel">
-        <div class="workspace-header">
-          <div class="workspace-title-group">
-            <h3 id="hero-title">NOVA AI</h3>
-            <p id="hero-subtitle">Your Intelligent Digital Human Assistant</p>
-            <span id="hero-description" class="hero-desc">Digital human demo experience.</span>
-          </div>
-          <div class="status-badge-container">
-            <span class="status-badge" id="avatar-status-badge">
-              <i class="fa-solid fa-computer status-badge-icon"></i>
-              <span id="avatar-status-text">Idle Working</span>
-            </span>
-          </div>
-        </div>
-
-        <div class="avatar-window-container" id="avatar-window-container">
-          <video id="novaIntroVideo" class="avatar-video-preload" src="/AIPEOPLE/assets/INTRO_009_TEST-CV3yNZVZ.mp4" muted playsinline preload="auto" aria-hidden="true"></video>
-          <video id="novaIdleVideo" class="avatar-video-blur-bg" src="/AIPEOPLE/assets/WAITING_HD-BkcmGUle.mp4" muted loop playsinline preload="auto" aria-hidden="true"></video>
-          <div class="avatar-screen-bg"></div>
-
-          <div class="video-wrapper" id="video-wrapper">
-            <video id="avatar-video-a" class="avatar-video-layer is-active" autoplay muted loop playsinline preload="auto"></video>
-            <video id="avatar-video-b" class="avatar-video-layer is-standby" autoplay muted loop playsinline preload="auto"></video>
-          </div>
-
-          <div class="image-fallback-container" id="image-fallback-container" style="display: none;">
-            <img id="avatar-fallback-img" alt="NOVA Placeholder Avatar">
-          </div>
-
-          <div class="css-fallback-container" id="css-fallback-container" style="display: none;">
-            <div class="css-avatar-circle">
-              <div class="css-avatar-pulse ring-1"></div>
-              <div class="css-avatar-pulse ring-2"></div>
-              <div class="css-avatar-pulse ring-3"></div>
-              <div class="css-avatar-core">
-                <i class="fa-solid fa-user-astronaut css-avatar-icon"></i>
-              </div>
-            </div>
-            <div class="css-avatar-text-group">
-              <h4>NOVA Workspace Live</h4>
-              <p>Rendering CSS Fallback Engine</p>
-            </div>
-          </div>
-
-          <div class="subtitles-overlay" id="subtitles-overlay" style="display: none;">
-            <span class="subtitle-text" id="subtitle-text"></span>
-          </div>
-        </div>
-
-        <div class="chat-history-container" id="chat-history">
-          <div class="message assistant-message">
-            <div class="message-sender">NOVA</div>
-            <div class="message-text">Hello, I am NOVA. Type a message to start the demo.</div>
-          </div>
-        </div>
-
-        <div class="chat-input-panel">
-          <div class="input-row">
-            <input type="text" id="chat-input" placeholder="Type a message to NOVA..." autocomplete="off">
-            <button id="btn-send" title="Send">
-              <i class="fa-solid fa-paper-plane"></i>
-              <span>Send</span>
-            </button>
-          </div>
-          <div class="action-row">
-            <button id="btn-clear" class="btn-secondary">
-              <i class="fa-solid fa-trash-can"></i> Clear
-            </button>
-            <span class="mode-info">
-              <i class="fa-solid fa-circle-info"></i> DEMO MODE ACTIVE
-            </span>
-          </div>
-        </div>
-      </section>
-    </main>
-  </div>
-
-  <!-- Agent Overlay -->
-  <div id="agent-overlay" class="agent-overlay">
-    <div class="agent-overlay-backdrop" aria-hidden="true"></div>
-    <div class="agent-overlay-card">
-      <div class="agent-overlay-header">
-        <div class="agent-overlay-title-group">
-          <i class="fa-solid fa-robot agent-overlay-icon"></i>
-          <div>
-            <h4 id="agent-overlay-title">NOVA Agent Workbench</h4>
-            <p id="agent-overlay-task-desc">Task: Initializing...</p>
-          </div>
-        </div>
-        <div class="agent-overlay-header-actions">
-          <div class="agent-overlay-status-badge" id="agent-overlay-status">
-            <span class="status-dot pulsing"></span>
-            <span id="agent-overlay-status-label">MOCK MODE</span>
-          </div>
-          <button id="agent-overlay-close" class="agent-overlay-close" type="button" hidden>Return to NOVA</button>
-        </div>
-      </div>
-      <div class="agent-overlay-content">
-        <iframe
-          id="agent-workbench-frame"
-          src="http://127.0.0.1:8501"
-          title="NOVA Agent Workbench"
-          loading="eager"
-        ></iframe>
-        <div id="agent-overlay-message-layer" class="agent-overlay-message-layer" aria-live="polite">
-          <div id="agent-completion-message" class="agent-completion-message" hidden>
-            已幫你完成，還有需要幫你做什麼嗎？
-          </div>
-          <div id="agent-error-message" class="agent-error-message" hidden></div>
-        </div>
-        <div id="agent-streamlit-notice" class="agent-streamlit-notice" hidden>
-          Streamlit workbench may not be running. Please start localhost:8501.
-        </div>
-      </div>
-      <div class="agent-overlay-footer" id="agent-overlay-footer">
-        <span>MOCK MODE · FastAPI 8787 · Streamlit 8501</span>
-      </div>
-    </div>
-  </div>
-
-  <script src="script.js"></script>
-</body>
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#020814" />
+    <meta name="description" content="Earth Portal 登入入口" />
+    <link rel="icon" href="data:," />
+    <title>Earth Portal</title>
+    <script>
+      if (window.location.pathname.endsWith('/login') || window.location.pathname.endsWith('/nova')) {
+        window.location.replace(
+          window.location.pathname + '/' + window.location.search + window.location.hash
+        );
+      }
+    </script>
+    <script type="module" crossorigin src="/AIPEOPLE/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+    <script type="module" crossorigin src="/AIPEOPLE/assets/login-main-Xj3GcjBi.js"></script>
+    <link rel="stylesheet" crossorigin href="/AIPEOPLE/assets/login-main-BSK-ELzF.css">
+  </head>
+  <body>
+    <div id="login-root"></div>
+  </body>
 </html>
-

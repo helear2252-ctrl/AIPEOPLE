@@ -12,12 +12,14 @@ const AVATAR_STATES = Object.freeze({
   FINAL_LOOP_043: "FINAL_LOOP_043"
 });
 
+const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+
 const VIDEO_PATHS = Object.freeze({
-  INITIAL_LOOP_040: "assets/avatar/AIPEOPLE/040.mp4",
-  FIRST_ACK_041: "assets/avatar/AIPEOPLE/041.mp4",
-  COMPLETE_TRANSITION_042: "assets/avatar/AIPEOPLE/042.mp4",
-  FINAL_LOOP_043: "assets/avatar/AIPEOPLE/043.mp4",
-  Fallback: "assets/avatar/nova_working_placeholder.png"
+  INITIAL_LOOP_040: assetUrl("assets/avatar/AIPEOPLE/040.mp4"),
+  FIRST_ACK_041: assetUrl("assets/avatar/AIPEOPLE/041.mp4"),
+  COMPLETE_TRANSITION_042: assetUrl("assets/avatar/AIPEOPLE/042.mp4"),
+  FINAL_LOOP_043: assetUrl("assets/avatar/AIPEOPLE/043.mp4"),
+  Fallback: assetUrl("assets/avatar/nova_working_placeholder.png")
 });
 
 // Legacy rollback references only. These files are intentionally not used by Phase 0.7.

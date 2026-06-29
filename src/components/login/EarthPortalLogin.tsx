@@ -11,7 +11,7 @@ export default function EarthPortalLogin() {
 
     setStatus('entering');
     window.setTimeout(() => {
-      window.location.href = import.meta.env.BASE_URL;
+      window.location.href = `${import.meta.env.BASE_URL}nova/`;
     }, 600);
   }, [status]);
 

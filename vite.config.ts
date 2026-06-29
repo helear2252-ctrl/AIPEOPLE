@@ -10,7 +10,7 @@ function loginRouteRedirect() {
   ) => {
     const url = new URL(request.url ?? '/', 'http://localhost');
 
-    if (url.pathname.endsWith('/login')) {
+    if (url.pathname.endsWith('/login') || url.pathname.endsWith('/nova')) {
       response.statusCode = 302;
       response.setHeader('Location', `${url.pathname}/${url.search}`);
       response.end();
@@ -40,7 +40,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: resolve(__dirname, 'index.html'),
-        login: resolve(__dirname, 'login/index.html')
+        login: resolve(__dirname, 'login/index.html'),
+        nova: resolve(__dirname, 'nova.html')
       }
     }
   }
