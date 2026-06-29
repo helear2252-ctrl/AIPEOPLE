@@ -2,9 +2,6 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 
-const repoBase = process.env.VITE_BASE_PATH
-  ?? (process.env.GITHUB_ACTIONS ? '/AIPEOPLE/' : '/');
-
 function loginRouteRedirect() {
   const redirectLogin = (
     request: { url?: string },
@@ -35,11 +32,10 @@ function loginRouteRedirect() {
 }
 
 export default defineConfig({
-  base: repoBase,
+  base: '/AIPEOPLE/',
   plugins: [loginRouteRedirect(), react()],
   build: {
-    // We will build into a dist folder first
-    outDir: 'dist',
+    outDir: 'docs',
     emptyOutDir: true,
     rollupOptions: {
       input: {

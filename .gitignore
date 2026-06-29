@@ -44,4 +44,9 @@ runtime/
 .env.local
 .env.*.local
 
+# Node and local build output
+
+node_modules/
+dist/
+
 
