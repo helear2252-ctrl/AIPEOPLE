@@ -243,6 +243,7 @@ class AvatarController {
     this.subtitleText = document.getElementById("subtitle-text");
 
     this.agentOverlay = document.getElementById("agent-overlay");
+    this.agentStatusBadge = document.getElementById("agent-overlay-status");
     this.agentTaskDesc = document.getElementById("agent-overlay-task-desc");
     this.agentStatusLabel = document.getElementById("agent-overlay-status-label");
     this.agentIframe = document.getElementById("agent-workbench-frame");
@@ -251,6 +252,12 @@ class AvatarController {
     this.agentStreamlitNotice = document.getElementById("agent-streamlit-notice");
     this.agentCloseButton = document.getElementById("agent-overlay-close");
     this.agentFooter = document.getElementById("agent-overlay-footer");
+    this.workbenchPanel = document.getElementById("nova-workbench");
+    this.workbenchCurrentTask = document.getElementById("workbench-current-task");
+    this.fastApiWorkbenchStatus = document.getElementById("fastapi-workbench-status");
+    this.streamlitWorkbenchStatus = document.getElementById("streamlit-workbench-status");
+    this.workbenchTabs = Array.from(document.querySelectorAll(".workbench-tab"));
+    this.workbenchNavButtons = Array.from(document.querySelectorAll(".workbench-nav-button"));
     this.agentPollInFlight = false;
     this.agentCompletionInProgress = false;
 
@@ -301,6 +308,18 @@ class AvatarController {
     });
     this.btnClear.addEventListener("click", () => this.clearChat());
     this.agentCloseButton.addEventListener("click", () => this.closeAgentOverlayAfterError());
+    this.workbenchTabs.forEach((tab) => {
+      tab.addEventListener("click", () => {
+        this.workbenchTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
+      });
+    });
+    this.workbenchNavButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        this.workbenchNavButtons.forEach((item) => item.classList.toggle("is-active", item === button));
+      });
+    });
+    this.workbenchPanel.addEventListener("pointermove", (event) => this.updateWorkbenchParallax(event));
+    this.workbenchPanel.addEventListener("pointerleave", () => this.resetWorkbenchParallax());
   }
 
   async verifyRequiredVideos() {
@@ -403,6 +422,8 @@ class AvatarController {
       const result = await response.json();
       if (!this.isCurrentRequest(requestId)) return;
 
+      this.setServiceStatus(this.fastApiWorkbenchStatus, "Online", "online");
+      this.agentStatusBadge.classList.remove("is-error");
       this.agentStatusLabel.innerText = result.status === "completed" ? "MOCK COMPLETE" : "MOCK WORKING";
       this.logFlowEvent("agent:start", {
         requestId,
@@ -417,6 +438,7 @@ class AvatarController {
       }
     } catch (error) {
       console.warn("[NOVA Agent] FastAPI mock server is unavailable.", error);
+      this.setServiceStatus(this.fastApiWorkbenchStatus, "Offline", "offline");
       isAgentRunning = false;
       this.showAgentError(
         "FastAPI mock server is not running.\nPlease start localhost:8787 first."
@@ -426,13 +448,17 @@ class AvatarController {
 
   showAgentOverlay(task) {
     this.agentCompletionInProgress = false;
-    this.agentTaskDesc.innerText = `Task: ${task} · MOCK`;
+    this.agentTaskDesc.innerText = `Task: ${task} · LOCAL MOCK`;
     this.agentStatusLabel.innerText = "INITIALIZING";
+    this.agentStatusBadge.classList.remove("is-error");
+    this.workbenchCurrentTask.innerText = task;
+    this.setServiceStatus(this.fastApiWorkbenchStatus, "Checking", "checking");
+    this.setServiceStatus(this.streamlitWorkbenchStatus, "Checking", "checking");
     this.agentCompletionText.hidden = true;
     this.agentErrorText.hidden = true;
     this.agentStreamlitNotice.hidden = true;
     this.agentCloseButton.hidden = true;
-    this.agentIframe.src = STREAMLIT_WORKBENCH_URL;
+    this.agentIframe.src = "about:blank";
     document.body.classList.add("agent-overlay-open");
 
     this.agentOverlay.classList.remove("ready", "is-completing", "is-closing");
@@ -446,6 +472,30 @@ class AvatarController {
     });
   }
 
+  setServiceStatus(element, label, state) {
+    if (!element) return;
+    element.classList.remove("is-online", "is-offline");
+    if (state === "online") element.classList.add("is-online");
+    if (state === "offline") element.classList.add("is-offline");
+    element.innerHTML = `<i></i> ${label}`;
+  }
+
+  updateWorkbenchParallax(event) {
+    if (!this.agentOverlay.classList.contains("ready") || window.matchMedia("(pointer: coarse)").matches) return;
+    const bounds = this.workbenchPanel.getBoundingClientRect();
+    const x = (event.clientX - bounds.left) / bounds.width - 0.5;
+    const y = (event.clientY - bounds.top) / bounds.height - 0.5;
+    const card = this.agentOverlay.querySelector(".agent-overlay-card");
+    card.style.setProperty("--workbench-tilt-x", `${(-y * 1.8).toFixed(2)}deg`);
+    card.style.setProperty("--workbench-tilt-y", `${(x * 2.5).toFixed(2)}deg`);
+  }
+
+  resetWorkbenchParallax() {
+    const card = this.agentOverlay.querySelector(".agent-overlay-card");
+    card.style.setProperty("--workbench-tilt-x", "0deg");
+    card.style.setProperty("--workbench-tilt-y", "0deg");
+  }
+
   async checkStreamlitAvailability() {
     const controller = new AbortController();
     const timeoutId = window.setTimeout(() => controller.abort(), 2500);
@@ -455,10 +505,12 @@ class AvatarController {
         cache: "no-store",
         signal: controller.signal
       });
+      this.setServiceStatus(this.streamlitWorkbenchStatus, "Online", "online");
       this.agentStreamlitNotice.hidden = true;
     } catch (error) {
       console.warn("[NOVA Agent] Streamlit workbench may be unavailable.", error);
-      this.agentStreamlitNotice.hidden = false;
+      this.setServiceStatus(this.streamlitWorkbenchStatus, "Offline", "offline");
+      this.agentStreamlitNotice.hidden = true;
     } finally {
       clearTimeout(timeoutId);
     }
@@ -518,6 +570,7 @@ class AvatarController {
     this.clearAgentStatusPolling();
     this.updateStatus(AVATAR_STATES.AGENT_COMPLETED_TTS);
     this.agentStatusLabel.innerText = "MOCK COMPLETE";
+    this.agentStatusBadge.classList.remove("is-error");
 
     let ttsResult = null;
     try {
@@ -565,19 +618,23 @@ class AvatarController {
     }
     this.agentTaskDesc.innerText = `Task: ${this.currentTaskName} · LOCAL MOCK`;
     this.agentStatusLabel.innerText = "MOCK ERROR";
+    this.agentStatusBadge.classList.add("is-error");
+    this.setServiceStatus(this.fastApiWorkbenchStatus, "Offline", "offline");
     this.agentCompletionText.hidden = true;
     this.agentErrorText.innerText = message;
-    this.agentErrorText.hidden = false;
+    this.agentErrorText.hidden = true;
     this.agentCloseButton.hidden = false;
     this.clearAgentStatusPolling();
   }
 
   async hideAgentOverlay() {
     this.agentOverlay.classList.add("is-closing");
+    this.resetWorkbenchParallax();
     await this.wait(600);
     this.agentOverlay.classList.remove("is-active", "ready", "opening", "is-completing");
     await this.wait(500);
     this.agentOverlay.classList.remove("is-closing");
+    this.agentStatusBadge.classList.remove("is-error");
     document.body.classList.remove("agent-overlay-open");
     this.agentIframe.src = "about:blank";
   }
