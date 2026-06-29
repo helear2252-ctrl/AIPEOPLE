@@ -3,6 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script>
+    // Static hosts may serve 404.html for the extensionless login URL.
+    // Canonicalize it to the generated login directory without affecting other routes.
+    if (window.location.pathname.endsWith('/login')) {
+      window.location.replace(
+        window.location.pathname + '/' + window.location.search + window.location.hash
+      );
+    }
+  </script>
   <link rel="icon" href="data:,">
   <title>NOVA AI - Your Intelligent Digital Human Assistant</title>
   <meta name="description" content="Experience a next-generation AI assistant with natural conversation, voice interaction, and digital human presentation.">
