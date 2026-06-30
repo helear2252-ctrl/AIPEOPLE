@@ -83,9 +83,7 @@ function render3DDesignTask(userMessage) {
   return `<div class="task-workflow task-workflow--design3d">
     ${renderWorkflowHeading("3D Concept Studio", "NOVA is actively building a product-style 3D concept from your request.", "fa-cube")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="workbench-card task-panel workbench-task-reveal"><span class="task-panel-label">Requirement Analysis</span><blockquote>${request}</blockquote><ul class="task-check-list"><li>Object type · Product concept</li><li>Material · Frosted glass</li><li>Lighting · Studio rim</li><li>Camera · Three-quarter</li><li>Direction · Futuristic</li></ul></section>
-      <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Drag to orbit · Live</span></div><div class="cafe-3d-viewport" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor"></i><i class="cafe-wall cafe-wall--back"></i><i class="cafe-wall cafe-wall--side"></i><div class="cafe-counter"></div><div class="cafe-table cafe-table--one"></div><div class="cafe-table cafe-table--two"></div><div class="cafe-table cafe-table--three"></div><div class="cafe-pendants"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready ai-progressive" data-stage="6"><i class="fa-solid fa-check"></i> Preview ready</div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Analyzing cafe layout</div></section>
-      <section class="workbench-card task-panel output-panel workbench-task-reveal"><span class="task-panel-label">Generation Controls</span><dl><div><dt>Style</dt><dd>Futuristic product</dd></div><div><dt>Material</dt><dd>Frosted glass + aluminum</dd></div><div><dt>Lighting</dt><dd>Soft studio rim</dd></div><div><dt>Camera</dt><dd>42° perspective</dd></div><div><dt>Quality</dt><dd>Preview · High</dd></div><div><dt>Status</dt><dd class="task-status-live">Rendering preview</dd></div></dl></section>
+      <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Drag to orbit · Live</span></div><div class="viewport-floating-hud"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor"></i><i class="cafe-wall cafe-wall--back"></i><i class="cafe-wall cafe-wall--side"></i><div class="cafe-counter"></div><div class="cafe-bench"></div><div class="cafe-table cafe-table--one"></div><div class="cafe-table cafe-table--two"></div><div class="cafe-table cafe-table--three"></div><div class="cafe-pendants"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready ai-progressive" data-stage="6"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Analyzing cafe layout</div></section>
     </div>
     <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Reading request", "Opening canvas", "Selecting style", "Building geometry", "Applying material", "Preview ready"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
   </div>`;
@@ -96,9 +94,7 @@ function renderBookingTask(userMessage) {
   return `<div class="task-workflow task-workflow--booking">
     ${renderWorkflowHeading("Booking Flow Agent", "NOVA is operating a booking flow and will stop safely before payment.", "fa-ticket")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="workbench-card task-panel workbench-task-reveal"><span class="task-panel-label">Task Brief</span><p class="task-request-line">${request}</p><ul class="task-check-list"><li>Search available tickets</li><li>Compare time and price</li><li>Select preferred seat</li><li>Review traveler details</li></ul></section>
-      <section class="ai-live-canvas ai-live-window booking-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><div class="ai-address-bar"><i class="fa-solid fa-lock"></i> vscinemas.com.tw · NOVA Safe Preview</div><a class="official-site-link" href="${VIESHOW_OFFICIAL_URL}" target="_blank" rel="noopener noreferrer">Open official site <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div><div class="booking-page"><div class="booking-brand"><i class="fa-solid fa-film"></i><strong>VIESHOW Booking Assistant</strong><span>Safe mode · stops before payment</span></div><div class="booking-form"><label data-control="theater"><span>Theater</span><b class="typed-value ai-progressive" data-stage="1">台北信義威秀影城</b></label><label data-control="movie"><span>Movie</span><b class="typed-value ai-progressive" data-stage="2">Movie preview</b></label><label data-control="date"><span>Date</span><b class="typed-value ai-progressive" data-stage="3">Selected date</b></label><button type="button" class="ai-progressive" data-stage="3">Search sessions</button></div><div class="booking-result ai-progressive" data-stage="4"><span>19:30</span><strong>Digital · Preview</strong><b>Adult × 2</b><button type="button">Select</button></div><div class="seat-picker ai-progressive" data-stage="5"><span>F10</span><span class="is-selected">F11</span><span class="is-selected">F12</span><strong>Seats selected</strong></div><div class="review-lock ai-progressive" data-stage="6"><i class="fa-solid fa-shield-halved"></i><div><strong>Review before payment</strong><small>No transaction executed. Continue only on the official website.</small></div></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Opening VIESHOW safe preview</div></section>
-      <section class="workbench-card task-panel safety-panel workbench-task-reveal"><span class="task-panel-label">Safety Panel</span><div class="booking-mode-toggle"><button type="button" class="is-active" data-workbench-action="booking-mode" data-booking-mode="safe">Safe mode</button><button type="button" data-workbench-action="booking-mode" data-booking-mode="authorized">Authorized handoff</button></div><div class="safety-lock"><i class="fa-solid fa-lock"></i><strong>Payment protected</strong><small>No transaction executed</small></div><ul><li>User confirmation required</li><li>Current step: Review order</li><li>Payment step is locked</li></ul></section>
+      <section class="ai-live-canvas ai-live-window booking-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><div class="ai-address-bar"><i class="fa-solid fa-lock"></i> vscinemas.com.tw · NOVA Safe Preview</div><span class="browser-safe-badge"><i class="fa-solid fa-shield-halved"></i> stop_before_payment</span><a class="official-site-link" href="${VIESHOW_OFFICIAL_URL}" target="_blank" rel="noopener noreferrer">Open official site <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div><div class="booking-page"><div class="booking-site-nav"><strong>VIESHOW CINEMAS</strong><span>Movies</span><span>Cinemas</span><span>Events</span><b>Safe preview</b></div><div class="booking-brand"><i class="fa-solid fa-film"></i><strong>VIESHOW Booking Assistant</strong><span>frontend_preview · playwright_ready</span></div><div class="booking-task-chip"><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</div><div class="booking-browser-grid"><div class="booking-browser-main"><div class="booking-cinema-hero ai-progressive" data-stage="1"><small>TAIPEI XINYI</small><strong>Choose your next cinema experience.</strong><span>Official availability is confirmed only after opening VIESHOW.</span></div><div class="booking-form"><label data-control="theater"><span>Theater</span><b class="typed-value ai-progressive" data-stage="1">台北信義威秀影城</b></label><label data-control="movie"><span>Movie</span><b class="typed-value ai-progressive" data-stage="2">Movie preview</b></label><label data-control="date"><span>Date</span><b class="typed-value ai-progressive" data-stage="3">Selected date</b></label><button type="button" class="ai-progressive" data-stage="3">Search sessions</button></div><div class="booking-showtimes ai-progressive" data-stage="4"><button>17:10 <small>Digital</small></button><button class="is-selected">19:30 <small>Digital</small></button><button>21:50 <small>IMAX</small></button></div></div><aside class="booking-seat-preview ai-progressive" data-stage="5"><small>SCREEN</small><div>${Array.from({ length: 24 }, (_, index) => `<i class="${index === 15 || index === 16 ? "is-selected" : ""}"></i>`).join("")}</div><strong>F11 · F12 selected</strong></aside></div><div class="review-lock ai-progressive" data-stage="6"><i class="fa-solid fa-shield-halved"></i><div><strong>Review before payment · User confirmation required</strong><small>No transaction executed. Continue only on the official website.</small></div></div></div><div class="booking-mode-toggle booking-mode-floating"><button type="button" class="is-active" data-workbench-action="booking-mode" data-booking-mode="safe">Safe mode</button><button type="button" data-workbench-action="booking-mode" data-booking-mode="authorized">Authorized handoff</button></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Opening VIESHOW safe preview</div></section>
     </div>
     <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Search tickets", "Compare options", "Select time", "Choose seat", "Traveler info", "Stop before payment"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
   </div>`;
@@ -109,11 +105,8 @@ function renderDemoToCodeTask(userMessage) {
   return `<div class="task-workflow task-workflow--website">
     ${renderWorkflowHeading("Website Design Studio", "NOVA is designing a live website concept from your style request.", "fa-pen-ruler")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="workbench-card task-panel workbench-task-reveal"><span class="task-panel-label">Style Request</span><p class="task-request-line">${request}</p><ul class="analysis-list"><li>Premium technology mood</li><li>Glass navigation</li><li>Focused hero hierarchy</li><li>Responsive component grid</li><li>Subtle motion language</li></ul></section>
-      <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span></div><div class="website-builder fashion-builder"><div class="builder-nav ai-progressive" data-stage="1"><b>ATELIER / 01</b><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><button>Shop now</button></div><div class="builder-hero ai-progressive" data-stage="2"><small>FUTURE ESSENTIALS · 2026</small><strong>Wear what comes next.</strong><p>Precision silhouettes for a new generation.</p><button>Explore collection</button></div><div class="fashion-categories ai-progressive" data-stage="3"><span>Outerwear</span><span>Knitwear</span><span>Essentials</span><span>Accessories</span></div><div class="builder-products">${[["Form Jacket","NT$ 6,980"],["Glass Knit","NT$ 3,280"],["Motion Trouser","NT$ 4,680"],["Vector Coat","NT$ 8,800"],["Core Tee","NT$ 1,980"],["Orbit Bag","NT$ 3,980"]].map(([name,price],index) => `<article class="ai-progressive" data-stage="${index < 3 ? 4 : 5}"><i style="--product-tone:${index}"></i><b>${name}</b><span>${price}</span></article>`).join("")}</div><div class="responsive-blocks ai-progressive" data-stage="5"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading your fashion brand request</div></section>
-      <section class="workbench-card task-panel design-controls workbench-task-reveal"><span class="task-panel-label">Design Controls</span>${[["Style","Premium glass"],["Color","Ice blue"],["Layout","Editorial"],["Components","Adaptive"],["Motion","Subtle"]].map(([label,value]) => `<label><span>${label}</span><strong>${value}</strong></label>`).join("")}</section>
+      <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span><button type="button" class="toolbar-action" data-workbench-action="refine-design">Refine</button><button type="button" class="toolbar-action is-primary" data-workbench-action="save-website-code">Save as Code</button></div><div class="website-style-toolbar"><span><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</span><b>Premium glass</b><b>Ice blue</b><b>Editorial</b><b>Responsive</b></div><div class="website-builder fashion-builder"><div class="builder-nav ai-progressive" data-stage="1"><b>ATELIER / 01</b><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><button>Shop now</button></div><div class="builder-hero ai-progressive" data-stage="2"><small>FUTURE ESSENTIALS · 2026</small><strong>Wear what comes next.</strong><p>Precision silhouettes for a new generation.</p><button>Explore collection</button></div><div class="fashion-categories ai-progressive" data-stage="3"><span>Outerwear</span><span>Knitwear</span><span>Essentials</span><span>Accessories</span></div><div class="builder-products">${[["Form Jacket","NT$ 6,980"],["Glass Knit","NT$ 3,280"],["Motion Trouser","NT$ 4,680"],["Vector Coat","NT$ 8,800"],["Core Tee","NT$ 1,980"],["Orbit Bag","NT$ 3,980"]].map(([name,price],index) => `<article class="ai-progressive" data-stage="${index < 3 ? 4 : 5}"><i style="--product-tone:${index}"></i><b>${name}</b><span>${price}</span></article>`).join("")}</div><div class="fashion-lookbook ai-progressive" data-stage="5"><article><small>LOOKBOOK / 01</small><strong>Engineered layers</strong></article><article><small>NEW ARRIVAL</small><strong>Quiet utility</strong></article></div><footer class="fashion-footer ai-progressive" data-stage="5"><strong>ATELIER / 01</strong><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><small>© 2026</small></footer><div class="responsive-blocks ai-progressive" data-stage="5"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading your fashion brand request</div></section>
     </div>
-    <div class="website-action-bar workbench-card workbench-task-reveal"><div><span>Live concept</span><strong>Design preview in progress</strong></div><button type="button" class="is-secondary" data-workbench-action="refine-design">Refine Design</button><button type="button" data-workbench-action="save-website-code">Save as Code</button></div>
     <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Reading style", "Building header", "Composing hero", "Adding cards", "Responsive pass", "Design ready"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
@@ -122,9 +115,8 @@ function renderDefaultWorkbenchTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--default">
     ${renderWorkflowHeading("NOVA Workspace", "NOVA is preparing your workspace and organizing the current request.", "fa-wand-magic-sparkles")}
-    <section class="workbench-card default-request-card workbench-task-reveal"><span class="task-panel-label">Current Request</span><p id="workbench-current-task">${request}</p><div class="assistant-progress"><i></i></div><small>Preparing workspace context…</small></section>
-    <div class="default-workspace-grid"><section class="workbench-card workbench-task-reveal"><span class="task-panel-label">System Overview</span><div class="overview-metrics"><div><strong>04</strong><span>Modules</span></div><div><strong>12</strong><span>Events</span></div><div><strong>03</strong><span>Outputs</span></div><div><strong>98%</strong><span>Ready</span></div></div></section><section class="workbench-card workbench-task-reveal"><span class="task-panel-label">Output Files</span><div class="placeholder-files"><span>workspace-brief.md</span><span>task-notes.json</span><span>preview.pending</span></div></section></div>
-    <section class="workbench-card default-activity workbench-task-reveal"><span class="task-panel-label">Recent Activity</span><div><i></i>Request classified</div><div><i></i>Workspace initialized</div><div><i></i>Output slots prepared</div></section>
+    <section class="ai-live-canvas ai-live-window default-agent-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Agent Execution Workspace</strong><span>localMock · backend_proxy_required</span></div><div class="default-agent-request"><small>CURRENT REQUEST</small><h4 id="workbench-current-task">${request}</h4></div><div class="default-agent-plan"><span class="ai-progressive" data-stage="1"><i>01</i>Understand request</span><span class="ai-progressive" data-stage="2"><i>02</i>Create execution plan</span><span class="ai-progressive" data-stage="3"><i>03</i>Select tools</span><span class="ai-progressive" data-stage="4"><i>04</i>Prepare output</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Understanding your request</div></section>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Received", "Planning", "Selecting tools", "Preparing output"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -233,7 +225,8 @@ class Interior3DEngine {
       stone: new THREE.MeshStandardMaterial({ color: 0xaca79d, roughness: 0.38 }),
       metal: new THREE.MeshStandardMaterial({ color: 0x20262a, metalness: 0.72, roughness: 0.3 }),
       fabric: new THREE.MeshStandardMaterial({ color: 0x9d7457, roughness: 0.82 }),
-      green: new THREE.MeshStandardMaterial({ color: 0x496b50, roughness: 0.78 })
+      green: new THREE.MeshStandardMaterial({ color: 0x496b50, roughness: 0.78 }),
+      glass: new THREE.MeshPhysicalMaterial({ color: 0xa9d6e8, transparent: true, opacity: 0.32, roughness: 0.12, metalness: 0.08 })
     };
     const box = (size, position, material) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
@@ -246,6 +239,16 @@ class Interior3DEngine {
     box([5.9, 0.18, 1.35], [1.5, 1.15, -2.35], materials.stone);
     box([4.8, 0.12, 0.55], [1.3, 2.35, -3.25], materials.wood);
     box([4.8, 0.12, 0.55], [1.3, 3.15, -3.25], materials.wood);
+    box([1.1, 0.72, 0.62], [1.4, 1.62, -2.85], materials.metal);
+    box([0.7, 0.22, 0.7], [1.4, 2.08, -2.82], materials.stone);
+    box([0.12, 0.65, 0.12], [1.05, 1.62, -2.42], materials.metal);
+    box([0.12, 0.65, 0.12], [1.75, 1.62, -2.42], materials.metal);
+    box([0.18, 0.35, 0.18], [2.45, 1.43, -2.55], materials.glass);
+    box([3.5, 0.62, 0.75], [-3.65, 0.55, -1.1], materials.fabric);
+    box([3.5, 1.05, 0.18], [-4.42, 1.05, -1.1], materials.fabric);
+    [[-2.8,2.3],[-1.5,2.3]].forEach(([x,y]) => box([0.82,1.05,0.08],[x,y,-3.32],materials.metal));
+    box([6.5,0.08,0.08],[0,4.75,.4],materials.metal);
+    box([2.8,2.3,0.08],[3.45,2.2,-3.3],materials.glass);
 
     const addTable = (x, z) => {
       const top = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.12, 32), materials.wood);
@@ -269,6 +272,11 @@ class Interior3DEngine {
       const shade = new THREE.Mesh(new THREE.ConeGeometry(0.38,0.42,24,1,true), materials.metal);
       shade.position.set(x,3.7,-.4); shade.rotation.x = Math.PI; this.cafeRoot.add(shade);
       const light = new THREE.PointLight(0xffc784,1.8,5); light.position.set(x,3.5,-.4); light.castShadow = true; this.cafeRoot.add(light);
+    });
+    [-2.4,-.8,.8,2.4].forEach((x) => {
+      const fixture = box([0.22,0.16,0.28],[x,4.62,.4],materials.metal);
+      fixture.rotation.x = -.3;
+      const spot = new THREE.SpotLight(0xffe2b7,1.2,7,Math.PI/7,.45,1.4); spot.position.set(x,4.5,.45); spot.target.position.set(x,0,0); this.scene.add(spot,spot.target);
     });
     this.scene.add(new THREE.HemisphereLight(0xcbe9ff, 0x38291f, 1.8));
     const key = new THREE.DirectionalLight(0xffe2be, 2.2); key.position.set(5,8,6); key.castShadow = true; this.scene.add(key);
@@ -360,15 +368,52 @@ class BrowserAutomationEngine {
     this.futureEngine = "playwright_ready";
     this.safetyMode = "stop_before_payment";
     this.currentStep = 0;
+    this.steps = ["open_official_site", "select_theater", "select_movie", "select_session", "select_seats", "request_user_confirmation"];
   }
   openOfficialSite() { window.open(this.officialUrl, "_blank", "noopener,noreferrer"); }
-  previewAutomation(step) { this.currentStep = step; return { step, mode: this.mode, safetyMode: this.safetyMode }; }
+  previewAutomation(step) { this.currentStep = Math.max(0, Math.min(Number(step) || 0, this.steps.length - 1)); return { step: this.steps[this.currentStep], mode: this.mode, safetyMode: this.safetyMode }; }
   requestUserConfirmation() { return { status: "waiting_for_user", reason: "Payment, login, or verification requires user confirmation." }; }
 }
 
 class WebsiteBuildEngine {
-  constructor() { this.status = "idle"; }
-  start(request) { this.status = "executing"; return { request, status: this.status, preview: "fashion_store" }; }
+  constructor() { this.status = "idle"; this.model = null; }
+  parseStylePrompt(userMessage) {
+    const prompt = String(userMessage || "");
+    const normalized = prompt.toLowerCase();
+    return {
+      prompt,
+      direction: normalized.includes("潮") ? "streetwear" : normalized.includes("極簡") ? "minimal" : "premium_technology",
+      glass: /玻璃|glass|apple|openai/.test(normalized),
+      palette: /黑|dark|潮/.test(normalized) ? "graphite" : "ice_blue",
+      density: normalized.includes("極簡") ? "airy" : "editorial"
+    };
+  }
+  generateSiteModel(userMessage) {
+    const style = this.parseStylePrompt(userMessage);
+    return {
+      brand: "ATELIER / 01",
+      style,
+      navigation: ["New Arrival", "Lookbook", "Best Seller"],
+      hero: { eyebrow: "FUTURE ESSENTIALS · 2026", title: "Wear what comes next.", body: "Precision silhouettes for a new generation.", cta: "Explore collection" },
+      categories: ["Outerwear", "Knitwear", "Essentials", "Accessories"],
+      products: [["Form Jacket", "NT$ 6,980"], ["Glass Knit", "NT$ 3,280"], ["Motion Trouser", "NT$ 4,680"], ["Vector Coat", "NT$ 8,800"], ["Core Tee", "NT$ 1,980"], ["Orbit Bag", "NT$ 3,980"]]
+    };
+  }
+  renderLiveWebsitePreview(userMessage) { this.model = this.generateSiteModel(userMessage); this.status = "preview_ready"; return this.model; }
+  enableRefineDesign(changes = {}) { this.model = { ...(this.model || this.generateSiteModel("")), ...changes }; this.status = "refining"; return this.model; }
+  saveAsCode(userMessage) {
+    const model = this.model || this.generateSiteModel(userMessage);
+    const products = model.products.map(([name, price], index) => `<article><div class="product-art product-art-${index + 1}"></div><h2>${name}</h2><p>${price}</p></article>`).join("");
+    const navigation = model.navigation.map((item) => `<a href="#collection">${item}</a>`).join("");
+    return {
+      "index.html": `<!doctype html>\n<html lang="zh-Hant">\n<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${model.brand}</title><link rel="stylesheet" href="style.css"></head>\n<body><header class="nav"><strong>${model.brand}</strong><nav>${navigation}</nav><button>Shop now</button></header><main><section class="hero"><p>${model.hero.eyebrow}</p><h1>${model.hero.title}</h1><span>${model.hero.body}</span><button>${model.hero.cta}</button></section><section id="collection" class="products">${products}</section><section class="lookbook"><p>LOOKBOOK / 01</p><h2>Engineered layers for moving cities.</h2></section></main><footer>${model.brand} · New Arrival · Best Seller · © 2026</footer><script src="script.js"><\/script></body></html>`,
+      "style.css": `:root{font-family:Inter,Arial,sans-serif;color:#102030;background:#eef5f9}*{box-sizing:border-box}body{margin:0}.nav{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:28px;padding:20px 5vw;background:#ffffffb8;backdrop-filter:blur(24px)}.nav strong{margin-right:auto}.nav nav{display:flex;gap:20px}.nav a{color:inherit;text-decoration:none}.nav button,.hero button{padding:12px 20px;border:0;border-radius:999px;color:#fff;background:#167fc9}.hero{min-height:68vh;padding:14vh 8vw;background:radial-gradient(circle at 78% 24%,#a5dcf7,transparent 32%),linear-gradient(135deg,#fff,#dcebf4)}.hero p{letter-spacing:.16em}.hero h1{max-width:760px;margin:18px 0;font-size:clamp(52px,9vw,120px);line-height:.86}.hero span{display:block;max-width:480px;margin-bottom:26px}.products{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:60px 5vw}.products article{padding:16px;border:1px solid #fff;border-radius:28px;background:#ffffff8c;box-shadow:0 24px 70px #1e4a6820}.product-art{height:300px;border-radius:20px;background:linear-gradient(145deg,#c6d9e5,#637b8c);position:relative}.product-art:before{content:"";position:absolute;left:50%;top:16%;width:42%;height:64%;border-radius:38% 38% 18% 18%;background:#f2f5f7;transform:translateX(-50%);box-shadow:0 18px 34px #20384828}.product-art-2:before,.product-art-5:before{background:#304452}.product-art-4:before{height:72%;background:#a9b9c2}.lookbook{margin:20px 5vw 70px;padding:9vw;border-radius:36px;color:#fff;background:linear-gradient(135deg,#122637,#49738e)}.lookbook h2{max-width:680px;font-size:clamp(36px,6vw,78px)}footer{display:flex;justify-content:center;padding:32px;background:#102030;color:#dbeaf2}@media(max-width:760px){.nav nav{display:none}.products{grid-template-columns:1fr}.product-art{height:240px}}`,
+      "script.js": `document.querySelectorAll('button').forEach(button=>button.addEventListener('click',()=>document.querySelector('#collection')?.scrollIntoView({behavior:'smooth'})));`,
+      "assets/README.md": `Generated by NOVA Website Design Studio.\nMode: frontend_preview\nDesign request: ${String(userMessage || "").replace(/[\r\n]+/g, " ").slice(0, 180)}`
+    };
+  }
+  writeToFilesWorkspace(fileWorkspace, projectName, userMessage) { return fileWorkspace.createProject(projectName, this.saveAsCode(userMessage)); }
+  start(request) { this.status = "executing"; this.model = this.generateSiteModel(request); return { request, status: this.status, preview: "fashion_store" }; }
   markPreviewReady() { this.status = "preview_ready"; return this.status; }
 }
 
@@ -748,9 +793,6 @@ class AvatarController {
         ["exports", "fa-file-export", "Exports"]
       ].map(([view, icon, label], index) => `<button class="workbench-nav-button ${index === 0 ? "is-active" : ""}" type="button" data-workbench-view="${view}" aria-label="${label}"><i class="fa-solid ${icon}"></i><span>${label}</span></button>`).join("");
     }
-    this.workbenchPanel.querySelector(".workbench-toolbar")?.remove();
-    this.workbenchPanel.querySelector(".workbench-status-panel")?.remove();
-    this.workbenchPanel.querySelector(".workbench-reflection")?.remove();
     this.workbenchTaskCanvas.id = "workbench-task-canvas";
     this.workbenchTaskCanvas.classList.add("dynamic-task-canvas");
     this.workbenchNavButtons = Array.from(this.workbenchPanel.querySelectorAll(".workbench-nav-button"));
@@ -769,19 +811,7 @@ class AvatarController {
 
   createWebsiteProject() {
     const request = this.currentWorkbenchRequest || "Premium fashion storefront";
-    const id = `fashion-store-${Date.now()}`;
-    const safeTitle = escapeWorkbenchText(request).replace(/&[^;]+;/g, "").slice(0, 80) || "Fashion Store";
-    return {
-      id,
-      name: "fashion-store",
-      createdAt: new Date().toISOString(),
-      files: {
-        "index.html": `<!doctype html>\n<html lang="zh-Hant">\n<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><link rel="stylesheet" href="style.css"></head>\n<body><header class="nav"><strong>ATELIER / 01</strong><nav>New Arrival · Lookbook · Best Seller</nav></header><main><section class="hero"><p>FUTURE ESSENTIALS</p><h1>Wear what comes next.</h1><button>Explore collection</button></section><section class="products"><article>Form Jacket · NT$ 6,980</article><article>Glass Knit · NT$ 3,280</article><article>Motion Trouser · NT$ 4,680</article><article>Vector Coat · NT$ 8,800</article><article>Core Tee · NT$ 1,980</article><article>Orbit Bag · NT$ 3,980</article></section></main><script src="script.js"><\/script></body></html>`,
-        "style.css": `:root{font-family:Inter,sans-serif;color:#101827;background:#eef5f9}*{box-sizing:border-box}body{margin:0}.nav{display:flex;justify-content:space-between;padding:24px 5vw}.hero{min-height:62vh;padding:10vh 8vw;background:radial-gradient(circle at 80% 20%,#bce9ff,transparent 35%),linear-gradient(135deg,#fff,#dcebf4)}h1{max-width:720px;font-size:clamp(48px,8vw,108px);line-height:.9}button{padding:14px 22px;border:0;border-radius:999px;color:white;background:#147dcc}.products{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:32px 5vw}.products article{min-height:220px;padding:24px;border:1px solid #fff;border-radius:28px;background:#ffffff8c;box-shadow:0 24px 70px #1e4a6820}@media(max-width:700px){.products{grid-template-columns:1fr}}`,
-        "script.js": `document.querySelector('button')?.addEventListener('click',()=>document.querySelector('.products')?.scrollIntoView({behavior:'smooth'}));`,
-        "assets/README.md": `Generated by NOVA Website Design Studio.\nDesign request: ${request.replace(/[\r\n]+/g, " ").slice(0, 180)}`
-      }
-    };
+    return this.websiteBuildEngine.writeToFilesWorkspace(this.fileWorkspaceEngine, "fashion-store", request);
   }
 
   saveWebsiteProject() {
@@ -858,15 +888,16 @@ class AvatarController {
     if (type === "toggle-project") action.closest(".project-node")?.classList.toggle("is-open");
     if (type === "export-folder") this.exportGeneratedFolder();
     if (type === "booking-mode") {
-      const panel = action.closest(".safety-panel");
+      const panel = action.closest(".booking-live-window");
       panel?.querySelectorAll("[data-booking-mode]").forEach((button) => button.classList.toggle("is-active", button === action));
-      const title = panel?.querySelector(".safety-lock strong");
-      const detail = panel?.querySelector(".safety-lock small");
+      const title = panel?.querySelector(".review-lock strong");
+      const detail = panel?.querySelector(".review-lock small");
       const authorized = action.dataset.bookingMode === "authorized";
       if (title) title.textContent = authorized ? "Ready for official handoff" : "Payment protected";
       if (detail) detail.textContent = authorized ? "Continue manually on VIESHOW after confirmation" : "No transaction executed";
     }
     if (type === "refine-design") {
+      this.websiteBuildEngine.enableRefineDesign({ refinedAt: new Date().toISOString() });
       this.clearWorkbenchTaskAnimation();
       this.runWebsiteDesignWorkflowAnimation(this.workbenchTaskCanvas.querySelector(".task-workflow"));
     }
@@ -1237,10 +1268,12 @@ class AvatarController {
   }
 
   runDefaultWorkflowAnimation(root) {
-    const steps = Array.from(root.querySelectorAll(".workbench-task-reveal"));
-    if (window.gsap) {
-      this.workbenchTaskTimeline = window.gsap.fromTo(steps, { autoAlpha: 0.45 }, { autoAlpha: 1, duration: 0.3, stagger: 0.08, ease: "power2.out" });
-    }
+    this.runSimulatedWorkflow(root, [
+      { x: 20, y: 26, message: "NOVA received the task" },
+      { x: 38, y: 42, message: "Creating execution plan" },
+      { x: 63, y: 56, message: "Selecting available tools" },
+      { x: 72, y: 72, message: "Preparing output preview" }
+    ]);
   }
 
   runWorkbenchTaskAnimation(taskType) {

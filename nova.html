@@ -148,91 +148,10 @@
           </aside>
 
           <div class="workbench-stage">
-            <div class="workbench-toolbar">
-              <nav class="workbench-tabs" aria-label="Task filters">
-                <button class="workbench-tab is-active" type="button">All</button>
-                <button class="workbench-tab" type="button">Due</button>
-                <button class="workbench-tab" type="button">Work</button>
-                <button class="workbench-tab" type="button">Archive</button>
-                <button class="workbench-tab" type="button">Calendar</button>
-              </nav>
-              <div class="workbench-search"><i class="fa-solid fa-magnifying-glass"></i><span>Search workspace</span><kbd>⌘ K</kbd></div>
-            </div>
-
             <div class="workbench-layout">
-              <main class="workbench-main">
-                <section class="workbench-card overview-card">
-                  <div class="workbench-card-title"><span class="workbench-icon workbench-icon--blue"><i class="fa-solid fa-chart-line"></i></span><div><span>System Overview</span><small>Local agent workspace</small></div><span class="overview-live"><i></i> LIVE</span></div>
-                  <div class="overview-metrics">
-                    <div><strong>04</strong><span>Active modules</span></div>
-                    <div><strong>12</strong><span>Task events</span></div>
-                    <div><strong>03</strong><span>Output files</span></div>
-                    <div><strong>98%</strong><span>UI readiness</span></div>
-                  </div>
-                </section>
-
-                <div class="workbench-card-grid">
-                  <section class="workbench-card assistant-workbench-card">
-                    <div class="workbench-card-title"><span class="workbench-icon workbench-icon--violet"><i class="fa-solid fa-wand-magic-sparkles"></i></span><div><span>AI Assistant</span><small>Task orchestration</small></div></div>
-                    <p>NOVA is preparing the local workspace and organizing the requested deliverables.</p>
-                    <div class="assistant-progress"><i></i></div>
-                    <span class="assistant-progress-label">Preparing workspace context…</span>
-                  </section>
-
-                  <section class="workbench-card current-task-card">
-                    <div class="workbench-card-title"><span class="workbench-icon workbench-icon--cyan"><i class="fa-solid fa-bolt"></i></span><div><span>Current Task</span><small>Latest request</small></div></div>
-                    <p id="workbench-current-task">Waiting for task details…</p>
-                    <div class="task-meta"><span><i class="fa-regular fa-clock"></i> Started now</span><span>LOCAL MOCK</span></div>
-                  </section>
-                </div>
-
-                <section class="workbench-card output-files-card">
-                  <div class="workbench-card-title"><span class="workbench-icon workbench-icon--green"><i class="fa-solid fa-file-arrow-down"></i></span><div><span>Output Files</span><small>Generated deliverables</small></div><button type="button">View all</button></div>
-                  <div class="workbench-files">
-                    <button type="button"><span class="file-badge file-badge--md">MD</span><span><strong>market_report.md</strong><small>Generated just now</small></span><i class="fa-solid fa-download"></i></button>
-                    <button type="button"><span class="file-badge file-badge--png">PNG</span><span><strong>interior_design_preview.png</strong><small>Preview image</small></span><i class="fa-solid fa-download"></i></button>
-                    <button type="button"><span class="file-badge file-badge--pdf">PDF</span><span><strong>workspace_summary.pdf</strong><small>3 pages</small></span><i class="fa-solid fa-download"></i></button>
-                  </div>
-                </section>
-
-                <section class="workbench-card quick-actions-card">
-                  <div class="workbench-card-title"><span class="workbench-icon workbench-icon--amber"><i class="fa-solid fa-bolt-lightning"></i></span><div><span>Quick Actions</span><small>Workspace controls</small></div></div>
-                  <div class="quick-actions">
-                    <button type="button"><i class="fa-solid fa-rotate-right"></i> Retry task</button>
-                    <button type="button"><i class="fa-solid fa-folder-open"></i> Open outputs</button>
-                    <button type="button"><i class="fa-solid fa-code-branch"></i> View activity</button>
-                  </div>
-                </section>
-              </main>
-
-              <aside class="workbench-status-panel">
-                <section class="workbench-card environment-card">
-                  <div class="workbench-card-title"><span class="workbench-icon workbench-icon--blue"><i class="fa-solid fa-server"></i></span><div><span>Environment Status</span><small>Local services</small></div></div>
-                  <div class="environment-mode"><span><i></i> Local Preview</span><strong>MOCK MODE</strong></div>
-                </section>
-
-                <section class="workbench-card services-card">
-                  <div class="service-row"><span class="service-logo service-logo--api"><i class="fa-solid fa-plug"></i></span><div><strong>FastAPI</strong><small>localhost:8787</small></div><span class="service-status-pill" id="fastapi-workbench-status"><i></i> Checking</span></div>
-                  <div class="service-row"><span class="service-logo service-logo--streamlit"><i class="fa-solid fa-wave-square"></i></span><div><strong>Streamlit</strong><small>localhost:8501</small></div><span class="service-status-pill" id="streamlit-workbench-status"><i></i> Checking</span></div>
-                </section>
-
-                <section class="workbench-card activity-card">
-                  <div class="workbench-card-title"><span>Recent Activity</span><span class="activity-count">3</span></div>
-                  <ol>
-                    <li><i></i><div><strong>Workspace initialized</strong><small>Just now</small></div></li>
-                    <li><i></i><div><strong>Avatar state synchronized</strong><small>041 sequence</small></div></li>
-                    <li><i></i><div><strong>Output slots prepared</strong><small>3 files ready</small></div></li>
-                  </ol>
-                </section>
-
-                <section class="workbench-card preview-card">
-                  <span class="preview-orb"><i></i></span>
-                  <div><strong>NOVA Local Preview</strong><small>Interface remains available while services reconnect.</small></div>
-                </section>
-              </aside>
+              <main id="workbench-task-canvas" class="workbench-main dynamic-task-canvas" aria-live="polite"></main>
             </div>
           </div>
-          <div class="workbench-reflection" aria-hidden="true"></div>
           <div class="workbench-base-glow" aria-hidden="true"></div>
         </div>
         <div id="agent-overlay-message-layer" class="agent-overlay-message-layer" aria-live="polite">
