@@ -32,6 +32,7 @@ const AGENT_API_BASE = "http://127.0.0.1:8787";
 const STREAMLIT_WORKBENCH_URL = "http://127.0.0.1:8501";
 const VIESHOW_OFFICIAL_URL = "https://www.vscinemas.com.tw/";
 const WORKBENCH_PROJECTS_STORAGE_KEY = "nova.workbench.projects.v1";
+const AGENT_BRAIN_MODE = "localMock";
 const FIRST_ACK_PREPARE_SECONDS = 3.2;
 const FIRST_ACK_SHELL_PREPARE_SECONDS = 3.6;
 const FIRST_ACK_WORKBENCH_CUE_SECONDS = 3.45;
@@ -73,7 +74,7 @@ function renderWorkflowHeading(title, subtitle, icon) {
   return `<header class="task-canvas-heading workbench-task-reveal">
     <span class="task-canvas-icon"><i class="fa-solid ${icon}"></i></span>
     <div><span class="task-canvas-kicker">DYNAMIC TASK CANVAS</span><h3>${title}</h3><p>${subtitle}</p></div>
-    <span class="task-live-pill"><i></i> LIVE MOCK</span>
+    <div class="agent-runtime-hud"><span class="agent-brain-chip">BRAIN · ${AGENT_BRAIN_MODE}</span><span class="agent-tool-chip">Selecting tools</span><span class="agent-runtime-status" data-agent-status>Planning</span></div>
   </header>`;
 }
 
@@ -109,7 +110,7 @@ function renderDemoToCodeTask(userMessage) {
     ${renderWorkflowHeading("Website Design Studio", "NOVA is designing a live website concept from your style request.", "fa-pen-ruler")}
     <div class="task-workflow-grid task-workflow-grid--live">
       <section class="workbench-card task-panel workbench-task-reveal"><span class="task-panel-label">Style Request</span><p class="task-request-line">${request}</p><ul class="analysis-list"><li>Premium technology mood</li><li>Glass navigation</li><li>Focused hero hierarchy</li><li>Responsive component grid</li><li>Subtle motion language</li></ul></section>
-      <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span></div><div class="website-builder"><div class="builder-nav ai-progressive" data-stage="1"><b>NOVA</b><span>Product</span><span>Studio</span><button>Get started</button></div><div class="builder-hero ai-progressive" data-stage="2"><small>NEXT-GENERATION WORKSPACE</small><strong>Design at the speed of thought.</strong><p>Intelligent tools for ambitious product teams.</p><button>Start creating</button></div><div class="builder-features"><article class="ai-progressive" data-stage="3"><i class="fa-solid fa-wand-magic-sparkles"></i><b>AI Studio</b></article><article class="ai-progressive" data-stage="4"><i class="fa-solid fa-layer-group"></i><b>Glass System</b></article><article class="ai-progressive" data-stage="4"><i class="fa-solid fa-bolt"></i><b>Fast Motion</b></article></div><div class="responsive-blocks ai-progressive" data-stage="5"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading your style request</div></section>
+      <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span></div><div class="website-builder fashion-builder"><div class="builder-nav ai-progressive" data-stage="1"><b>ATELIER / 01</b><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><button>Shop now</button></div><div class="builder-hero ai-progressive" data-stage="2"><small>FUTURE ESSENTIALS · 2026</small><strong>Wear what comes next.</strong><p>Precision silhouettes for a new generation.</p><button>Explore collection</button></div><div class="fashion-categories ai-progressive" data-stage="3"><span>Outerwear</span><span>Knitwear</span><span>Essentials</span><span>Accessories</span></div><div class="builder-products">${[["Form Jacket","NT$ 6,980"],["Glass Knit","NT$ 3,280"],["Motion Trouser","NT$ 4,680"],["Vector Coat","NT$ 8,800"],["Core Tee","NT$ 1,980"],["Orbit Bag","NT$ 3,980"]].map(([name,price],index) => `<article class="ai-progressive" data-stage="${index < 3 ? 4 : 5}"><i style="--product-tone:${index}"></i><b>${name}</b><span>${price}</span></article>`).join("")}</div><div class="responsive-blocks ai-progressive" data-stage="5"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading your fashion brand request</div></section>
       <section class="workbench-card task-panel design-controls workbench-task-reveal"><span class="task-panel-label">Design Controls</span>${[["Style","Premium glass"],["Color","Ice blue"],["Layout","Editorial"],["Components","Adaptive"],["Motion","Subtle"]].map(([label,value]) => `<label><span>${label}</span><strong>${value}</strong></label>`).join("")}</section>
     </div>
     <div class="website-action-bar workbench-card workbench-task-reveal"><div><span>Live concept</span><strong>Design preview in progress</strong></div><button type="button" class="is-secondary" data-workbench-action="refine-design">Refine Design</button><button type="button" data-workbench-action="save-website-code">Save as Code</button></div>
@@ -166,7 +167,7 @@ CAPABILITY ENGINE LAYER
 3D Design, Browser Automation, Website Design, and File Output engines.
 ================================ */
 
-class Cafe3DDesignEngine {
+class Interior3DEngine {
   constructor(viewport) {
     this.viewport = viewport;
     this.disposed = false;
@@ -231,7 +232,8 @@ class Cafe3DDesignEngine {
       wood: new THREE.MeshStandardMaterial({ color: 0x563929, roughness: 0.62 }),
       stone: new THREE.MeshStandardMaterial({ color: 0xaca79d, roughness: 0.38 }),
       metal: new THREE.MeshStandardMaterial({ color: 0x20262a, metalness: 0.72, roughness: 0.3 }),
-      fabric: new THREE.MeshStandardMaterial({ color: 0x9d7457, roughness: 0.82 })
+      fabric: new THREE.MeshStandardMaterial({ color: 0x9d7457, roughness: 0.82 }),
+      green: new THREE.MeshStandardMaterial({ color: 0x496b50, roughness: 0.78 })
     };
     const box = (size, position, material) => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
@@ -257,6 +259,10 @@ class Cafe3DDesignEngine {
       });
     };
     addTable(-2.5, 1.5); addTable(0, 1.35); addTable(2.55, 1.45);
+    [[-4.1,-2.6],[4.2,-2.7]].forEach(([x,z]) => {
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.55,18), materials.stone); pot.position.set(x,.28,z); this.cafeRoot.add(pot);
+      for (let index=0; index<5; index+=1) { const leaf = new THREE.Mesh(new THREE.SphereGeometry(.24,14,10),materials.green); leaf.scale.set(.55,1.7,.38); leaf.position.set(x+(index-2)*.1,.8+Math.abs(index-2)*.12,z); leaf.rotation.z=(index-2)*.35; this.cafeRoot.add(leaf); }
+    });
     [-2.3, 0, 2.3].forEach((x) => {
       const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,1.25,8), materials.metal);
       cable.position.set(x,4.35,-.4); this.cafeRoot.add(cable);
@@ -304,6 +310,141 @@ class Cafe3DDesignEngine {
     this.renderer?.dispose();
     this.renderer?.forceContextLoss?.();
   }
+}
+
+class AgentBrainAdapter {
+  constructor(mode) { this.mode = mode; }
+  async planTask() { throw new Error("planTask() must be implemented by an Agent Brain adapter."); }
+  chooseTools(plan) { return plan.tools || []; }
+  generateSteps(plan) { return plan.steps || []; }
+  async executeStep(step) { return { stepId: step.id, status: "completed" }; }
+  summarizeResult(result) { return result; }
+}
+
+class LocalMockBrainAdapter extends AgentBrainAdapter {
+  constructor() { super("localMock"); }
+  async planTask(userMessage, intent) {
+    const plans = {
+      interior_3d_design: { tools: ["Interior3DEngine"], steps: ["Analyze interior style", "Build cafe shell", "Place counter and furniture", "Apply modern materials", "Set warm lighting", "Enable orbit preview"] },
+      browser_booking: { tools: ["BrowserAutomationEngine"], steps: ["Identify official website", "Search preview sessions", "Select date and time", "Choose ticket quantity", "Select seats", "Stop before payment"] },
+      website_builder: { tools: ["WebsiteBuildEngine", "FileWorkspaceEngine"], steps: ["Parse brand direction", "Build navigation", "Compose fashion hero", "Generate product catalog", "Apply responsive layout", "Wait for design approval"] },
+      general_workspace: { tools: ["WorkbenchToolExecutor"], steps: ["Understand request", "Create plan", "Prepare workspace", "Generate preview"] }
+    };
+    return { intent, summary: userMessage, brain: this.mode, ...(plans[intent] || plans.general_workspace) };
+  }
+}
+
+class LocalProxyBrainAdapter extends AgentBrainAdapter {
+  constructor(mode) { super(mode); }
+  async planTask(userMessage, intent) {
+    const response = await fetch(`${AGENT_API_BASE}/api/agent/plan`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: userMessage, intent, brain: this.mode }) });
+    if (!response.ok) throw new Error(`${this.mode} proxy returned HTTP ${response.status}`);
+    return response.json();
+  }
+}
+
+class AntigravityExecutorAdapter {
+  detectAvailability() { return { available: false, status: "adapter_ready", mode: "manual_connection_required" }; }
+  async openProject(projectPath) { return { projectPath, status: "manual_connection_required" }; }
+  async runPrompt(prompt) { return { prompt, status: "manual_connection_required" }; }
+  streamEvents() { return new EventTarget(); }
+  reportStatus() { return this.detectAvailability(); }
+  fallbackToLocalAgent() { return new LocalMockBrainAdapter(); }
+}
+
+class BrowserAutomationEngine {
+  constructor() {
+    this.targetSite = "Vieshow Cinemas";
+    this.officialUrl = VIESHOW_OFFICIAL_URL;
+    this.mode = "frontend_preview";
+    this.futureEngine = "playwright_ready";
+    this.safetyMode = "stop_before_payment";
+    this.currentStep = 0;
+  }
+  openOfficialSite() { window.open(this.officialUrl, "_blank", "noopener,noreferrer"); }
+  previewAutomation(step) { this.currentStep = step; return { step, mode: this.mode, safetyMode: this.safetyMode }; }
+  requestUserConfirmation() { return { status: "waiting_for_user", reason: "Payment, login, or verification requires user confirmation." }; }
+}
+
+class WebsiteBuildEngine {
+  constructor() { this.status = "idle"; }
+  start(request) { this.status = "executing"; return { request, status: this.status, preview: "fashion_store" }; }
+  markPreviewReady() { this.status = "preview_ready"; return this.status; }
+}
+
+class FileWorkspaceEngine {
+  constructor(storageKey) { this.storageKey = storageKey; }
+  load() { try { const data = JSON.parse(localStorage.getItem(this.storageKey) || "[]"); return Array.isArray(data) ? data : []; } catch { return []; } }
+  save(projects) { localStorage.setItem(this.storageKey, JSON.stringify(projects)); }
+  createProject(name, files) { return { id: `${name}-${Date.now()}`, name, createdAt: new Date().toISOString(), files }; }
+  addFile(project, path, content) { project.files[path] = content; return project; }
+  renderFileTree(projects) { return projects.map((project) => ({ id: project.id, name: project.name, paths: Object.keys(project.files) })); }
+  openFile(project, path) { return project?.files?.[path] ?? null; }
+  previewFile(project, path) { return this.openFile(project, path); }
+  downloadProject(project, downloadFile) { Object.keys(project.files).filter((path) => !path.includes("/")).forEach((path) => downloadFile(project.id, path)); }
+}
+
+class AgentToolExecutor {
+  constructor() { this.tools = new Map(); }
+  register(name, engine) { this.tools.set(name, engine); return this; }
+  unregister(name) { this.tools.delete(name); return this; }
+  has(name) { return this.tools.has(name); }
+  async execute(name, method, ...args) {
+    const engine = this.tools.get(name);
+    if (!engine || typeof engine[method] !== "function") throw new Error(`Tool unavailable: ${name}.${method}`);
+    return engine[method](...args);
+  }
+  report() { return Array.from(this.tools.keys()).map((name) => ({ name, status: "ready" })); }
+}
+
+class AgentStatusStream extends EventTarget {
+  constructor() { super(); this.mode = "local_async"; this.connection = null; }
+  publish(type, payload) { this.dispatchEvent(new CustomEvent(type, { detail: payload })); }
+  connectWebSocket(url) { this.disconnect(); this.mode = "websocket"; this.connection = new WebSocket(url); this.connection.onmessage = (event) => this.publish("event", JSON.parse(event.data)); return this.connection; }
+  connectSSE(url) { this.disconnect(); this.mode = "sse"; this.connection = new EventSource(url); this.connection.onmessage = (event) => this.publish("event", JSON.parse(event.data)); return this.connection; }
+  connectPolling(poll, interval = 1000) { this.disconnect(); this.mode = "polling"; this.connection = window.setInterval(async () => this.publish("event", await poll()), interval); return this.connection; }
+  disconnect() { if (!this.connection) return; if (typeof this.connection === "number") clearInterval(this.connection); else this.connection.close?.(); this.connection = null; }
+}
+
+class AgentOrchestrator extends EventTarget {
+  constructor(brainMode = AGENT_BRAIN_MODE) {
+    super();
+    this.brain = brainMode === "localMock" ? new LocalMockBrainAdapter() : new LocalProxyBrainAdapter(brainMode);
+    this.statusStream = new AgentStatusStream();
+    this.state = null;
+  }
+  emit(type, detail = {}) { const payload = { ...this.state, ...detail }; this.dispatchEvent(new CustomEvent(type, { detail: payload })); this.statusStream.publish(type, payload); }
+  async startTask(userMessage, intent) {
+    const taskId = `nova-task-${Date.now()}`;
+    this.state = { taskId, intent, brain: this.brain.mode, status: "planning", currentStep: null, steps: [], toolCalls: [], cursor: null, output: null, files: [] };
+    this.emit("status", { message: "Agent is planning the task" });
+    try {
+      const plan = await this.brain.planTask(userMessage, intent);
+      this.state.steps = this.brain.generateSteps(plan).map((label, index) => ({ id: `step-${index + 1}`, label, status: "pending" }));
+      this.state.toolCalls = this.brain.chooseTools(plan).map((name) => ({ name, status: "selected" }));
+      this.state.status = "executing";
+      this.emit("plan", { plan });
+      this.emit("status", { message: "Plan ready · executing" });
+      return this.state;
+    } catch (error) {
+      if (this.brain.mode !== "localMock") {
+        this.brain = new LocalMockBrainAdapter();
+        return this.startTask(userMessage, intent);
+      }
+      this.state.status = "failed"; this.emit("status", { message: error.message }); throw error;
+    }
+  }
+  advance(index, message, cursor) {
+    if (!this.state) return;
+    this.state.steps.forEach((step, stepIndex) => { step.status = stepIndex < index ? "completed" : stepIndex === index ? "executing" : "pending"; });
+    this.state.currentStep = this.state.steps[index]?.id || null;
+    this.state.status = index >= this.state.steps.length - 1 ? "preview_ready" : "using_tool";
+    this.state.cursor = cursor;
+    this.emit("step", { index, message });
+    this.emit("status", { message });
+  }
+  complete(output = null, files = []) { if (!this.state) return; this.state.status = "completed"; this.state.output = output; this.state.files = files; this.emit("completed"); }
+  stop() { if (!this.state) return; this.state.status = "idle"; this.emit("status", { message: "Agent stopped" }); }
 }
 
 let hasCompletedFirstTask = false;
@@ -546,9 +687,21 @@ class AvatarController {
     this.workbenchTaskTimers = [];
     this.design3DEngine = null;
     this.currentWorkbenchRequest = "";
+    this.browserAutomationEngine = new BrowserAutomationEngine();
+    this.websiteBuildEngine = new WebsiteBuildEngine();
+    this.fileWorkspaceEngine = new FileWorkspaceEngine(WORKBENCH_PROJECTS_STORAGE_KEY);
+    this.antigravityExecutor = new AntigravityExecutorAdapter();
+    this.toolExecutor = new AgentToolExecutor()
+      .register("BrowserAutomationEngine", this.browserAutomationEngine)
+      .register("WebsiteBuildEngine", this.websiteBuildEngine)
+      .register("FileWorkspaceEngine", this.fileWorkspaceEngine)
+      .register("AntigravityExecutorAdapter", this.antigravityExecutor);
+    this.agentOrchestrator = new AgentOrchestrator(AGENT_BRAIN_MODE);
+    this.agentLogs = [];
     this.generatedProjects = this.loadGeneratedProjects();
 
     this.crossfade = new CrossfadeController(this.videoA, this.videoB, this.config.crossfade_ms);
+    this.bindAgentRuntimeEvents();
   }
 
   async init() {
@@ -606,16 +759,11 @@ class AvatarController {
   }
 
   loadGeneratedProjects() {
-    try {
-      const projects = JSON.parse(localStorage.getItem(WORKBENCH_PROJECTS_STORAGE_KEY) || "[]");
-      return Array.isArray(projects) ? projects.filter((project) => project && project.id && project.files) : [];
-    } catch {
-      return [];
-    }
+    return this.fileWorkspaceEngine.load().filter((project) => project && project.id && project.files);
   }
 
   persistGeneratedProjects() {
-    try { localStorage.setItem(WORKBENCH_PROJECTS_STORAGE_KEY, JSON.stringify(this.generatedProjects)); }
+    try { this.fileWorkspaceEngine.save(this.generatedProjects); }
     catch (error) { console.warn("[NOVA Files] Unable to persist generated project.", error); }
   }
 
@@ -628,7 +776,7 @@ class AvatarController {
       name: "fashion-store",
       createdAt: new Date().toISOString(),
       files: {
-        "index.html": `<!doctype html>\n<html lang="zh-Hant">\n<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><link rel="stylesheet" href="style.css"></head>\n<body><header class="nav"><strong>ATELIER / 01</strong><nav>New · Collection · Journal</nav></header><main><section class="hero"><p>FUTURE ESSENTIALS</p><h1>Wear what comes next.</h1><button>Explore collection</button></section><section class="products"><article>Form Jacket</article><article>Glass Knit</article><article>Motion Trouser</article></section></main><script src="script.js"><\/script></body></html>`,
+        "index.html": `<!doctype html>\n<html lang="zh-Hant">\n<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${safeTitle}</title><link rel="stylesheet" href="style.css"></head>\n<body><header class="nav"><strong>ATELIER / 01</strong><nav>New Arrival · Lookbook · Best Seller</nav></header><main><section class="hero"><p>FUTURE ESSENTIALS</p><h1>Wear what comes next.</h1><button>Explore collection</button></section><section class="products"><article>Form Jacket · NT$ 6,980</article><article>Glass Knit · NT$ 3,280</article><article>Motion Trouser · NT$ 4,680</article><article>Vector Coat · NT$ 8,800</article><article>Core Tee · NT$ 1,980</article><article>Orbit Bag · NT$ 3,980</article></section></main><script src="script.js"><\/script></body></html>`,
         "style.css": `:root{font-family:Inter,sans-serif;color:#101827;background:#eef5f9}*{box-sizing:border-box}body{margin:0}.nav{display:flex;justify-content:space-between;padding:24px 5vw}.hero{min-height:62vh;padding:10vh 8vw;background:radial-gradient(circle at 80% 20%,#bce9ff,transparent 35%),linear-gradient(135deg,#fff,#dcebf4)}h1{max-width:720px;font-size:clamp(48px,8vw,108px);line-height:.9}button{padding:14px 22px;border:0;border-radius:999px;color:white;background:#147dcc}.products{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;padding:32px 5vw}.products article{min-height:220px;padding:24px;border:1px solid #fff;border-radius:28px;background:#ffffff8c;box-shadow:0 24px 70px #1e4a6820}@media(max-width:700px){.products{grid-template-columns:1fr}}`,
         "script.js": `document.querySelector('button')?.addEventListener('click',()=>document.querySelector('.products')?.scrollIntoView({behavior:'smooth'}));`,
         "assets/README.md": `Generated by NOVA Website Design Studio.\nDesign request: ${request.replace(/[\r\n]+/g, " ").slice(0, 180)}`
@@ -637,9 +785,13 @@ class AvatarController {
   }
 
   saveWebsiteProject() {
+    this.updateToolCall("FileWorkspaceEngine", "using_tool");
+    this.setAgentStatus("using_tool", "Generating code package");
     const project = this.createWebsiteProject();
     this.generatedProjects = [project, ...this.generatedProjects.filter((item) => item.name !== project.name)];
     this.persistGeneratedProjects();
+    this.websiteBuildEngine.markPreviewReady();
+    this.agentOrchestrator.complete({ projectId: project.id, status: "code_package_ready" }, Object.keys(project.files));
     this.renderFilesWorkspace(project.id);
   }
 
@@ -866,21 +1018,113 @@ class AvatarController {
     cancel();
   }
 
+  bindAgentRuntimeEvents() {
+    this.agentOrchestrator.addEventListener("status", (event) => {
+      this.setAgentStatus(event.detail.status, event.detail.message);
+      if (event.detail.message) this.appendAgentLog(event.detail.message);
+    });
+    this.agentOrchestrator.addEventListener("plan", (event) => {
+      const tools = event.detail.toolCalls || [];
+      const chip = this.workbenchTaskCanvas.querySelector(".agent-tool-chip");
+      if (chip) chip.textContent = tools.map((tool) => tool.name).join(" + ") || "No tool required";
+    });
+    this.agentOrchestrator.addEventListener("step", (event) => this.updateCurrentStep(event.detail.currentStep, event.detail.status));
+    this.agentOrchestrator.addEventListener("completed", (event) => this.renderFiles(event.detail.files || []));
+  }
+
+  getAgentIntent(taskType) {
+    if (taskType === "design3d") return "interior_3d_design";
+    if (taskType === "booking") return "browser_booking";
+    if (taskType === "demoToCode") return "website_builder";
+    return "general_workspace";
+  }
+
+  appendAgentLog(message) {
+    this.agentLogs.push({ at: new Date().toISOString(), message });
+    if (this.agentLogs.length > 40) this.agentLogs.shift();
+    const stream = this.workbenchTaskCanvas.querySelector(".agent-log-stream");
+    if (!stream) return;
+    const row = document.createElement("span");
+    row.textContent = message;
+    stream.appendChild(row);
+    while (stream.children.length > 4) stream.firstElementChild.remove();
+    stream.scrollTop = stream.scrollHeight;
+  }
+
+  updateCurrentStep(stepId, status) {
+    const steps = Array.from(this.workbenchTaskCanvas.querySelectorAll(".ai-step"));
+    const index = this.agentOrchestrator.state?.steps.findIndex((step) => step.id === stepId) ?? -1;
+    steps.forEach((step, stepIndex) => {
+      step.classList.toggle("is-complete", stepIndex < index);
+      step.classList.toggle("is-active", stepIndex === index && status !== "completed");
+    });
+  }
+
+  updateToolCall(toolName, status = "using_tool") {
+    const chip = this.workbenchTaskCanvas.querySelector(".agent-tool-chip");
+    if (chip) chip.textContent = `${toolName} · ${status.replaceAll("_", " ")}`;
+  }
+
+  moveAgentCursor(x, y) {
+    const cursor = this.workbenchTaskCanvas.querySelector(".ai-cursor");
+    if (!cursor) return;
+    cursor.style.left = `${x}%`; cursor.style.top = `${y}%`;
+  }
+
+  moveCursorTo(selectorOrPoint) {
+    if (typeof selectorOrPoint === "object") return this.moveAgentCursor(selectorOrPoint.x, selectorOrPoint.y);
+    const root = this.workbenchTaskCanvas.querySelector(".ai-live-window");
+    const target = root?.querySelector(selectorOrPoint);
+    const cursor = root?.querySelector(".ai-cursor");
+    if (!target || !cursor) return;
+    const rootBounds = root.getBoundingClientRect(); const bounds = target.getBoundingClientRect();
+    cursor.style.left = `${((bounds.left + bounds.width / 2 - rootBounds.left) / rootBounds.width) * 100}%`;
+    cursor.style.top = `${((bounds.top + bounds.height / 2 - rootBounds.top) / rootBounds.height) * 100}%`;
+  }
+
+  clickCursorTarget(selectorOrPoint) {
+    const root = this.workbenchTaskCanvas.querySelector(".ai-live-window");
+    const cursor = root?.querySelector(".ai-cursor");
+    const target = typeof selectorOrPoint === "string" ? root?.querySelector(selectorOrPoint) : null;
+    cursor?.classList.remove("is-clicking"); requestAnimationFrame(() => cursor?.classList.add("is-clicking"));
+    if (target) { target.classList.add("is-agent-target"); window.setTimeout(() => target.classList.remove("is-agent-target"), 520); }
+  }
+
+  highlightAgentTarget(selector) { const target = this.workbenchTaskCanvas.querySelector(selector); target?.classList.add("is-agent-target"); return target; }
+  updateAgentBubble(text) { const bubble = this.workbenchTaskCanvas.querySelector(".ai-action-bubble"); if (bubble) bubble.textContent = text; }
+  completeAgentStep(stepId) { const step = this.agentOrchestrator.state?.steps.find((item) => item.id === stepId); if (step) step.status = "completed"; this.updateCurrentStep(stepId, "completed"); }
+  runAgentCursorStep(step) { const point = step.cursor || { x: step.x, y: step.y }; this.updateAgentBubble(step.message); this.moveCursorTo(point); this.clickCursorTarget(step.target || point); }
+  renderLivePreview(payload) { const root = this.workbenchTaskCanvas.querySelector(".task-workflow"); if (root && payload?.ready) root.classList.add("is-ready"); }
+  renderFiles(files) { if (!files.length) return; this.appendAgentLog(`${files.length} output files ready`); }
+  setAgentStatus(status, message = "") { const node = this.workbenchTaskCanvas.querySelector("[data-agent-status]"); if (node) node.textContent = message || status.replaceAll("_", " "); this.agentStatusLabel.textContent = status.replaceAll("_", " ").toUpperCase(); }
+
+  async startAgentTaskRuntime(task, taskType) {
+    this.agentLogs = [];
+    await this.agentOrchestrator.startTask(task, this.getAgentIntent(taskType));
+    const selectedTool = this.agentOrchestrator.state.toolCalls[0]?.name;
+    if (selectedTool) this.updateToolCall(selectedTool, "selected");
+  }
+
   renderCurrentWorkbenchTask(task) {
     this.clearWorkbenchTaskAnimation();
     this.destroyCapabilityEngines();
     this.currentWorkbenchRequest = task;
     this.currentWorkbenchTaskType = detectWorkbenchTaskType(task);
     this.workbenchTaskCanvas.innerHTML = renderWorkbenchTask(this.currentWorkbenchTaskType, task);
+    this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
     this.workbenchCurrentTask = document.getElementById("workbench-current-task");
     this.workbenchCards = Array.from(this.agentOverlay.querySelectorAll(".workbench-card"));
     if (this.currentWorkbenchTaskType === "design3d") {
       const viewport = this.workbenchTaskCanvas.querySelector("[data-3d-viewport]");
-      if (viewport) this.design3DEngine = new Cafe3DDesignEngine(viewport);
+      if (viewport) {
+        this.design3DEngine = new Interior3DEngine(viewport);
+        this.toolExecutor.register("Interior3DEngine", this.design3DEngine);
+      }
     }
     this.logFlowEvent("workbench:task-rendered", {
       taskType: this.currentWorkbenchTaskType
     });
+    this.startAgentTaskRuntime(task, this.currentWorkbenchTaskType).catch((error) => console.warn("[NOVA Agent Runtime] Planning failed.", error));
     requestAnimationFrame(() => this.runWorkbenchTaskAnimation(this.currentWorkbenchTaskType));
   }
 
@@ -896,6 +1140,7 @@ class AvatarController {
   destroyCapabilityEngines() {
     this.design3DEngine?.destroy();
     this.design3DEngine = null;
+    this.toolExecutor.unregister("Interior3DEngine");
   }
 
   applyWorkflowStage(root, index, message) {
@@ -910,7 +1155,20 @@ class AvatarController {
     progressive.forEach((item) => {
       if (Number(item.dataset.stage || 0) <= index + 1) item.classList.add("is-visible");
     });
+    this.agentOrchestrator.advance(index, message, { x: root.querySelector(".ai-cursor")?.style.left, y: root.querySelector(".ai-cursor")?.style.top });
     this.design3DEngine?.setStage(index);
+    if (this.currentWorkbenchTaskType === "booking") {
+      this.browserAutomationEngine.previewAutomation(index);
+      if (index >= 5) {
+        const confirmation = this.browserAutomationEngine.requestUserConfirmation();
+        this.agentOrchestrator.state.status = confirmation.status;
+        this.setAgentStatus(confirmation.status, "Review before payment · confirmation required");
+      }
+    }
+    if (this.currentWorkbenchTaskType === "demoToCode") {
+      if (index === 0) this.websiteBuildEngine.start(this.currentWorkbenchRequest);
+      if (index >= 5) this.websiteBuildEngine.markPreviewReady();
+    }
     if (index >= steps.length - 1) root.classList.add("is-ready");
   }
 
@@ -925,7 +1183,7 @@ class AvatarController {
           top: `${stage.y}%`,
           duration: 0.34,
           ease: "power3.inOut",
-          onStart: () => this.applyWorkflowStage(root, index, stage.message)
+          onStart: () => { this.runAgentCursorStep(stage); this.applyWorkflowStage(root, index, stage.message); }
         });
         timeline.to(cursor, { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1 }, `>-0.04`);
       });
@@ -938,6 +1196,7 @@ class AvatarController {
       const timer = window.setTimeout(() => {
         cursor.style.left = `${stage.x}%`;
         cursor.style.top = `${stage.y}%`;
+        this.runAgentCursorStep(stage);
         this.applyWorkflowStage(root, index, stage.message);
       }, index * 380);
       this.workbenchTaskTimers.push(timer);
