@@ -12,7 +12,8 @@ const AVATAR_STATES = Object.freeze({
   FINAL_LOOP_043: "FINAL_LOOP_043"
 });
 
-const assetUrl = (path) => `${import.meta.env.BASE_URL}${path.replace(/^\/+/, "")}`;
+const runtimeBaseUrl = import.meta.env?.BASE_URL || new URL(".", import.meta.url).pathname;
+const assetUrl = (path) => `${runtimeBaseUrl}${path.replace(/^\/+/, "")}`;
 
 const VIDEO_PATHS = Object.freeze({
   INITIAL_LOOP_040: assetUrl("assets/avatar/AIPEOPLE/040.mp4"),
@@ -29,7 +30,7 @@ const VIDEO_PATHS = Object.freeze({
 
 const AGENT_API_BASE = "http://127.0.0.1:8787";
 const STREAMLIT_WORKBENCH_URL = "http://127.0.0.1:8501";
-const FIRST_ACK_MIN_DURATION_MS = 6000;
+const FIRST_ACK_WORKBENCH_CUE_SECONDS = 4;
 const MOCK_COMPLETION_HOLD_MS = 1000;
 const COMPLETION_TEXT = "已幫你完成，還有需要幫你做什麼嗎？";
 
@@ -260,11 +261,13 @@ class AvatarController {
     this.workbenchNavButtons = Array.from(document.querySelectorAll(".workbench-nav-button"));
     this.agentPollInFlight = false;
     this.agentCompletionInProgress = false;
+    this.cancel041WorkbenchCue = null;
 
     this.crossfade = new CrossfadeController(this.videoA, this.videoB, this.config.crossfade_ms);
   }
 
   async init() {
+    document.body.classList.remove("agent-overlay-open");
     console.info("[NOVA Phase 0.7] Initializing local 040-043 mock flow.");
     this.applyBranding();
     this.bindEvents();
@@ -370,6 +373,50 @@ class AvatarController {
     this.cssFallbackContainer.style.display = "none";
   }
 
+  waitFor041WorkbenchCue(video, requestId, seconds = FIRST_ACK_WORKBENCH_CUE_SECONDS) {
+    this.clear041WorkbenchCue();
+    if (!video) return Promise.resolve(false);
+
+    return new Promise((resolve) => {
+      let fired = false;
+
+      const cleanup = () => {
+        video.removeEventListener("timeupdate", onTimeUpdate);
+        video.removeEventListener("ended", onEnded);
+        if (this.cancel041WorkbenchCue === cancel) {
+          this.cancel041WorkbenchCue = null;
+        }
+      };
+
+      const finish = (triggered) => {
+        if (fired) return;
+        fired = true;
+        cleanup();
+        resolve(triggered && this.isCurrentRequest(requestId));
+      };
+
+      const fire = () => finish(true);
+      const onTimeUpdate = () => {
+        if (video.currentTime >= seconds) fire();
+      };
+      const onEnded = () => fire();
+      const cancel = () => finish(false);
+
+      this.cancel041WorkbenchCue = cancel;
+      video.addEventListener("timeupdate", onTimeUpdate);
+      video.addEventListener("ended", onEnded, { once: true });
+
+      if (video.currentTime >= seconds) fire();
+    });
+  }
+
+  clear041WorkbenchCue() {
+    if (!this.cancel041WorkbenchCue) return;
+    const cancel = this.cancel041WorkbenchCue;
+    this.cancel041WorkbenchCue = null;
+    cancel();
+  }
+
   async handleSendMessageFlow() {
     const message = this.chatInput.value.trim();
     if (!message || isAgentRunning || this.isBusy || !this.videoAvailable) return;
@@ -386,13 +433,12 @@ class AvatarController {
     try {
       if (!hasCompletedFirstTask) {
         const ackVideo = await this.playState(AVATAR_STATES.FIRST_ACK_041, { loop: true });
-        const ackStartedAt = performance.now();
         this.logFlowEvent("first-ack:started", { requestId, video: ackVideo.currentSrc });
-        await this.wait(FIRST_ACK_MIN_DURATION_MS);
-        if (!this.isCurrentRequest(requestId)) return;
-        this.logFlowEvent("first-ack:minimum-met", {
+        const cueReached = await this.waitFor041WorkbenchCue(ackVideo, requestId);
+        if (!cueReached || !this.isCurrentRequest(requestId)) return;
+        this.logFlowEvent("first-ack:workbench-cue", {
           requestId,
-          elapsedMs: Math.round(performance.now() - ackStartedAt)
+          currentTime: Number(ackVideo.currentTime.toFixed(2))
         });
       }
 
@@ -640,6 +686,7 @@ class AvatarController {
   }
 
   async closeAgentOverlayAfterError() {
+    this.clear041WorkbenchCue();
     this.clearAgentStatusPolling();
     isAgentRunning = false;
     await this.hideAgentOverlay();
@@ -657,6 +704,9 @@ class AvatarController {
   }
 
   async playState(state, options = {}) {
+    if (state !== AVATAR_STATES.FIRST_ACK_041) {
+      this.clear041WorkbenchCue();
+    }
     const src = this.config.video_paths[state];
     if (!src) throw new Error(`No video configured for state ${state}`);
 

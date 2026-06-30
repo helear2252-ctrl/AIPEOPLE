@@ -1049,6 +1049,59 @@ body::after,
 /* ==========================================
    Agent Workbench Overlay Styles
    ========================================== */
+.video-wrapper {
+  visibility: visible;
+  opacity: 1;
+  filter: none;
+  transform: none !important;
+  z-index: 3;
+  transition: filter 420ms ease, opacity 420ms ease, transform 420ms ease;
+}
+
+#avatar-video-a,
+#avatar-video-b {
+  visibility: visible;
+  filter: none;
+  transition: filter 420ms ease, opacity 420ms ease, transform 420ms ease;
+}
+
+body:not(.agent-overlay-open) .video-wrapper {
+  visibility: visible;
+  opacity: 1;
+  filter: none;
+  transform: none !important;
+}
+
+body:not(.agent-overlay-open) #avatar-video-a,
+body:not(.agent-overlay-open) #avatar-video-b {
+  visibility: visible;
+  filter: none;
+  transform: none !important;
+}
+
+body.agent-overlay-open #avatar-video-a,
+body.agent-overlay-open #avatar-video-b {
+  filter: blur(18px) brightness(0.48) saturate(0.82);
+  transform: scale(1.04) !important;
+}
+
+body.agent-overlay-open .avatar-video-layer.is-active {
+  opacity: 0.62;
+}
+
+body.agent-overlay-open::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at center, rgba(220, 245, 255, 0.10), transparent 36%),
+    linear-gradient(135deg, rgba(2, 8, 18, 0.46), rgba(7, 16, 32, 0.64));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
 .agent-overlay {
   position: fixed;
   inset: 0;
