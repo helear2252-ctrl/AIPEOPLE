@@ -2299,6 +2299,23 @@ body.agent-overlay-open {
 .fashion-lookbook { display:grid; grid-template-columns:1.3fr .7fr; gap:6px; margin:0 9px 7px; }.fashion-lookbook article { min-height:52px; display:flex; flex-direction:column; justify-content:flex-end; padding:8px; border-radius:8px; color:#fff; background:radial-gradient(circle at 82% 20%,rgba(120,215,255,.36),transparent 35%),linear-gradient(135deg,#17364b,#4c758c); }.fashion-lookbook article:last-child { background:linear-gradient(135deg,#cbd8df,#6f8796); }.fashion-lookbook small { color:rgba(237,249,255,.62); font-size:4px; letter-spacing:.12em; }.fashion-lookbook strong { margin-top:3px; font-size:7px; }
 .fashion-footer { display:flex; align-items:center; gap:8px; padding:7px 10px; color:#718797; border-top:1px solid rgba(41,80,107,.1); font-size:4px; }.fashion-footer strong { margin-right:auto; color:#203c50; font-size:5px; }.fashion-footer small { margin-left:auto; }
 .files-workspace-body { min-height:clamp(430px,58vh,610px); }
+/* Unified Agent Playback layers */
+.playback-layer { transition:opacity 460ms ease,filter 460ms ease,visibility 0s linear 460ms,box-shadow 260ms ease,outline-color 260ms ease; }
+.playback-layer.is-pending { opacity:0!important; visibility:hidden; filter:blur(7px); }
+.playback-layer.is-building { visibility:visible; opacity:.26; filter:blur(4px); transition-delay:0s; }
+.playback-layer.is-visible,.playback-layer.is-complete { visibility:visible; opacity:1!important; filter:blur(0); transition-delay:0s; }
+.playback-layer.is-highlighted { outline:1px solid rgba(105,211,255,.8); outline-offset:3px; box-shadow:0 0 0 5px rgba(74,179,238,.12),0 0 28px rgba(74,179,238,.2); }
+.ai-step-timeline { grid-template-columns:repeat(8,minmax(0,1fr)); }
+.ai-step[data-status="running"] { opacity:1; color:rgba(245,252,255,.96); }
+.agent-tool-chip { transition:color 220ms ease,border-color 220ms ease,background 220ms ease; }
+.cafe-3d-viewport.is-playback-locked { pointer-events:none; cursor:progress; }
+.cafe-fallback-decor { position:absolute; inset:0; transform-style:preserve-3d; }.cafe-fallback-decor i { position:absolute; display:block; }.cafe-fallback-decor i:nth-child(1) { left:12px; bottom:34px; width:20px; height:48px; border-radius:50% 50% 24% 24%; background:#496b50; box-shadow:8px 8px #36533e; transform:translateZ(48px); }.cafe-fallback-decor i:nth-child(2),.cafe-fallback-decor i:nth-child(3) { top:38px; width:30px; height:42px; border:4px solid #252c30; background:#b79b76; transform:translateZ(-72px); }.cafe-fallback-decor i:nth-child(2) { left:76px; }.cafe-fallback-decor i:nth-child(3) { left:116px; }
+.booking-ticket-control { display:flex; align-items:center; gap:7px; margin-top:8px; padding:7px 9px; border:1px solid rgba(48,102,139,.13); border-radius:8px; color:#315971; background:rgba(255,255,255,.74); }.booking-ticket-control > span { margin-right:auto; font-size:7px; }.booking-ticket-control button { width:22px; height:22px; border:0; border-radius:6px; color:#fff; background:#3d8dca; }.booking-ticket-control strong { min-width:16px; text-align:center; font-size:8px; }.booking-ticket-control small { color:#7690a1; font-size:5px; }
+.booking-layer-browser .ai-address-bar i { animation:agent-status-pulse 1s infinite; }
+.builder-products article.playback-layer { transform:translateY(10px) scale(.96); transition:opacity 420ms ease,transform 520ms cubic-bezier(.22,1,.36,1),filter 420ms ease,visibility 0s linear 520ms; }
+.builder-products article.playback-layer.is-visible,.builder-products article.playback-layer.is-complete { transform:translateY(0) scale(1); }
+.site-layer-save:disabled { pointer-events:none; cursor:default; }
+.task-workflow.is-complete .ai-action-bubble::before { background:#67dfaf; box-shadow:0 0 8px #67dfaf; animation:none; }
 @media (max-width:720px) {
   .design-live-window,.booking-live-window,.website-live-window { min-height:430px; }
   .viewport-floating-hud { left:42px; width:55%; }

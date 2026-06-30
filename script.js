@@ -33,6 +33,7 @@ const STREAMLIT_WORKBENCH_URL = "http://127.0.0.1:8501";
 const VIESHOW_OFFICIAL_URL = "https://www.vscinemas.com.tw/";
 const WORKBENCH_PROJECTS_STORAGE_KEY = "nova.workbench.projects.v1";
 const AGENT_BRAIN_MODE = "localMock";
+const AGENT_PLAYBACK_SPEED = "normal";
 const FIRST_ACK_PREPARE_SECONDS = 3.2;
 const FIRST_ACK_SHELL_PREPARE_SECONDS = 3.6;
 const FIRST_ACK_WORKBENCH_CUE_SECONDS = 3.45;
@@ -83,9 +84,9 @@ function render3DDesignTask(userMessage) {
   return `<div class="task-workflow task-workflow--design3d">
     ${renderWorkflowHeading("3D Concept Studio", "NOVA is actively building a product-style 3D concept from your request.", "fa-cube")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Drag to orbit · Live</span></div><div class="viewport-floating-hud"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor"></i><i class="cafe-wall cafe-wall--back"></i><i class="cafe-wall cafe-wall--side"></i><div class="cafe-counter"></div><div class="cafe-bench"></div><div class="cafe-table cafe-table--one"></div><div class="cafe-table cafe-table--two"></div><div class="cafe-table cafe-table--three"></div><div class="cafe-pendants"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready ai-progressive" data-stage="6"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Analyzing cafe layout</div></section>
+      <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Building scene</span></div><div class="viewport-floating-hud playback-layer cafe-layer-material is-pending"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport is-playback-locked" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail playback-layer cafe-layer-shell is-pending"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar playback-layer cafe-layer-material is-pending"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading interior design request</div></section>
     </div>
-    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Reading request", "Opening canvas", "Selecting style", "Building geometry", "Applying material", "Preview ready"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Planning", "Space shell", "Counter", "Seating", "Lighting", "Materials", "Details", "Preview ready"].map((step, index) => `<span class="ai-step" data-step-id="design3d-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -94,9 +95,9 @@ function renderBookingTask(userMessage) {
   return `<div class="task-workflow task-workflow--booking">
     ${renderWorkflowHeading("Booking Flow Agent", "NOVA is operating a booking flow and will stop safely before payment.", "fa-ticket")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="ai-live-canvas ai-live-window booking-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><div class="ai-address-bar"><i class="fa-solid fa-lock"></i> vscinemas.com.tw · NOVA Safe Preview</div><span class="browser-safe-badge"><i class="fa-solid fa-shield-halved"></i> stop_before_payment</span><a class="official-site-link" href="${VIESHOW_OFFICIAL_URL}" target="_blank" rel="noopener noreferrer">Open official site <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div><div class="booking-page"><div class="booking-site-nav"><strong>VIESHOW CINEMAS</strong><span>Movies</span><span>Cinemas</span><span>Events</span><b>Safe preview</b></div><div class="booking-brand"><i class="fa-solid fa-film"></i><strong>VIESHOW Booking Assistant</strong><span>frontend_preview · playwright_ready</span></div><div class="booking-task-chip"><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</div><div class="booking-browser-grid"><div class="booking-browser-main"><div class="booking-cinema-hero ai-progressive" data-stage="1"><small>TAIPEI XINYI</small><strong>Choose your next cinema experience.</strong><span>Official availability is confirmed only after opening VIESHOW.</span></div><div class="booking-form"><label data-control="theater"><span>Theater</span><b class="typed-value ai-progressive" data-stage="1">台北信義威秀影城</b></label><label data-control="movie"><span>Movie</span><b class="typed-value ai-progressive" data-stage="2">Movie preview</b></label><label data-control="date"><span>Date</span><b class="typed-value ai-progressive" data-stage="3">Selected date</b></label><button type="button" class="ai-progressive" data-stage="3">Search sessions</button></div><div class="booking-showtimes ai-progressive" data-stage="4"><button>17:10 <small>Digital</small></button><button class="is-selected">19:30 <small>Digital</small></button><button>21:50 <small>IMAX</small></button></div></div><aside class="booking-seat-preview ai-progressive" data-stage="5"><small>SCREEN</small><div>${Array.from({ length: 24 }, (_, index) => `<i class="${index === 15 || index === 16 ? "is-selected" : ""}"></i>`).join("")}</div><strong>F11 · F12 selected</strong></aside></div><div class="review-lock ai-progressive" data-stage="6"><i class="fa-solid fa-shield-halved"></i><div><strong>Review before payment · User confirmation required</strong><small>No transaction executed. Continue only on the official website.</small></div></div></div><div class="booking-mode-toggle booking-mode-floating"><button type="button" class="is-active" data-workbench-action="booking-mode" data-booking-mode="safe">Safe mode</button><button type="button" data-workbench-action="booking-mode" data-booking-mode="authorized">Authorized handoff</button></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Opening VIESHOW safe preview</div></section>
+      <section class="ai-live-canvas ai-live-window booking-live-window workbench-task-reveal"><div class="ai-window-toolbar booking-layer-browser"><i></i><i></i><i></i><div class="ai-address-bar"><i class="fa-solid fa-spinner"></i><span>loading browser workspace…</span></div><span class="browser-safe-badge playback-layer booking-layer-review is-pending"><i class="fa-solid fa-shield-halved"></i> stop_before_payment</span><a class="official-site-link playback-layer booking-layer-site is-pending" href="${VIESHOW_OFFICIAL_URL}" target="_blank" rel="noopener noreferrer">Open official site <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div><div class="booking-page"><div class="booking-site-nav playback-layer booking-layer-site is-pending"><strong>VIESHOW CINEMAS</strong><span>Movies</span><span>Cinemas</span><span>Events</span><b>Safe preview</b></div><div class="booking-brand playback-layer booking-layer-site is-pending"><i class="fa-solid fa-film"></i><strong>VIESHOW Booking Assistant</strong><span>frontend_preview · playwright_ready</span></div><div class="booking-task-chip playback-layer booking-layer-site is-pending"><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</div><div class="booking-browser-grid"><div class="booking-browser-main"><div class="booking-cinema-hero playback-layer booking-layer-site is-pending"><small>TAIPEI XINYI</small><strong>Choose your next cinema experience.</strong><span>Official availability is confirmed only after opening VIESHOW.</span></div><div class="booking-form playback-layer booking-layer-search is-pending"><label data-control="theater"><span>Theater</span><b class="typed-value">台北信義威秀影城</b></label><label data-control="movie"><span>Movie</span><b class="typed-value">Movie preview</b></label><label data-control="date"><span>Date</span><b class="typed-value">Selected date</b></label><button type="button">Search sessions</button></div><div class="booking-showtimes playback-layer booking-layer-results is-pending"><button>17:10 <small>Digital</small></button><button class="is-selected">19:30 <small>Digital</small></button><button>21:50 <small>IMAX</small></button></div><div class="booking-ticket-control playback-layer booking-layer-ticket is-pending"><span>Adult ticket</span><button type="button">−</button><strong>2</strong><button type="button">＋</button><small>Preview only</small></div></div><aside class="booking-seat-preview playback-layer booking-layer-seat is-pending"><small>SCREEN</small><div>${Array.from({ length: 24 }, (_, index) => `<i class="${index === 15 || index === 16 ? "is-selected" : ""}"></i>`).join("")}</div><strong>F11 · F12 selected</strong></aside></div><div class="review-lock playback-layer booking-layer-review is-pending"><i class="fa-solid fa-shield-halved"></i><div><strong>Review before payment · User confirmation required</strong><small>No transaction executed. Continue only on the official website.</small></div></div></div><div class="booking-mode-toggle booking-mode-floating playback-layer booking-layer-review is-pending"><button type="button" class="is-active" data-workbench-action="booking-mode" data-booking-mode="safe">Safe mode</button><button type="button" data-workbench-action="booking-mode" data-booking-mode="authorized">Authorized handoff</button></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Identifying target site</div></section>
     </div>
-    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Search tickets", "Compare options", "Select time", "Choose seat", "Traveler info", "Stop before payment"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Planning", "Browser", "Vieshow", "Search", "Sessions", "Tickets", "Seats", "Review"].map((step, index) => `<span class="ai-step" data-step-id="booking-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -105,9 +106,9 @@ function renderDemoToCodeTask(userMessage) {
   return `<div class="task-workflow task-workflow--website">
     ${renderWorkflowHeading("Website Design Studio", "NOVA is designing a live website concept from your style request.", "fa-pen-ruler")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span><button type="button" class="toolbar-action" data-workbench-action="refine-design">Refine</button><button type="button" class="toolbar-action is-primary" data-workbench-action="save-website-code">Save as Code</button></div><div class="website-style-toolbar"><span><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</span><b>Premium glass</b><b>Ice blue</b><b>Editorial</b><b>Responsive</b></div><div class="website-builder fashion-builder"><div class="builder-nav ai-progressive" data-stage="1"><b>ATELIER / 01</b><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><button>Shop now</button></div><div class="builder-hero ai-progressive" data-stage="2"><small>FUTURE ESSENTIALS · 2026</small><strong>Wear what comes next.</strong><p>Precision silhouettes for a new generation.</p><button>Explore collection</button></div><div class="fashion-categories ai-progressive" data-stage="3"><span>Outerwear</span><span>Knitwear</span><span>Essentials</span><span>Accessories</span></div><div class="builder-products">${[["Form Jacket","NT$ 6,980"],["Glass Knit","NT$ 3,280"],["Motion Trouser","NT$ 4,680"],["Vector Coat","NT$ 8,800"],["Core Tee","NT$ 1,980"],["Orbit Bag","NT$ 3,980"]].map(([name,price],index) => `<article class="ai-progressive" data-stage="${index < 3 ? 4 : 5}"><i style="--product-tone:${index}"></i><b>${name}</b><span>${price}</span></article>`).join("")}</div><div class="fashion-lookbook ai-progressive" data-stage="5"><article><small>LOOKBOOK / 01</small><strong>Engineered layers</strong></article><article><small>NEW ARRIVAL</small><strong>Quiet utility</strong></article></div><footer class="fashion-footer ai-progressive" data-stage="5"><strong>ATELIER / 01</strong><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><small>© 2026</small></footer><div class="responsive-blocks ai-progressive" data-stage="5"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading your fashion brand request</div></section>
+      <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span><button type="button" class="toolbar-action playback-layer site-layer-save is-pending" data-workbench-action="refine-design" disabled>Refine</button><button type="button" class="toolbar-action is-primary playback-layer site-layer-save is-pending" data-workbench-action="save-website-code" disabled>Save as Code</button></div><div class="website-style-toolbar playback-layer site-layer-brand is-pending"><span><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</span><b>Premium glass</b><b>Ice blue</b><b>Editorial</b><b>Responsive</b></div><div class="website-builder fashion-builder"><div class="builder-nav playback-layer site-layer-header is-pending"><b>ATELIER / 01</b><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><button>Shop now</button></div><div class="builder-hero playback-layer site-layer-hero is-pending"><small>FUTURE ESSENTIALS · 2026</small><strong>Wear what comes next.</strong><p>Precision silhouettes for a new generation.</p><button>Explore collection</button></div><div class="fashion-categories playback-layer site-layer-categories is-pending"><span>Outerwear</span><span>Knitwear</span><span>Essentials</span><span>Accessories</span></div><div class="builder-products">${[["Form Jacket","NT$ 6,980"],["Glass Knit","NT$ 3,280"],["Motion Trouser","NT$ 4,680"],["Vector Coat","NT$ 8,800"],["Core Tee","NT$ 1,980"],["Orbit Bag","NT$ 3,980"]].map(([name,price],index) => `<article class="playback-layer site-layer-products is-pending" style="--product-order:${index}"><i style="--product-tone:${index}"></i><b>${name}</b><span>${price}</span></article>`).join("")}</div><div class="fashion-lookbook playback-layer site-layer-footer is-pending"><article><small>LOOKBOOK / 01</small><strong>Engineered layers</strong></article><article><small>NEW ARRIVAL</small><strong>Quiet utility</strong></article></div><footer class="fashion-footer playback-layer site-layer-footer is-pending"><strong>ATELIER / 01</strong><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><small>© 2026</small></footer><div class="responsive-blocks playback-layer site-layer-footer is-pending"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Parsing fashion store request</div></section>
     </div>
-    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Reading style", "Building header", "Composing hero", "Adding cards", "Responsive pass", "Design ready"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Planning", "Brand", "Header", "Hero", "Categories", "Products", "Lookbook", "Preview ready"].map((step, index) => `<span class="ai-step" data-step-id="demoToCode-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -115,8 +116,8 @@ function renderDefaultWorkbenchTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--default">
     ${renderWorkflowHeading("NOVA Workspace", "NOVA is preparing your workspace and organizing the current request.", "fa-wand-magic-sparkles")}
-    <section class="ai-live-canvas ai-live-window default-agent-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Agent Execution Workspace</strong><span>localMock · backend_proxy_required</span></div><div class="default-agent-request"><small>CURRENT REQUEST</small><h4 id="workbench-current-task">${request}</h4></div><div class="default-agent-plan"><span class="ai-progressive" data-stage="1"><i>01</i>Understand request</span><span class="ai-progressive" data-stage="2"><i>02</i>Create execution plan</span><span class="ai-progressive" data-stage="3"><i>03</i>Select tools</span><span class="ai-progressive" data-stage="4"><i>04</i>Prepare output</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Understanding your request</div></section>
-    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Received", "Planning", "Selecting tools", "Preparing output"].map((step) => `<span class="ai-step"><i></i>${step}</span>`).join("")}</div>
+    <section class="ai-live-canvas ai-live-window default-agent-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Agent Execution Workspace</strong><span>localMock · backend_proxy_required</span></div><div class="default-agent-request"><small>CURRENT REQUEST</small><h4 id="workbench-current-task">${request}</h4></div><div class="default-agent-plan"><span class="playback-layer default-layer-plan is-pending"><i>01</i>Understand request</span><span class="playback-layer default-layer-plan is-pending"><i>02</i>Create execution plan</span><span class="playback-layer default-layer-tools is-pending"><i>03</i>Select tools</span><span class="playback-layer default-layer-output is-pending"><i>04</i>Prepare output</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Understanding your request</div></section>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Received", "Planning", "Selecting tools", "Preparing output"].map((step, index) => `<span class="ai-step" data-step-id="default-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -168,6 +169,9 @@ class Interior3DEngine {
     this.drag = null;
     this.frame = null;
     this.resizeObserver = null;
+    this.revealedLayers = new Set();
+    this.layers = {};
+    this.materials = {};
     this.bindPointerEvents();
     this.init();
   }
@@ -218,6 +222,15 @@ class Interior3DEngine {
     this.cafeRoot = new THREE.Group();
     this.scene.add(this.cafeRoot);
 
+    ["shell", "counter", "seating", "lighting", "material", "decor"].forEach((name) => {
+      const group = new THREE.Group();
+      group.name = `cafe-layer-${name}`;
+      group.visible = false;
+      group.scale.setScalar(0.001);
+      this.layers[name] = group;
+      this.cafeRoot.add(group);
+    });
+
     const materials = {
       floor: new THREE.MeshStandardMaterial({ color: 0x6f5540, roughness: 0.72 }),
       wall: new THREE.MeshStandardMaterial({ color: 0xd8c9b7, roughness: 0.88 }),
@@ -228,55 +241,58 @@ class Interior3DEngine {
       green: new THREE.MeshStandardMaterial({ color: 0x496b50, roughness: 0.78 }),
       glass: new THREE.MeshPhysicalMaterial({ color: 0xa9d6e8, transparent: true, opacity: 0.32, roughness: 0.12, metalness: 0.08 })
     };
-    const box = (size, position, material) => {
+    this.materials = materials;
+    [materials.wood, materials.stone, materials.metal, materials.fabric, materials.glass].forEach((material) => { material.wireframe = true; });
+    const addToLayer = (object, layerName) => { this.layers[layerName]?.add(object); return object; };
+    const box = (size, position, material, layerName = "decor") => {
       const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
-      mesh.position.set(...position); mesh.castShadow = true; mesh.receiveShadow = true; this.cafeRoot.add(mesh); return mesh;
+      mesh.position.set(...position); mesh.castShadow = true; mesh.receiveShadow = true; return addToLayer(mesh, layerName);
     };
-    box([10, 0.18, 7], [0, -0.1, 0], materials.floor);
-    box([10, 5.2, 0.16], [0, 2.5, -3.45], materials.wall);
-    box([0.16, 5.2, 7], [-4.95, 2.5, 0], materials.wall);
-    box([5.7, 1.05, 1.15], [1.5, 0.55, -2.35], materials.wood);
-    box([5.9, 0.18, 1.35], [1.5, 1.15, -2.35], materials.stone);
-    box([4.8, 0.12, 0.55], [1.3, 2.35, -3.25], materials.wood);
-    box([4.8, 0.12, 0.55], [1.3, 3.15, -3.25], materials.wood);
-    box([1.1, 0.72, 0.62], [1.4, 1.62, -2.85], materials.metal);
-    box([0.7, 0.22, 0.7], [1.4, 2.08, -2.82], materials.stone);
-    box([0.12, 0.65, 0.12], [1.05, 1.62, -2.42], materials.metal);
-    box([0.12, 0.65, 0.12], [1.75, 1.62, -2.42], materials.metal);
-    box([0.18, 0.35, 0.18], [2.45, 1.43, -2.55], materials.glass);
-    box([3.5, 0.62, 0.75], [-3.65, 0.55, -1.1], materials.fabric);
-    box([3.5, 1.05, 0.18], [-4.42, 1.05, -1.1], materials.fabric);
-    [[-2.8,2.3],[-1.5,2.3]].forEach(([x,y]) => box([0.82,1.05,0.08],[x,y,-3.32],materials.metal));
-    box([6.5,0.08,0.08],[0,4.75,.4],materials.metal);
-    box([2.8,2.3,0.08],[3.45,2.2,-3.3],materials.glass);
+    box([10, 0.18, 7], [0, -0.1, 0], materials.floor, "shell");
+    box([10, 5.2, 0.16], [0, 2.5, -3.45], materials.wall, "shell");
+    box([0.16, 5.2, 7], [-4.95, 2.5, 0], materials.wall, "shell");
+    box([5.7, 1.05, 1.15], [1.5, 0.55, -2.35], materials.wood, "counter");
+    box([5.9, 0.18, 1.35], [1.5, 1.15, -2.35], materials.stone, "counter");
+    box([4.8, 0.12, 0.55], [1.3, 2.35, -3.25], materials.wood, "counter");
+    box([4.8, 0.12, 0.55], [1.3, 3.15, -3.25], materials.wood, "counter");
+    box([1.1, 0.72, 0.62], [1.4, 1.62, -2.85], materials.metal, "counter");
+    box([0.7, 0.22, 0.7], [1.4, 2.08, -2.82], materials.stone, "counter");
+    box([0.12, 0.65, 0.12], [1.05, 1.62, -2.42], materials.metal, "counter");
+    box([0.12, 0.65, 0.12], [1.75, 1.62, -2.42], materials.metal, "counter");
+    box([0.18, 0.35, 0.18], [2.45, 1.43, -2.55], materials.glass, "material");
+    box([3.5, 0.62, 0.75], [-3.65, 0.55, -1.1], materials.fabric, "seating");
+    box([3.5, 1.05, 0.18], [-4.42, 1.05, -1.1], materials.fabric, "seating");
+    [[-2.8,2.3],[-1.5,2.3]].forEach(([x,y]) => box([0.82,1.05,0.08],[x,y,-3.32],materials.metal,"decor"));
+    box([6.5,0.08,0.08],[0,4.75,.4],materials.metal,"lighting");
+    box([2.8,2.3,0.08],[3.45,2.2,-3.3],materials.glass,"material");
 
     const addTable = (x, z) => {
       const top = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.12, 32), materials.wood);
-      top.position.set(x, 0.82, z); top.castShadow = true; this.cafeRoot.add(top);
+      top.position.set(x, 0.82, z); top.castShadow = true; addToLayer(top, "seating");
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.15, 0.78, 16), materials.metal);
-      leg.position.set(x, 0.4, z); this.cafeRoot.add(leg);
+      leg.position.set(x, 0.4, z); addToLayer(leg, "seating");
       [[-.9,0],[.9,0],[0,-.9]].forEach(([dx,dz]) => {
-        box([0.52,0.12,0.52],[x+dx,0.48,z+dz],materials.fabric);
-        box([0.08,0.46,0.08],[x+dx,0.23,z+dz],materials.metal);
-        box([0.52,0.62,0.1],[x+dx,0.78,z+dz-.2],materials.fabric);
+        box([0.52,0.12,0.52],[x+dx,0.48,z+dz],materials.fabric,"seating");
+        box([0.08,0.46,0.08],[x+dx,0.23,z+dz],materials.metal,"seating");
+        box([0.52,0.62,0.1],[x+dx,0.78,z+dz-.2],materials.fabric,"seating");
       });
     };
     addTable(-2.5, 1.5); addTable(0, 1.35); addTable(2.55, 1.45);
     [[-4.1,-2.6],[4.2,-2.7]].forEach(([x,z]) => {
-      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.55,18), materials.stone); pot.position.set(x,.28,z); this.cafeRoot.add(pot);
-      for (let index=0; index<5; index+=1) { const leaf = new THREE.Mesh(new THREE.SphereGeometry(.24,14,10),materials.green); leaf.scale.set(.55,1.7,.38); leaf.position.set(x+(index-2)*.1,.8+Math.abs(index-2)*.12,z); leaf.rotation.z=(index-2)*.35; this.cafeRoot.add(leaf); }
+      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.55,18), materials.stone); pot.position.set(x,.28,z); addToLayer(pot,"decor");
+      for (let index=0; index<5; index+=1) { const leaf = new THREE.Mesh(new THREE.SphereGeometry(.24,14,10),materials.green); leaf.scale.set(.55,1.7,.38); leaf.position.set(x+(index-2)*.1,.8+Math.abs(index-2)*.12,z); leaf.rotation.z=(index-2)*.35; addToLayer(leaf,"decor"); }
     });
     [-2.3, 0, 2.3].forEach((x) => {
       const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,1.25,8), materials.metal);
-      cable.position.set(x,4.35,-.4); this.cafeRoot.add(cable);
+      cable.position.set(x,4.35,-.4); addToLayer(cable,"lighting");
       const shade = new THREE.Mesh(new THREE.ConeGeometry(0.38,0.42,24,1,true), materials.metal);
-      shade.position.set(x,3.7,-.4); shade.rotation.x = Math.PI; this.cafeRoot.add(shade);
-      const light = new THREE.PointLight(0xffc784,1.8,5); light.position.set(x,3.5,-.4); light.castShadow = true; this.cafeRoot.add(light);
+      shade.position.set(x,3.7,-.4); shade.rotation.x = Math.PI; addToLayer(shade,"lighting");
+      const light = new THREE.PointLight(0xffc784,1.8,5); light.position.set(x,3.5,-.4); light.castShadow = true; addToLayer(light,"lighting");
     });
     [-2.4,-.8,.8,2.4].forEach((x) => {
-      const fixture = box([0.22,0.16,0.28],[x,4.62,.4],materials.metal);
+      const fixture = box([0.22,0.16,0.28],[x,4.62,.4],materials.metal,"lighting");
       fixture.rotation.x = -.3;
-      const spot = new THREE.SpotLight(0xffe2b7,1.2,7,Math.PI/7,.45,1.4); spot.position.set(x,4.5,.45); spot.target.position.set(x,0,0); this.scene.add(spot,spot.target);
+      const spot = new THREE.SpotLight(0xffe2b7,1.2,7,Math.PI/7,.45,1.4); spot.position.set(x,4.5,.45); spot.target.position.set(x,0,0); addToLayer(spot,"lighting"); addToLayer(spot.target,"lighting");
     });
     this.scene.add(new THREE.HemisphereLight(0xcbe9ff, 0x38291f, 1.8));
     const key = new THREE.DirectionalLight(0xffe2be, 2.2); key.position.set(5,8,6); key.castShadow = true; this.scene.add(key);
@@ -284,6 +300,7 @@ class Interior3DEngine {
     this.resizeObserver.observe(this.viewport);
     this.resize();
     this.viewport.classList.add("has-webgl");
+    this.revealedLayers.forEach((name) => this.revealLayer(name));
     this.renderFrame();
   }
 
@@ -304,7 +321,23 @@ class Interior3DEngine {
     this.frame = requestAnimationFrame(() => this.renderFrame());
   }
 
-  setStage(index) { this.viewport.dataset.renderStage = String(index); }
+  revealLayer(name) {
+    this.revealedLayers.add(name);
+    if (name === "material") {
+      Object.values(this.materials).forEach((material) => { material.wireframe = false; material.needsUpdate = true; });
+    }
+    const group = this.layers[name];
+    if (!group) return;
+    group.visible = true;
+    if (window.gsap) window.gsap.to(group.scale, { x: 1, y: 1, z: 1, duration: 0.62, ease: "power3.out" });
+    else group.scale.setScalar(1);
+  }
+
+  setStage(index) {
+    this.viewport.dataset.renderStage = String(index);
+    const layer = [null, "shell", "counter", "seating", "lighting", "material", "decor"][index];
+    if (layer) this.revealLayer(layer);
+  }
 
   destroy() {
     this.disposed = true;
@@ -730,6 +763,10 @@ class AvatarController {
     this.currentWorkbenchTaskType = "default";
     this.workbenchTaskTimeline = null;
     this.workbenchTaskTimers = [];
+    this.agentPlaybackQueue = [];
+    this.agentPlaybackStepIndex = -1;
+    this.agentPlaybackActive = false;
+    this.agentPlaybackProfile = null;
     this.design3DEngine = null;
     this.currentWorkbenchRequest = "";
     this.browserAutomationEngine = new BrowserAutomationEngine();
@@ -1132,8 +1169,6 @@ class AvatarController {
   async startAgentTaskRuntime(task, taskType) {
     this.agentLogs = [];
     await this.agentOrchestrator.startTask(task, this.getAgentIntent(taskType));
-    const selectedTool = this.agentOrchestrator.state.toolCalls[0]?.name;
-    if (selectedTool) this.updateToolCall(selectedTool, "selected");
   }
 
   renderCurrentWorkbenchTask(task) {
@@ -1166,6 +1201,9 @@ class AvatarController {
     }
     this.workbenchTaskTimers.forEach((timer) => clearTimeout(timer));
     this.workbenchTaskTimers = [];
+    this.agentPlaybackQueue = [];
+    this.agentPlaybackStepIndex = -1;
+    this.agentPlaybackActive = false;
   }
 
   destroyCapabilityEngines() {
@@ -1174,116 +1212,191 @@ class AvatarController {
     this.toolExecutor.unregister("Interior3DEngine");
   }
 
-  applyWorkflowStage(root, index, message) {
-    const bubble = root.querySelector(".ai-action-bubble");
-    const steps = Array.from(root.querySelectorAll(".ai-step"));
-    const progressive = Array.from(root.querySelectorAll(".ai-progressive"));
-    if (bubble) bubble.textContent = message;
-    steps.forEach((step, stepIndex) => {
-      step.classList.toggle("is-complete", stepIndex < index);
-      step.classList.toggle("is-active", stepIndex === index);
+  resetAgentPlayback() {
+    this.workbenchTaskTimers.forEach((timer) => clearTimeout(timer));
+    this.workbenchTaskTimers = [];
+    this.agentPlaybackQueue = [];
+    this.agentPlaybackStepIndex = -1;
+    this.agentPlaybackActive = false;
+    const root = this.workbenchTaskCanvas.querySelector(".task-workflow");
+    root?.classList.remove("is-ready", "is-complete");
+    root?.querySelectorAll(".playback-layer").forEach((layer) => {
+      layer.classList.remove("is-building", "is-visible", "is-complete", "is-highlighted", "is-agent-target");
+      layer.classList.add("is-pending");
     });
-    progressive.forEach((item) => {
-      if (Number(item.dataset.stage || 0) <= index + 1) item.classList.add("is-visible");
-    });
-    this.agentOrchestrator.advance(index, message, { x: root.querySelector(".ai-cursor")?.style.left, y: root.querySelector(".ai-cursor")?.style.top });
-    this.design3DEngine?.setStage(index);
-    if (this.currentWorkbenchTaskType === "booking") {
-      this.browserAutomationEngine.previewAutomation(index);
-      if (index >= 5) {
-        const confirmation = this.browserAutomationEngine.requestUserConfirmation();
-        this.agentOrchestrator.state.status = confirmation.status;
-        this.setAgentStatus(confirmation.status, "Review before payment · confirmation required");
+    root?.querySelectorAll(".ai-step").forEach((step) => step.classList.remove("is-active", "is-complete"));
+  }
+
+  getAgentPlaybackDefinition(taskType) {
+    const definitions = {
+      design3d: {
+        tool: "Interior3DEngine",
+        planning: "Reading interior design request",
+        completeStatus: "done",
+        steps: [
+          { layer: "cafe-layer-shell", target: { x: 30, y: 58 }, message: "Building spatial shell" },
+          { layer: "cafe-layer-counter", target: { x: 66, y: 47 }, message: "Adding cafe counter and back bar" },
+          { layer: "cafe-layer-seating", target: { x: 44, y: 66 }, message: "Arranging seating layout" },
+          { layer: "cafe-layer-lighting", target: { x: 52, y: 28 }, message: "Applying warm lighting" },
+          { layer: "cafe-layer-material", target: ".viewport-floating-hud", message: "Applying material palette" },
+          { layer: "cafe-layer-decor", target: { x: 18, y: 50 }, message: "Adding interior details" },
+          { layer: "cafe-layer-ready", target: ".viewport-drag-hint", message: "3D preview ready · drag to rotate", final: true }
+        ]
+      },
+      booking: {
+        tool: "BrowserAutomationEngine",
+        planning: "Identifying target site",
+        completeStatus: "waiting_for_user",
+        steps: [
+          { layer: "booking-layer-browser", target: ".ai-address-bar", message: "Opening browser workspace" },
+          { layer: "booking-layer-site", target: ".official-site-link", message: "Loading Vieshow Cinemas safe preview" },
+          { layer: "booking-layer-search", target: '[data-control="theater"]', message: "Searching available sessions" },
+          { layer: "booking-layer-results", target: ".booking-showtimes .is-selected", message: "Selecting the 19:30 session" },
+          { layer: "booking-layer-ticket", target: ".booking-ticket-control strong", message: "Selecting two adult tickets" },
+          { layer: "booking-layer-seat", target: ".booking-seat-preview i.is-selected", message: "Choosing seats F11 and F12" },
+          { layer: "booking-layer-review", target: ".review-lock", message: "Review before payment · confirmation required", final: true }
+        ]
+      },
+      demoToCode: {
+        tool: "WebsiteBuildEngine",
+        planning: "Parsing fashion store request",
+        completeStatus: "preview_ready",
+        steps: [
+          { layer: "site-layer-brand", target: ".website-style-toolbar", message: "Defining brand, color, and type direction" },
+          { layer: "site-layer-header", target: ".builder-nav", message: "Building logo and navigation" },
+          { layer: "site-layer-hero", target: ".builder-hero", message: "Composing hero and primary CTA" },
+          { layer: "site-layer-categories", target: ".fashion-categories", message: "Adding collection categories" },
+          { layer: "site-layer-products", target: ".builder-products article", message: "Generating six fashion products" },
+          { layer: "site-layer-footer", target: ".fashion-lookbook", message: "Adding lookbook and footer" },
+          { layer: "site-layer-save", target: '[data-workbench-action="save-website-code"]', message: "Website preview ready · code export enabled", final: true }
+        ]
+      },
+      default: {
+        tool: "AgentOrchestrator",
+        planning: "Understanding your request",
+        completeStatus: "preview_ready",
+        steps: [
+          { layer: "default-layer-plan", target: { x: 26, y: 44 }, message: "Creating execution plan" },
+          { layer: "default-layer-tools", target: { x: 52, y: 58 }, message: "Selecting available tools" },
+          { layer: "default-layer-output", target: { x: 76, y: 70 }, message: "Preparing output preview", final: true }
+        ]
       }
-    }
-    if (this.currentWorkbenchTaskType === "demoToCode") {
-      if (index === 0) this.websiteBuildEngine.start(this.currentWorkbenchRequest);
-      if (index >= 5) this.websiteBuildEngine.markPreviewReady();
-    }
-    if (index >= steps.length - 1) root.classList.add("is-ready");
+    };
+    return definitions[taskType] || definitions.default;
   }
 
-  runSimulatedWorkflow(root, sequence) {
-    const cursor = root.querySelector(".ai-cursor");
-    if (!cursor) return;
-    if (window.gsap) {
-      const timeline = window.gsap.timeline();
-      sequence.forEach((stage, index) => {
-        timeline.to(cursor, {
-          left: `${stage.x}%`,
-          top: `${stage.y}%`,
-          duration: 0.34,
-          ease: "power3.inOut",
-          onStart: () => { this.runAgentCursorStep(stage); this.applyWorkflowStage(root, index, stage.message); }
-        });
-        timeline.to(cursor, { scale: 0.82, duration: 0.08, yoyo: true, repeat: 1 }, `>-0.04`);
-      });
-      timeline.call(() => root.classList.add("is-ready"));
-      this.workbenchTaskTimeline = timeline;
-      return;
-    }
-
-    sequence.forEach((stage, index) => {
-      const timer = window.setTimeout(() => {
-        cursor.style.left = `${stage.x}%`;
-        cursor.style.top = `${stage.y}%`;
-        this.runAgentCursorStep(stage);
-        this.applyWorkflowStage(root, index, stage.message);
-      }, index * 380);
-      this.workbenchTaskTimers.push(timer);
-    });
-  }
-
-  run3DDesignWorkflowAnimation(root) {
-    this.runSimulatedWorkflow(root, [
-      { x: 14, y: 20, message: "Reading your request" },
-      { x: 22, y: 52, message: "Opening design canvas" },
-      { x: 78, y: 24, message: "Selecting futuristic glass style" },
-      { x: 48, y: 46, message: "Building wireframe geometry" },
-      { x: 56, y: 58, message: "Applying material and lighting" },
-      { x: 68, y: 44, message: "3D concept preview ready" }
-    ]);
-  }
-
-  runBookingWorkflowAnimation(root) {
-    this.runSimulatedWorkflow(root, [
-      { x: 26, y: 28, message: "Opening booking website" },
-      { x: 28, y: 42, message: "Entering departure and destination" },
-      { x: 68, y: 42, message: "Selecting date and searching tickets" },
-      { x: 70, y: 61, message: "Comparing ticket options" },
-      { x: 55, y: 73, message: "Choosing seat and traveler details" },
-      { x: 64, y: 84, message: "Reviewing safely before payment" }
-    ]);
-  }
-
-  runWebsiteDesignWorkflowAnimation(root) {
-    this.runSimulatedWorkflow(root, [
-      { x: 18, y: 18, message: "Reading your style request" },
-      { x: 72, y: 25, message: "Building glass navigation" },
-      { x: 42, y: 46, message: "Composing hero hierarchy" },
-      { x: 30, y: 72, message: "Adding feature components" },
-      { x: 75, y: 72, message: "Applying responsive layout" },
-      { x: 63, y: 52, message: "Website design preview ready" }
-    ]);
-  }
-
-  runDefaultWorkflowAnimation(root) {
-    this.runSimulatedWorkflow(root, [
-      { x: 20, y: 26, message: "NOVA received the task" },
-      { x: 38, y: 42, message: "Creating execution plan" },
-      { x: 63, y: 56, message: "Selecting available tools" },
-      { x: 72, y: 72, message: "Preparing output preview" }
-    ]);
-  }
-
-  runWorkbenchTaskAnimation(taskType) {
+  startAgentPlayback(taskType, userMessage) {
+    this.resetAgentPlayback();
     const root = this.workbenchTaskCanvas.querySelector(".task-workflow");
     if (!root) return;
-    if (taskType === "design3d") return this.run3DDesignWorkflowAnimation(root);
-    if (taskType === "booking") return this.runBookingWorkflowAnimation(root);
-    if (taskType === "demoToCode") return this.runWebsiteDesignWorkflowAnimation(root);
-    return this.runDefaultWorkflowAnimation(root);
+    const profiles = { slow: { start: 700, interval: 1650 }, normal: { start: 600, interval: 1100 }, fast: { start: 400, interval: 700 } };
+    this.agentPlaybackProfile = profiles[AGENT_PLAYBACK_SPEED] || profiles.normal;
+    const definition = this.getAgentPlaybackDefinition(taskType);
+    this.agentPlaybackActive = true;
+    this.updateAgentBubble(definition.planning);
+    this.updateToolChip(definition.tool, "pending");
+    this.updateStepStatus(`${taskType}-0`, "running");
+    this.setAgentStatus("planning", "Agent planning");
+    this.appendAgentLog(`Agent received task · ${String(userMessage || "").slice(0, 72)}`);
+    definition.steps.forEach((step, index) => this.queueAgentStep({ ...step, id: `${taskType}-${index + 1}`, tool: definition.tool, completeStatus: definition.completeStatus }));
+    const selectionTimer = window.setTimeout(() => {
+      if (!this.agentPlaybackActive) return;
+      this.updateToolChip(definition.tool, "selected");
+      this.setAgentStatus("using_tool", `Selected ${definition.tool}`);
+      this.appendAgentLog(`Selected engine · ${definition.tool}`);
+    }, 300);
+    const startTimer = window.setTimeout(() => this.runNextAgentStep(), this.agentPlaybackProfile.start);
+    this.workbenchTaskTimers.push(selectionTimer, startTimer);
   }
+
+  queueAgentStep(step) { this.agentPlaybackQueue.push(step); return step; }
+
+  runNextAgentStep() {
+    if (!this.agentPlaybackActive) return;
+    const step = this.agentPlaybackQueue.shift();
+    if (!step) return this.completeAgentPlayback({ status: "preview_ready" });
+    const previousStepId = this.agentPlaybackStepIndex < 0
+      ? `${this.currentWorkbenchTaskType}-0`
+      : `${this.currentWorkbenchTaskType}-${this.agentPlaybackStepIndex + 1}`;
+    this.updateStepStatus(previousStepId, "done");
+    this.agentPlaybackStepIndex += 1;
+    this.updateStepStatus(step.id, "running");
+    this.updateAgentBubble(step.message);
+    this.updateToolChip(step.tool, step.final ? step.completeStatus : "using_tool");
+    this.setAgentStatus(step.final ? step.completeStatus : "using_tool", step.message);
+    if (step.layer) this.revealWorkspaceLayer(step.layer);
+    this.moveAgentCursorToTarget(step.target);
+    this.clickAgentTarget(step.target);
+    this.appendAgentLog(step.message);
+    if (this.currentWorkbenchTaskType === "booking") this.browserAutomationEngine.previewAutomation(this.agentPlaybackStepIndex);
+    if (this.currentWorkbenchTaskType === "demoToCode" && this.agentPlaybackStepIndex === 0) this.websiteBuildEngine.start(this.currentWorkbenchRequest);
+    if (step.final) {
+      const timer = window.setTimeout(() => this.completeAgentPlayback({ status: step.completeStatus, tool: step.tool, stepId: step.id }), 520);
+      this.workbenchTaskTimers.push(timer);
+      return;
+    }
+    const timer = window.setTimeout(() => this.runNextAgentStep(), this.agentPlaybackProfile.interval);
+    this.workbenchTaskTimers.push(timer);
+  }
+
+  revealWorkspaceLayer(layerName) {
+    const layers = Array.from(this.workbenchTaskCanvas.querySelectorAll(`.${layerName}`));
+    layers.forEach((layer, index) => {
+      layer.classList.remove("is-pending");
+      layer.classList.add("is-building");
+      const revealTimer = window.setTimeout(() => {
+        layer.classList.add("is-visible");
+        const completeTimer = window.setTimeout(() => { layer.classList.remove("is-building"); layer.classList.add("is-complete"); }, 460);
+        this.workbenchTaskTimers.push(completeTimer);
+      }, layerName === "site-layer-products" ? index * 105 : index * 45);
+      this.workbenchTaskTimers.push(revealTimer);
+    });
+    if (layerName.startsWith("cafe-layer-")) this.design3DEngine?.revealLayer(layerName.replace("cafe-layer-", ""));
+    if (layerName === "booking-layer-browser") {
+      const address = this.workbenchTaskCanvas.querySelector(".ai-address-bar span");
+      if (address) address.textContent = "opening secure preview…";
+    }
+    if (layerName === "booking-layer-site") {
+      const address = this.workbenchTaskCanvas.querySelector(".ai-address-bar");
+      if (address) address.innerHTML = '<i class="fa-solid fa-lock"></i><span>vscinemas.com.tw · NOVA Safe Preview</span>';
+    }
+    if (layerName === "cafe-layer-ready") this.workbenchTaskCanvas.querySelector("[data-3d-viewport]")?.classList.remove("is-playback-locked");
+    if (layerName === "site-layer-save") this.workbenchTaskCanvas.querySelectorAll(".site-layer-save").forEach((button) => { button.disabled = false; });
+  }
+
+  moveAgentCursorToTarget(targetName) { if (targetName) this.moveCursorTo(targetName); }
+  clickAgentTarget(targetName) { if (targetName) this.clickCursorTarget(targetName); }
+  updateToolChip(toolName, status) { this.updateToolCall(toolName, status); }
+
+  updateStepStatus(stepId, status) {
+    const step = this.workbenchTaskCanvas.querySelector(`[data-step-id="${stepId}"]`);
+    if (!step) return;
+    step.classList.toggle("is-active", status === "running");
+    step.classList.toggle("is-complete", status === "done" || status === "complete");
+    step.dataset.status = status;
+  }
+
+  completeAgentPlayback(result = {}) {
+    if (!this.agentPlaybackActive) return;
+    this.agentPlaybackActive = false;
+    const lastStep = this.workbenchTaskCanvas.querySelector(".ai-step.is-active");
+    lastStep?.classList.remove("is-active");
+    lastStep?.classList.add("is-complete");
+    const root = this.workbenchTaskCanvas.querySelector(".task-workflow");
+    root?.classList.add("is-ready", "is-complete");
+    if (this.currentWorkbenchTaskType === "demoToCode") this.websiteBuildEngine.markPreviewReady();
+    if (this.currentWorkbenchTaskType === "booking") {
+      const confirmation = this.browserAutomationEngine.requestUserConfirmation();
+      this.setAgentStatus(confirmation.status, "Waiting for user confirmation");
+      this.updateToolChip("BrowserAutomationEngine", "waiting_for_user");
+    } else {
+      this.setAgentStatus(result.status || "preview_ready", result.status === "done" ? "Preview ready" : "Output preview ready");
+      if (result.tool) this.updateToolChip(result.tool, result.status || "done");
+    }
+    this.appendAgentLog("Agent playback complete");
+  }
+
+  runWorkbenchTaskAnimation(taskType) { this.startAgentPlayback(taskType, this.currentWorkbenchRequest); }
 
   animateWorkbenchOpen() {
     if (!window.gsap) return;
