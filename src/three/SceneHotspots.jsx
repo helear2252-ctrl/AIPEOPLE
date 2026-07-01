@@ -1,0 +1,2 @@
+import {Html} from '@react-three/drei';
+export default function SceneHotspots({schema,onSelect}){return <>{schema.furniture.filter((_,i)=>[0,2,4,6].includes(i)).map(item=><Html key={item.id} position={[item.position[0],item.position[1]+.85,item.position[2]]} center distanceFactor={8}><button className="scene-hotspot" onClick={e=>{e.stopPropagation();onSelect(item)}} aria-label={`View ${item.label}`}>+</button></Html>)}</>}

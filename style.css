@@ -37,6 +37,10 @@
   --blur-lg: 28px;
 }
 
+/* Interior Render Studio */
+.interior-render-window{position:relative;overflow:hidden;background:#0c1517}.interior-render-window .ai-window-toolbar{z-index:30;background:#0b1515e8}.render-mode-toggle{display:flex;gap:3px;margin-left:auto;padding:3px;border:1px solid rgba(255,255,255,.13);border-radius:999px;background:#071010}.render-mode-toggle button{padding:5px 9px;border:0;border-radius:999px;color:#d9e7e2a3;background:transparent;cursor:pointer;font-size:6px}.render-mode-toggle button.is-active{color:#fff;background:#b98a5266;box-shadow:inset 0 0 0 1px #ffd69533}.interior-render-result,.interior-draft-panel{position:absolute;inset:29px 0 0}.render-image-stage{position:absolute;inset:0;overflow:hidden;background:#101919;cursor:grab;touch-action:none}.render-image-stage.is-dragging{cursor:grabbing}.render-image-stage img{width:100%;height:100%;display:block;object-fit:cover;transform:scale(1.018) translate3d(var(--render-pan-x,0),var(--render-pan-y,0),0);transition:transform .65s cubic-bezier(.2,.8,.2,1),filter .5s;filter:saturate(1.03) contrast(1.02)}.render-image-stage:after{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#0005 0,transparent 22%,transparent 68%,#020707a8 100%),radial-gradient(circle at 50% 40%,transparent 52%,#02070766 100%)}.render-light-sweep{position:absolute;inset:-30%;background:linear-gradient(110deg,transparent 38%,#fff4d924 48%,transparent 58%);transform:translateX(-60%);animation:render-light-sweep 5s ease-in-out infinite;pointer-events:none}@keyframes render-light-sweep{0%,55%{transform:translateX(-62%)}85%,100%{transform:translateX(64%)}}.render-drag-hint{position:absolute;z-index:6;right:18px;bottom:102px;padding:7px 10px;border:1px solid #ffffff26;border-radius:999px;color:#f3eee4cf;background:#0712119c;backdrop-filter:blur(14px);font-size:6px}.render-prompt-hud{position:absolute;z-index:8;top:22px;left:22px;width:min(370px,48%);padding:13px 15px;border:1px solid #ffffff2b;border-radius:16px;color:#fff;background:#06100f9c;box-shadow:0 16px 45px #0005;backdrop-filter:blur(18px)}.render-prompt-hud small,.render-provider-badge small{display:block;color:#d8c1a48c;font-size:5px;letter-spacing:.16em}.render-prompt-hud strong{display:block;margin:5px 0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:9px}.render-prompt-hud span{color:#e7eee9a3;font-size:6px}.render-provider-badge{position:absolute;z-index:8;top:22px;right:22px;display:flex;align-items:center;gap:9px;max-width:300px;padding:10px 13px;border:1px solid #ffffff24;border-radius:14px;color:#fff;background:#06100f9c;box-shadow:0 16px 45px #0004;backdrop-filter:blur(18px)}.render-provider-badge>i{width:8px;height:8px;border-radius:50%;background:#edbd78;box-shadow:0 0 15px #edbd78;animation:agent-status-pulse 1.4s infinite}.render-provider-badge strong{display:block;margin:3px 0;font-size:7px}.render-provider-badge span{display:block;max-width:220px;overflow:hidden;color:#dfe9e3a3;font-size:5px;text-overflow:ellipsis;white-space:nowrap}.render-progress-panel{position:absolute;z-index:9;left:22px;right:22px;bottom:82px;display:grid;grid-template-columns:minmax(140px,.35fr) 1fr 28px;align-items:center;gap:10px;padding:8px 11px;border:1px solid #ffffff1c;border-radius:12px;color:#fff;background:#06100fb5;backdrop-filter:blur(16px)}.render-progress-panel>span{overflow:hidden;font-size:6px;text-overflow:ellipsis;white-space:nowrap}.render-progress-panel>div{height:3px;overflow:hidden;border-radius:99px;background:#ffffff1c}.render-progress-panel>div i{height:100%;display:block;border-radius:99px;background:linear-gradient(90deg,#a77744,#f4cf93);box-shadow:0 0 12px #efbd72;transition:width .45s ease}.render-progress-panel>b{color:#ecd3ad;font-size:6px;text-align:right}.render-thumbnail-strip{position:absolute;z-index:10;left:22px;right:22px;bottom:14px;display:flex;justify-content:center;gap:8px}.render-thumbnail-strip button{position:relative;width:min(130px,20%);height:54px;padding:0;overflow:hidden;border:1px solid #ffffff35;border-radius:9px;background:#10201e;cursor:pointer;opacity:.64;transform:translateY(0);transition:.25s}.render-thumbnail-strip button:hover,.render-thumbnail-strip button.is-active{opacity:1;border-color:#f2c982;box-shadow:0 0 0 2px #f2c9822e,0 10px 24px #0007;transform:translateY(-3px)}.render-thumbnail-strip img{width:100%;height:100%;display:block;object-fit:cover}.render-thumbnail-strip span{position:absolute;right:0;bottom:0;left:0;padding:4px;color:#fff;background:#04100fc7;font-size:5px;text-transform:uppercase;letter-spacing:.13em}.render-ready-mark{position:absolute;z-index:12;top:92px;right:22px;padding:7px 10px;border:1px solid #87dbb45c;border-radius:999px;color:#eafff4;background:#176b4ca6;box-shadow:0 8px 22px #0004;font-size:6px}.interior-draft-panel{background:radial-gradient(circle at 55% 40%,#2b4243,#0c1617 72%)}.interior-draft-panel .cafe-3d-viewport{position:absolute;inset:48px 18px 18px;border:1px solid #ffffff24;border-radius:16px}.draft-mode-label{position:absolute;z-index:5;top:14px;left:22px;display:flex;align-items:center;gap:10px;color:#fff}.draft-mode-label strong{font-size:9px}.draft-mode-label span{color:#d8e6e399;font-size:6px}.interior-draft-panel canvas{filter:saturate(.55) contrast(1.08)}.task-workflow--interior-render .playback-layer.is-building{opacity:.72}.task-workflow--interior-render .playback-layer.is-visible,.task-workflow--interior-render .playback-layer.is-complete{opacity:1}.task-workflow--interior-render .render-image-stage.is-pending{opacity:.42!important;filter:blur(5px)}
+@media(max-width:720px){.render-prompt-hud{width:58%;top:12px;left:12px}.render-provider-badge{top:12px;right:12px;max-width:34%}.render-provider-badge span{display:none}.render-progress-panel{left:12px;right:12px;bottom:76px;grid-template-columns:1fr 28px}.render-progress-panel>span{display:none}.render-thumbnail-strip{left:12px;right:12px}.render-thumbnail-strip button{width:23%}.render-drag-hint{display:none}}
+
 /* Reset */
 * {
   box-sizing: border-box;
@@ -2335,3 +2339,45 @@ body.agent-overlay-open {
   .files-workspace-body { min-height:430px; }
 }
 
+
+
+/* ============================================================
+   INTERIOR AGENT STUDIO — Workbench iframe integration
+   ============================================================ */
+
+/* Make the task canvas fill the available vertical space */
+#workbench-task-canvas.dynamic-task-canvas {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  height: 100%;
+}
+
+.task-workflow--interior-agent {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.interior-studio-stage {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  overflow: hidden;
+  border-radius: 16px;
+  background: #0e131f;
+}
+
+.interior-studio-frame {
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #0e131f;
+  display: block;
+}
+
+.interior-studio-loading {
+  background: #0e131f;
+}

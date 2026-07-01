@@ -1,31 +1,37 @@
 """Safe, observable NOVA tools."""
 from __future__ import annotations
-import json
 from pathlib import Path
+from interior_render_agent import InteriorRenderAgent
 
 ROOT = Path(__file__).resolve().parent
 PROJECT_ROOT = ROOT / "generated_projects"
 
 class AgentTool:
     name = "AgentTool"
-    def run(self, message: str, emit): raise NotImplementedError
+    def run(self, message: str, emit, context=None): raise NotImplementedError
+
+class InteriorRenderTool(AgentTool):
+    name = "InteriorRenderTool"
+    def run(self, message: str, emit, context=None):
+        task_id = (context or {}).get("taskId", "local-render")
+        return InteriorRenderAgent(ROOT).run(task_id, message, emit)
 
 class Interior3DTool(AgentTool):
     name = "Interior3DTool"
-    def run(self, message: str, emit):
+    def run(self, message: str, emit, context=None):
         spec = {"style": "modern cafe interior", "objects": [{"type":"floor","material":"warm wood"},{"type":"wall","material":"plaster"},{"type":"counter","material":"wood + stone"},{"type":"tables","count":4},{"type":"chairs","count":12},{"type":"pendantLights","count":3},{"type":"plants","count":4}], "lighting":"warm interior lighting", "camera":"three-quarter perspective", "layers":["shell","counter","seating","lighting","material","decor"]}
         emit("tool_output", {"sceneSpec": spec}); return {"sceneSpec": spec, "summary": "Interactive 3D cafe scene ready."}, []
 
 class BrowserAutomationTool(AgentTool):
     name = "BrowserAutomationTool"
-    def run(self, message: str, emit):
+    def run(self, message: str, emit, context=None):
         output = {"targetSite":"Vieshow Cinemas","officialUrl":"https://www.vscinemas.com.tw/","safetyMode":"stop_before_payment","automationMode":"frontend_preview","futureEngine":"playwright_ready","openOfficialSite":True,"currentStep":"review_before_payment","frontendPreview":True}
         emit("tool_output", output); emit("tool_waiting_for_user", {"reason":"Login, verification and payment require user control."})
         return output, []
 
 class WebsiteBuilderTool(AgentTool):
     name = "WebsiteBuilderTool"
-    def run(self, message: str, emit):
+    def run(self, message: str, emit, context=None):
         model = {"projectName":"fashion-store","brandName":"ATELIER / 01","style":"premium editorial ice blue","sections":["header","hero","categories","products","lookbook","footer"],"products":[{"name":"Form Jacket","price":"NT$ 6,980","category":"Outerwear"},{"name":"Glass Knit","price":"NT$ 3,280","category":"Knitwear"},{"name":"Motion Trouser","price":"NT$ 4,680","category":"Essentials"},{"name":"Orbit Bag","price":"NT$ 3,980","category":"Accessories"}]}
         folder = PROJECT_ROOT / model["projectName"]; folder.mkdir(parents=True, exist_ok=True)
         cards = "".join(f'<article><div></div><h2>{p["name"]}</h2><p>{p["price"]}</p></article>' for p in model["products"])
@@ -40,14 +46,14 @@ class WebsiteBuilderTool(AgentTool):
 
 class FileWorkspaceTool(AgentTool):
     name = "FileWorkspaceTool"
-    def run(self, message: str, emit): return {"summary":"Workspace ready."}, []
+    def run(self, message: str, emit, context=None): return {"summary":"Workspace ready."}, []
 
-TOOLS = {tool.name: tool for tool in (Interior3DTool(), BrowserAutomationTool(), WebsiteBuilderTool(), FileWorkspaceTool())}
+TOOLS = {tool.name: tool for tool in (InteriorRenderTool(), Interior3DTool(), BrowserAutomationTool(), WebsiteBuilderTool(), FileWorkspaceTool())}
 
 class ToolExecutor:
-    def execute(self, name: str, message: str, emit):
+    def execute(self, name: str, message: str, emit, context=None):
         tool = TOOLS[name]; emit("tool_started", {"tool":name});
         try:
-            result = tool.run(message, emit); emit("tool_completed", {"tool":name}); return result
+            result = tool.run(message, emit, context); emit("tool_completed", {"tool":name}); return result
         except Exception as exc:
             emit("tool_failed", {"tool":name,"error":str(exc)}); raise

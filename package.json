@@ -1,11 +1,12 @@
 {
-  "name": "aipeople-login",
+  "name": "ai-interior-agent-studio",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build && node scripts/create-spa-fallback.mjs",
+    "build:studio": "vite build --config vite.interior.config.ts",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -14,7 +15,8 @@
     "framer-motion": "^11.1.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "three": "^0.164.1"
+    "three": "^0.164.1",
+    "zustand": "^4.5.2"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",

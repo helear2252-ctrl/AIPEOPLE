@@ -60,7 +60,11 @@ function detectWorkbenchTaskType(userMessage) {
   const raw = String(userMessage || "");
   const text = raw.toLowerCase();
 
-  if (["3d", "設計圖", "立體", "模型", "product render", "concept", "render"].some((keyword) => text.includes(keyword))) {
+  // Interior design / 3D render keywords — triggers Interior Agent Studio
+  if (["3d", "設計圖", "立體", "模型", "product render", "concept", "render",
+       "室內", "interior", "咖啡廳", "咖啡", "cafe", "restaurant", "餐廳",
+       "空間設計", "裝潢", "interior_3d_design", "interior_render",
+       "辦公室設計", "住宅設計"].some((keyword) => text.includes(keyword))) {
     return "design3d";
   }
   if (["訂票", "買票", "機票", "車票", "電影票", "威秀", "影城", "高鐵", "票券", "booking", "ticket", "seat", "payment"].some((keyword) => text.includes(keyword))) {
@@ -80,14 +84,152 @@ function renderWorkflowHeading(title, subtitle, icon) {
   </header>`;
 }
 
+/* ================================
+INTERIOR STUDIO MOUNT ADAPTER
+Mounts the React Interior Design Agent Studio in the Workbench main area via iframe.
+The build is served at /interior-studio/ by agent_runtime.py.
+================================ */
+
+const INTERIOR_STUDIO_SRC = "/interior-studio/interior-studio/";
+let interiorStudioIframe = null;
+let interiorStudioTaskId = null;
+
+function renderInteriorStudioMount(userMessage) {
+  const escapedMsg = escapeWorkbenchText(userMessage);
+  return `<div class="task-workflow task-workflow--design3d task-workflow--interior-agent" style="display:flex;flex-direction:column;height:100%;">
+    <header class="task-canvas-heading workbench-task-reveal" style="flex-shrink:0">
+      <span class="task-canvas-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></span>
+      <div><span class="task-canvas-kicker">AI INTERIOR DESIGN AGENT STUDIO</span><h3>Interior Design Studio</h3><p>${escapedMsg}</p></div>
+      <div class="agent-runtime-hud"><span class="agent-brain-chip">BRAIN · localMock</span><span class="agent-tool-chip">Loading studio</span><span class="agent-runtime-status" data-agent-status>Initializing</span></div>
+    </header>
+    <div class="interior-studio-mode-bar workbench-task-reveal" style="flex-shrink:0;display:flex;gap:8px;padding:8px 16px;background:rgba(255,255,255,.03);border-bottom:1px solid rgba(255,255,255,.06)">
+      <button type="button" class="render-mode-toggle-btn is-active" data-workbench-action="interior-mode" data-interior-mode="studio" style="padding:4px 14px;border-radius:6px;font-size:12px;font-weight:600;background:rgba(99,102,241,.18);color:#a5b4fc;border:1px solid rgba(99,102,241,.32);cursor:pointer">AI Interior Studio</button>
+      <button type="button" class="render-mode-toggle-btn" data-workbench-action="interior-mode" data-interior-mode="draft" style="padding:4px 14px;border-radius:6px;font-size:12px;font-weight:600;background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.1);cursor:pointer">3D Draft</button>
+    </div>
+    <div class="interior-studio-stage" style="flex:1;position:relative;overflow:hidden;">
+      <div class="interior-studio-panel" data-interior-panel="studio" style="position:absolute;inset:0;display:flex;flex-direction:column;">
+        <div class="interior-studio-loading" id="interior-studio-loading" style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0e131f;z-index:10;gap:16px;">
+          <div style="width:48px;height:48px;border:3px solid rgba(99,102,241,.3);border-top-color:#6366f1;border-radius:50%;animation:spin 0.9s linear infinite;"></div>
+          <div style="color:rgba(255,255,255,.7);font-size:14px;font-weight:500;">Loading Interior Design Agent Studio…</div>
+          <div style="color:rgba(255,255,255,.35);font-size:12px;">Building React + R3F environment</div>
+        </div>
+        <iframe
+          id="interior-studio-frame"
+          class="interior-studio-frame"
+          src="about:blank"
+          title="AI Interior Design Agent Studio"
+          style="flex:1;border:0;background:#0e131f;width:100%;height:100%;display:block;"
+          allow="fullscreen"
+          aria-label="Interior Design Agent Studio"
+        ></iframe>
+      </div>
+      <div class="interior-studio-panel" data-interior-panel="draft" hidden style="position:absolute;inset:0;overflow:auto;">
+        <div class="interior-draft-panel" style="padding:24px">
+          <div class="draft-mode-label" style="margin-bottom:16px"><strong>3D Draft</strong><span style="margin-left:8px;opacity:.5">CSS wireframe layout · fallback preview</span></div>
+          <div class="cafe-3d-viewport" data-3d-viewport aria-label="Draggable cafe layout draft" style="height:360px;position:relative">
+            <div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor"></i><i class="cafe-wall cafe-wall--back"></i><i class="cafe-wall cafe-wall--side"></i><div class="cafe-counter"></div><div class="cafe-bench"></div><div class="cafe-table cafe-table--one"></div><div class="cafe-table cafe-table--two"></div><div class="cafe-table cafe-table--three"></div><div class="cafe-pendants"><i></i><i></i><i></i></div><div class="cafe-fallback-decor"><i></i><i></i><i></i></div></div></div>
+            <span class="viewport-drag-hint"><i class="fa-solid fa-arrows-rotate"></i> View layout draft</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal" style="flex-shrink:0">${["Planning","Analyze","Visual prompt","Provider","Rendering","Enhance","Multi-view","Preview ready"].map((step,index)=>`<span class="ai-step" data-step-id="design3d-${index}"><i></i>${step}</span>`).join("")}</div>
+    <style>@keyframes spin{to{transform:rotate(360deg)}}.interior-studio-frame{opacity:0;transition:opacity .4s ease}.interior-studio-frame.is-loaded{opacity:1}</style>
+  </div>`;
+}
+
+function mountInteriorStudioIframe(canvas, userMessage) {
+  const frame = canvas.querySelector("#interior-studio-frame");
+  if (!frame) return;
+  interiorStudioIframe = frame;
+  interiorStudioTaskId = `studio-${Date.now()}`;
+
+  const onLoad = () => {
+    // Hide loading overlay.
+    const loading = canvas.querySelector("#interior-studio-loading");
+    if (loading) loading.style.display = "none";
+    frame.classList.add("is-loaded");
+    // Send task start message.
+    try {
+      frame.contentWindow?.postMessage({
+        type: "NOVA_INTERIOR_TASK_START",
+        taskId: interiorStudioTaskId,
+        prompt: userMessage,
+        provider: "localMock",
+        mode: "interior_render"
+      }, "*");
+    } catch (_) { /* cross-origin guard */ }
+  };
+
+  frame.addEventListener("load", onLoad, { once: true });
+
+  // Fallback: if studio not built yet, show friendly message.
+  const checkStudio = fetch(INTERIOR_STUDIO_SRC, { method: "HEAD" }).then((r) => {
+    if (r.ok) {
+      frame.src = INTERIOR_STUDIO_SRC;
+    } else {
+      throw new Error("not built");
+    }
+  }).catch(() => {
+    const loading = canvas.querySelector("#interior-studio-loading");
+    if (loading) {
+      loading.innerHTML = `
+        <div style="color:rgba(255,255,255,.5);font-size:13px;text-align:center;padding:24px;line-height:1.7">
+          <div style="font-size:32px;margin-bottom:12px;">⚙️</div>
+          <strong style="color:rgba(255,255,255,.8);display:block;margin-bottom:8px;">Interior Studio not built yet</strong>
+          Run <code style="background:rgba(255,255,255,.1);padding:2px 8px;border-radius:4px;">npm run build:studio</code> to compile the React app.<br>
+          Then restart <code style="background:rgba(255,255,255,.1);padding:2px 8px;border-radius:4px;">python agent_runtime.py</code>.
+        </div>`;
+    }
+  });
+  void checkStudio;
+}
+
+// Listen for messages from the interior studio iframe.
+window.addEventListener("message", (event) => {
+  const { type, taskId, step, status, outputs } = event.data || {};
+  if (!type || !type.startsWith("NOVA_INTERIOR_")) return;
+  if (type === "NOVA_INTERIOR_VIEWER_READY") {
+    console.info("[NOVA Interior] Studio viewer ready.", { taskId });
+    const statusEl = document.querySelector("[data-agent-status]");
+    if (statusEl) statusEl.textContent = "Viewer ready";
+  }
+  if (type === "NOVA_INTERIOR_AGENT_STEP") {
+    console.info("[NOVA Interior] Agent step:", step, status);
+  }
+  if (type === "NOVA_INTERIOR_RENDER_READY") {
+    console.info("[NOVA Interior] Render ready.", outputs);
+  }
+});
+
+function createLocalInteriorRenderDataUrl(view = "front") {
+  const palettes = { front: ["#d8a15d", "#345b50"], wide: ["#e4bd79", "#496d68"], side: ["#c98b50", "#6d5147"], detail: ["#f0c37d", "#3d6557"] };
+  const [light, accent] = palettes[view] || palettes.front;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900"><defs><linearGradient id="r" x2="0" y2="1"><stop stop-color="#273332"/><stop offset="1" stop-color="#0c1314"/></linearGradient><linearGradient id="w" x2="1"><stop stop-color="#a4704c"/><stop offset=".5" stop-color="#503126"/><stop offset="1" stop-color="#b17b52"/></linearGradient><linearGradient id="s" x2="1" y2="1"><stop stop-color="#eee8da"/><stop offset="1" stop-color="#686b66"/></linearGradient><linearGradient id="g"><stop stop-color="#eaf9f8" stop-opacity=".7"/><stop offset="1" stop-color="#507a7a" stop-opacity=".25"/></linearGradient><radialGradient id="l"><stop stop-color="#fff8cb"/><stop offset=".3" stop-color="${light}" stop-opacity=".8"/><stop offset="1" stop-color="${light}" stop-opacity="0"/></radialGradient><pattern id="f" width="100" height="28" patternUnits="userSpaceOnUse" patternTransform="skewX(-22)"><rect width="100" height="27" fill="#6a4632"/><path d="M0 2h100M98 0v28" stroke="#c69265" stroke-opacity=".35"/></pattern><filter id="b"><feGaussianBlur stdDeviation="20"/></filter></defs><rect width="1600" height="900" fill="url(#r)"/><path d="M0 900V650l800-60 800 60v250z" fill="url(#f)"/><rect x="55" y="105" width="720" height="500" fill="#d9eee9"/><path d="M55 105h720v500H55z" fill="url(#g)"/><g stroke="#233333" stroke-width="18"><path d="M60 105v500m235-500v500m240-500v500m240-500v500M55 105h720M55 605h720"/></g><circle cx="590" cy="190" r="230" fill="#fff" opacity=".25"/><path d="M835 115h710v430H835z" fill="#b4a78f"/><path d="M865 145h650v365H865z" fill="${accent}" opacity=".28"/><ellipse cx="1080" cy="790" rx="520" ry="65" fill="#000" opacity=".45" filter="url(#b)"/><path d="M820 540l570-20 125 145-620 40z" fill="url(#s)"/><path d="M895 690l620-42v160l-620 58z" fill="url(#w)"/><path d="M90 640q0-70 70-82h350q70 8 74 78v120H90z" fill="#31564e"/><path d="M120 580h430v125H120z" rx="30" fill="#58796e"/><g fill="#d4b783"><path d="M165 605h150v80H165zM345 605h155v80H345z"/></g><g fill="url(#w)" stroke="#2a1c16" stroke-width="5"><ellipse cx="680" cy="705" rx="130" ry="43"/><path d="M660 712h40l18 145h-78z"/></g><path d="M1400 625h70l24 178h-118z" fill="#765842"/><g fill="#477c52"><ellipse cx="1425" cy="570" rx="42" ry="115" transform="rotate(-24 1425 570)"/><ellipse cx="1470" cy="575" rx="38" ry="125" transform="rotate(20 1470 575)"/></g><g stroke="#211d19" stroke-width="6"><path d="M420 0v240M750 0v210M1080 0v240"/></g><g><ellipse cx="420" cy="275" rx="95" ry="110" fill="url(#l)"/><path d="M365 245q55-75 110 0l-20 50h-70z" fill="#252722"/><ellipse cx="750" cy="245" rx="88" ry="105" fill="url(#l)"/><path d="M698 218q52-70 104 0l-20 47h-64z" fill="#252722"/><ellipse cx="1080" cy="275" rx="95" ry="110" fill="url(#l)"/><path d="M1025 245q55-75 110 0l-20 50h-70z" fill="#252722"/></g><path d="M720 580L100 900H0V760z" fill="#fff4cd" opacity=".13"/><text x="1540" y="860" text-anchor="end" fill="#fff" fill-opacity=".55" font-family="Arial" font-size="16">LOCAL ARCHVIZ PREVIEW · ${view.toUpperCase()}</text></svg>`;
+  return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+}
+
 function render3DDesignTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
-  return `<div class="task-workflow task-workflow--design3d">
-    ${renderWorkflowHeading("3D Concept Studio", "NOVA is actively building a product-style 3D concept from your request.", "fa-cube")}
+  const views = ["front", "wide", "side", "detail"];
+  return `<div class="task-workflow task-workflow--design3d task-workflow--interior-render">
+    ${renderWorkflowHeading("Interior Render Studio", "NOVA is producing a multi-view architectural visualization from your request.", "fa-wand-magic-sparkles")}
     <div class="task-workflow-grid task-workflow-grid--live">
-      <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Building scene</span></div><div class="viewport-floating-hud playback-layer cafe-layer-material is-pending"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport is-playback-locked" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail playback-layer cafe-layer-shell is-pending"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar playback-layer cafe-layer-material is-pending"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading interior design request</div></section>
+      <section class="ai-live-canvas ai-live-window design-live-window interior-render-window workbench-task-reveal">
+        <div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Interior Render Studio</strong><div class="render-mode-toggle"><button class="is-active" type="button" data-workbench-action="render-mode" data-render-mode="result">Render Result</button><button type="button" data-workbench-action="render-mode" data-render-mode="draft">3D Draft</button></div></div>
+        <div class="interior-render-result" data-render-result>
+          <div class="render-image-stage render-layer-render playback-layer is-pending" data-render-stage><img data-render-main src="${createLocalInteriorRenderDataUrl("front")}" alt="Modern cafe interior architectural visualization"><div class="render-light-sweep"></div><span class="render-drag-hint"><i class="fa-solid fa-arrows-left-right"></i> Drag to explore</span></div>
+          <div class="render-prompt-hud render-layer-analyze playback-layer is-pending"><small>PROMPT SUMMARY</small><strong data-render-prompt>${request}</strong><span>Warm wood · stone · glass · cinematic daylight</span></div>
+          <div class="render-provider-badge render-layer-provider playback-layer is-pending"><i></i><div><small>RENDER PROVIDER</small><strong data-render-provider>localMockRenderProvider</strong><span data-render-status>production render provider not connected</span></div></div>
+          <div class="render-progress-panel render-layer-prompt playback-layer is-pending"><span data-render-message>Analyzing interior design request</span><div><i data-render-progress style="width:8%"></i></div><b data-render-progress-label>8%</b></div>
+          <div class="render-thumbnail-strip render-layer-multiview playback-layer is-pending">${views.map((view, index) => `<button type="button" class="${index === 0 ? "is-active" : ""}" data-workbench-action="render-view" data-render-view="${view}" data-render-src="${createLocalInteriorRenderDataUrl(view)}"><img src="${createLocalInteriorRenderDataUrl(view)}" alt="${view} interior view"><span>${view}</span></button>`).join("")}</div>
+          <div class="render-ready-mark render-layer-ready playback-layer is-pending"><i class="fa-solid fa-circle-check"></i> Preview ready</div>
+        </div>
+        <div class="interior-draft-panel" data-render-draft hidden><div class="draft-mode-label"><strong>3D Draft</strong><span>Wireframe layout · fallback preview</span></div><div class="cafe-3d-viewport" data-3d-viewport aria-label="Draggable cafe layout draft"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor"></i><i class="cafe-wall cafe-wall--back"></i><i class="cafe-wall cafe-wall--side"></i><div class="cafe-counter"></div><div class="cafe-bench"></div><div class="cafe-table cafe-table--one"></div><div class="cafe-table cafe-table--two"></div><div class="cafe-table cafe-table--three"></div><div class="cafe-pendants"><i></i><i></i><i></i></div><div class="cafe-fallback-decor"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint"><i class="fa-solid fa-arrows-rotate"></i> View layout draft</span></div></div>
+        <span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Analyzing interior design request</div>
+      </section>
     </div>
-    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Planning", "Space shell", "Counter", "Seating", "Lighting", "Materials", "Details", "Preview ready"].map((step, index) => `<span class="ai-step" data-step-id="design3d-${index}"><i></i>${step}</span>`).join("")}</div>
+    <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Planning", "Analyze", "Visual prompt", "Provider", "Rendering", "Enhance", "Multi-view", "Preview ready"].map((step, index) => `<span class="ai-step" data-step-id="design3d-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
 
@@ -508,7 +650,7 @@ async function startBackendAgentTask(userMessage, brain = "localMock") {
 
 function subscribeAgentEvents(taskId, onEvent, onOffline) {
   const source = new EventSource(`${BACKEND_AGENT_API_BASE}/agent/task/${encodeURIComponent(taskId)}/events`);
-  const types = ["task_created", "plan_created", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_waiting_for_user", "tool_completed", "tool_failed", "preview_ready", "task_completed"];
+  const types = ["task_created", "plan_created", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_waiting_for_user", "tool_completed", "tool_failed", "preview_ready", "task_completed", "render_task_created", "render_prompt_created", "render_provider_selected", "render_started", "render_progress", "render_preview_ready", "render_completed", "render_failed"];
   source.novaTaskId = taskId;
   source.novaCloseReason = null;
   source.novaTerminalObserved = false;
@@ -976,6 +1118,8 @@ class AvatarController {
     if (type === "download-generated-file") this.downloadGeneratedFile(action.dataset.projectId, action.dataset.filePath);
     if (type === "toggle-project") action.closest(".project-node")?.classList.toggle("is-open");
     if (type === "export-folder") this.exportGeneratedFolder();
+    if (type === "render-view") this.selectInteriorRenderView(action.dataset.renderView, action.dataset.renderSrc, action);
+    if (type === "render-mode") this.setInteriorRenderMode(action.dataset.renderMode, action);
     if (type === "booking-mode") {
       const panel = action.closest(".booking-live-window");
       panel?.querySelectorAll("[data-booking-mode]").forEach((button) => button.classList.toggle("is-active", button === action));
@@ -990,7 +1134,22 @@ class AvatarController {
       this.clearWorkbenchTaskAnimation();
       this.runWebsiteDesignWorkflowAnimation(this.workbenchTaskCanvas.querySelector(".task-workflow"));
     }
+    if (type === "interior-mode") {
+      const mode = action.dataset.interiorMode;
+      const studioPanel = this.workbenchTaskCanvas.querySelector("[data-interior-panel='studio']");
+      const draftPanel = this.workbenchTaskCanvas.querySelector("[data-interior-panel='draft']");
+      this.workbenchTaskCanvas.querySelectorAll("[data-workbench-action='interior-mode']").forEach((btn) => {
+        const isActive = btn === action;
+        btn.classList.toggle("is-active", isActive);
+        btn.style.background = isActive ? "rgba(99,102,241,.18)" : "transparent";
+        btn.style.color = isActive ? "#a5b4fc" : "rgba(255,255,255,.5)";
+        btn.style.border = isActive ? "1px solid rgba(99,102,241,.32)" : "1px solid rgba(255,255,255,.1)";
+      });
+      if (studioPanel) studioPanel.hidden = mode !== "studio";
+      if (draftPanel) draftPanel.hidden = mode !== "draft";
+    }
   }
+
 
   setText(id, text) {
     const element = document.getElementById(id);
@@ -1293,6 +1452,7 @@ class AvatarController {
     }
     if (event.type === "tool_output" && payload.sceneSpec) this.design3DEngine?.applySceneSpec?.(payload.sceneSpec);
     if (event.type === "tool_output" && payload.fileContents) this.importBackendWebsiteProject(payload.fileContents);
+    if (event.type.startsWith("render_")) this.applyInteriorRenderEvent(event.type, payload);
     if (event.type === "tool_waiting_for_user") this.handleBackendTaskWaitingForUser(state);
     if (event.type === "preview_ready" && state?.status === "waiting_for_user") this.handleBackendTaskWaitingForUser(state);
     if (event.type === "task_completed") this.handleBackendTaskCompleted(state);
@@ -1392,22 +1552,130 @@ class AvatarController {
     this.renderFiles(Object.keys(fileContents));
   }
 
+  applyInteriorRenderEvent(type, payload) {
+    const progress = Math.max(0, Math.min(100, Number(payload.progress) || 0));
+    const message = this.workbenchTaskCanvas.querySelector("[data-render-message]");
+    const bar = this.workbenchTaskCanvas.querySelector("[data-render-progress]");
+    const label = this.workbenchTaskCanvas.querySelector("[data-render-progress-label]");
+    const provider = this.workbenchTaskCanvas.querySelector("[data-render-provider]");
+    const status = this.workbenchTaskCanvas.querySelector("[data-render-status]");
+    if (message && payload.message) message.textContent = payload.message;
+    if (bar) bar.style.width = `${progress}%`;
+    if (label) label.textContent = `${progress}%`;
+    if (provider && payload.provider) provider.textContent = payload.provider;
+    if (status && payload.status) {
+      const renderStatus = payload.message || payload.status.replaceAll("_", " ");
+      status.textContent = payload.provider === "localMockRenderProvider" ? `production provider not connected · ${renderStatus}` : renderStatus;
+    }
+    if (type === "render_prompt_created") {
+      const summary = this.workbenchTaskCanvas.querySelector("[data-render-prompt]");
+      if (summary) summary.textContent = payload.promptSummary || "Modern cafe architectural visualization";
+    }
+    if (["render_preview_ready", "render_completed"].includes(type) && payload.outputs?.length) {
+      this.applyInteriorRenderOutputs(payload.outputs);
+      this.revealWorkspaceLayer("render-layer-multiview");
+      this.revealWorkspaceLayer("render-layer-ready");
+    }
+    if (type === "render_failed") {
+      if (status) status.textContent = "Local render preview mode";
+      this.appendAgentLog(`Render provider fallback · ${payload.message || "provider unavailable"}`);
+    }
+  }
+
+  applyInteriorRenderOutputs(outputs) {
+    const main = this.workbenchTaskCanvas.querySelector("[data-render-main]");
+    const buttons = Array.from(this.workbenchTaskCanvas.querySelectorAll("[data-render-view]"));
+    outputs.forEach((output) => {
+      const button = buttons.find((item) => item.dataset.renderView === output.view);
+      if (!button) return;
+      button.dataset.renderSrc = output.url;
+      const image = button.querySelector("img");
+      if (image) image.src = output.url;
+    });
+    const first = outputs.find((output) => output.view === "front") || outputs[0];
+    if (main && first) main.src = first.url;
+  }
+
+  selectInteriorRenderView(view, src, button) {
+    const main = this.workbenchTaskCanvas.querySelector("[data-render-main]");
+    const stage = this.workbenchTaskCanvas.querySelector("[data-render-stage]");
+    if (!main || !src) return;
+    this.workbenchTaskCanvas.querySelectorAll("[data-render-view]").forEach((item) => item.classList.toggle("is-active", item === button));
+    stage?.classList.add("is-switching");
+    window.setTimeout(() => { main.src = src; main.alt = `${view} modern cafe interior view`; stage?.classList.remove("is-switching"); }, 120);
+  }
+
+  setInteriorRenderMode(mode, button) {
+    const result = this.workbenchTaskCanvas.querySelector("[data-render-result]");
+    const draft = this.workbenchTaskCanvas.querySelector("[data-render-draft]");
+    this.workbenchTaskCanvas.querySelectorAll("[data-render-mode]").forEach((item) => item.classList.toggle("is-active", item === button));
+    const showDraft = mode === "draft";
+    if (result) result.hidden = showDraft;
+    if (draft) draft.hidden = !showDraft;
+    if (showDraft) ["shell", "counter", "seating", "lighting", "material", "decor"].forEach((layer) => this.design3DEngine?.revealLayer(layer));
+  }
+
+  bindInteriorRenderInteractions() {
+    const stage = this.workbenchTaskCanvas.querySelector("[data-render-stage]");
+    if (!stage) return;
+    let drag = null;
+    stage.addEventListener("pointerdown", (event) => {
+      drag = { x: event.clientX, y: event.clientY };
+      stage.classList.add("is-dragging");
+      stage.setPointerCapture?.(event.pointerId);
+    });
+    stage.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      const x = Math.max(-16, Math.min(16, (event.clientX - drag.x) * .08));
+      const y = Math.max(-9, Math.min(9, (event.clientY - drag.y) * .05));
+      stage.style.setProperty("--render-pan-x", `${x}px`);
+      stage.style.setProperty("--render-pan-y", `${y}px`);
+    });
+    const release = (event) => {
+      if (!drag) return;
+      const delta = event.clientX - drag.x;
+      drag = null;
+      stage.classList.remove("is-dragging");
+      stage.style.setProperty("--render-pan-x", "0px"); stage.style.setProperty("--render-pan-y", "0px");
+      if (Math.abs(delta) > 85) {
+        const buttons = Array.from(this.workbenchTaskCanvas.querySelectorAll("[data-render-view]"));
+        const current = Math.max(0, buttons.findIndex((item) => item.classList.contains("is-active")));
+        const next = (current + (delta < 0 ? 1 : buttons.length - 1)) % buttons.length;
+        buttons[next]?.click();
+      }
+    };
+    stage.addEventListener("pointerup", release);
+    stage.addEventListener("pointercancel", release);
+  }
+
   renderCurrentWorkbenchTask(task) {
     this.clearWorkbenchTaskAnimation();
     this.destroyCapabilityEngines();
     this.currentWorkbenchRequest = task;
     this.currentWorkbenchTaskType = detectWorkbenchTaskType(task);
-    this.workbenchTaskCanvas.innerHTML = renderWorkbenchTask(this.currentWorkbenchTaskType, task);
-    this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
-    this.workbenchCurrentTask = document.getElementById("workbench-current-task");
-    this.workbenchCards = Array.from(this.agentOverlay.querySelectorAll(".workbench-card"));
+
     if (this.currentWorkbenchTaskType === "design3d") {
+      // ── Interior Agent Studio path ──────────────────────────────────────
+      // Render the iframe mount wrapper (no old Three.js as primary).
+      this.workbenchTaskCanvas.innerHTML = renderInteriorStudioMount(task);
+      // Mount interior studio iframe and send postMessage.
+      mountInteriorStudioIframe(this.workbenchTaskCanvas, task);
+      // Still initialize the 3D Draft fallback engine for the draft tab.
       const viewport = this.workbenchTaskCanvas.querySelector("[data-3d-viewport]");
       if (viewport) {
         this.design3DEngine = new Interior3DEngine(viewport);
         this.toolExecutor.register("Interior3DEngine", this.design3DEngine);
       }
+    } else {
+      this.workbenchTaskCanvas.innerHTML = renderWorkbenchTask(this.currentWorkbenchTaskType, task);
+      this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
+      if (this.currentWorkbenchTaskType === "booking" || this.currentWorkbenchTaskType === "demoToCode") {
+        this.bindInteriorRenderInteractions();
+      }
     }
+
+    this.workbenchCurrentTask = document.getElementById("workbench-current-task");
+    this.workbenchCards = Array.from(this.agentOverlay.querySelectorAll(".workbench-card"));
     this.logFlowEvent("workbench:task-rendered", {
       taskType: this.currentWorkbenchTaskType
     });
@@ -1450,17 +1718,17 @@ class AvatarController {
   getAgentPlaybackDefinition(taskType) {
     const definitions = {
       design3d: {
-        tool: "Interior3DEngine",
-        planning: "Reading interior design request",
+        tool: "InteriorRenderTool",
+        planning: "Analyzing interior design request",
         completeStatus: "done",
         steps: [
-          { layer: "cafe-layer-shell", target: { x: 30, y: 58 }, message: "Building spatial shell" },
-          { layer: "cafe-layer-counter", target: { x: 66, y: 47 }, message: "Adding cafe counter and back bar" },
-          { layer: "cafe-layer-seating", target: { x: 44, y: 66 }, message: "Arranging seating layout" },
-          { layer: "cafe-layer-lighting", target: { x: 52, y: 28 }, message: "Applying warm lighting" },
-          { layer: "cafe-layer-material", target: ".viewport-floating-hud", message: "Applying material palette" },
-          { layer: "cafe-layer-decor", target: { x: 18, y: 50 }, message: "Adding interior details" },
-          { layer: "cafe-layer-ready", target: ".viewport-drag-hint", message: "3D preview ready · drag to rotate", final: true }
+          { layer: "render-layer-analyze", target: ".render-prompt-hud", message: "Analyzing interior design request" },
+          { layer: "render-layer-prompt", target: ".render-progress-panel", message: "Generating visual prompt" },
+          { layer: "render-layer-provider", target: ".render-provider-badge", message: "Selecting render provider" },
+          { layer: "render-layer-render", target: ".render-image-stage", message: "Rendering modern cafe concept" },
+          { layer: "render-layer-render", target: ".render-image-stage", message: "Enhancing lighting and material" },
+          { layer: "render-layer-multiview", target: ".render-thumbnail-strip", message: "Preparing multi-view preview" },
+          { layer: "render-layer-ready", target: ".render-ready-mark", message: "Interior render preview ready", final: true }
         ]
       },
       booking: {

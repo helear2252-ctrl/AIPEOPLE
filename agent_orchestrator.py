@@ -20,7 +20,7 @@ class AgentOrchestrator:
                 step["status"]="running"; task["status"]="using_tool"; task["currentStep"]=step["id"]
                 task["cursor"]={"x":18+index*10,"y":35+(index%3)*14,"action":"click"}
                 emit("step_updated", {"step":step,"index":index}); emit("tool_progress", {"tool":tool_name,"progress":round((index+1)/len(task["steps"]),2)}); sleep(.28)
-            result, generated = self.executor.execute(tool_name, message, emit); outputs.update(result); files.extend(generated)
+            result, generated = self.executor.execute(tool_name, message, emit, task); outputs.update(result); files.extend(generated)
             task["steps"][-1]["status"]="done"; task["output"]=outputs; task["files"]=files
             task["status"] = "waiting_for_user" if plan["intent"] == "browser_booking" else "preview_ready"
             emit("preview_ready", {"output":outputs,"files":files})

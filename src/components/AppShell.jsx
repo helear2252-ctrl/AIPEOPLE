@@ -1,0 +1,2 @@
+import Sidebar from './Sidebar';import Topbar from './Topbar';import DraftBoard from './DraftBoard';import InteriorViewer from './InteriorViewer';import AgentConsole from './AgentConsole';import RoomSchemaPanel from './RoomSchemaPanel';
+export default function AppShell(){return <div className="studio-shell"><Topbar/><Sidebar/><main className="studio-workspace"><section className="draft-column"><DraftBoard/><RoomSchemaPanel/></section><InteriorViewer/></main><AgentConsole/></div>}

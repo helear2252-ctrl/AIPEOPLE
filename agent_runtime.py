@@ -40,6 +40,9 @@ def task_events(task_id: str, cursor: int=Query(0,ge=0)):
             if tasks[task_id]["status"] in ("completed","failed","waiting_for_user"): break
     return StreamingResponse(generate(),media_type="text/event-stream",headers={"Cache-Control":"no-cache","X-Accel-Buffering":"no"})
 
+INTERIOR_STUDIO_DIR=ROOT/"interior-studio"/"dist"
+if INTERIOR_STUDIO_DIR.is_dir():
+    app.mount("/interior-studio",StaticFiles(directory=INTERIOR_STUDIO_DIR,html=True),name="interior-studio")
 app.mount("/",StaticFiles(directory=ROOT,html=True),name="nova")
 if __name__ == "__main__":
     import uvicorn; uvicorn.run(app,host="127.0.0.1",port=8080)

@@ -29,21 +29,21 @@ class LocalMockBrainAdapter(AgentBrainAdapter):
     name = "localMock"
     def chooseIntent(self, text: str) -> str:
         value = text.lower()
-        if any(x in value for x in ("3d", "室內", "咖啡廳", "interior")): return "interior_3d_design"
+        if any(x in value for x in ("3d", "室內", "咖啡廳", "interior")): return "interior_render"
         if any(x in value for x in ("訂票", "威秀", "booking", "cinema")): return "browser_booking"
         if any(x in value for x in ("網站", "服飾店", "website", "web site")): return "website_builder"
         return "default"
 
     def createSteps(self, intent: str, _message: str) -> list[str]:
         return {
-            "interior_3d_design": ["Analyze style", "Build shell", "Place counter", "Arrange seating", "Add lighting", "Apply materials", "Add decor"],
+            "interior_render": ["Analyze interior request", "Generate visual prompt", "Select render provider", "Render cafe concept", "Enhance light and material", "Prepare multi-view preview", "Preview ready"],
             "browser_booking": ["Open browser workspace", "Identify official site", "Search sessions", "Select session", "Choose tickets", "Select seats", "Stop before payment"],
             "website_builder": ["Define brand direction", "Build header", "Compose hero", "Add categories", "Generate products", "Build lookbook and footer", "Write project files"],
             "default": ["Understand request", "Create plan", "Select tools", "Prepare output"],
         }[intent]
 
     def chooseTools(self, intent: str) -> list[str]:
-        return {"interior_3d_design": ["Interior3DTool"], "browser_booking": ["BrowserAutomationTool"], "website_builder": ["WebsiteBuilderTool", "FileWorkspaceTool"], "default": ["FileWorkspaceTool"]}[intent]
+        return {"interior_render": ["InteriorRenderTool"], "browser_booking": ["BrowserAutomationTool"], "website_builder": ["WebsiteBuilderTool", "FileWorkspaceTool"], "default": ["FileWorkspaceTool"]}[intent]
 
 
 class _ProxyAdapter(LocalMockBrainAdapter):
