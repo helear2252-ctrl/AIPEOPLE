@@ -29,6 +29,7 @@ const VIDEO_PATHS = Object.freeze({
 // 030: assets/avatar/AIPEOPLE/030.mp4
 
 const AGENT_API_BASE = "http://127.0.0.1:8787";
+const BACKEND_AGENT_API_BASE = window.location.origin;
 const STREAMLIT_WORKBENCH_URL = "http://127.0.0.1:8501";
 const VIESHOW_OFFICIAL_URL = "https://www.vscinemas.com.tw/";
 const WORKBENCH_PROJECTS_STORAGE_KEY = "nova.workbench.projects.v1";
@@ -333,6 +334,14 @@ class Interior3DEngine {
     else group.scale.setScalar(1);
   }
 
+  applySceneSpec(spec) {
+    this.sceneSpec = spec;
+    const counts = Object.fromEntries((spec?.objects || []).map((item) => [item.type, item.count]));
+    const hud = this.viewport.parentElement?.querySelector(".viewport-floating-hud div");
+    if (hud) hud.innerHTML = `<span>${escapeWorkbenchText(spec.style || "Interior")}</span><span>${counts.tables || 0} tables</span><span>${counts.chairs || 0} chairs</span><span>${escapeWorkbenchText(spec.lighting || "Lighting")}</span>`;
+    return spec;
+  }
+
   setStage(index) {
     this.viewport.dataset.renderStage = String(index);
     const layer = [null, "shell", "counter", "seating", "lighting", "material", "decor"][index];
@@ -483,6 +492,44 @@ class AgentStatusStream extends EventTarget {
   connectPolling(poll, interval = 1000) { this.disconnect(); this.mode = "polling"; this.connection = window.setInterval(async () => this.publish("event", await poll()), interval); return this.connection; }
   disconnect() { if (!this.connection) return; if (typeof this.connection === "number") clearInterval(this.connection); else this.connection.close?.(); this.connection = null; }
 }
+
+async function startBackendAgentTask(userMessage, brain = "localMock") {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 1600);
+  try {
+    const response = await fetch(`${BACKEND_AGENT_API_BASE}/agent/task`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userMessage, brain }), signal: controller.signal
+    });
+    if (!response.ok) throw new Error(`Backend Agent Runtime returned HTTP ${response.status}`);
+    return response.json();
+  } finally { window.clearTimeout(timeout); }
+}
+
+function subscribeAgentEvents(taskId, onEvent, onOffline) {
+  const source = new EventSource(`${BACKEND_AGENT_API_BASE}/agent/task/${encodeURIComponent(taskId)}/events`);
+  const types = ["task_created", "plan_created", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_waiting_for_user", "tool_completed", "tool_failed", "preview_ready", "task_completed"];
+  source.novaTaskId = taskId;
+  source.novaCloseReason = null;
+  source.novaTerminalObserved = false;
+  types.forEach((type) => source.addEventListener(type, (message) => {
+    if (["task_completed", "tool_waiting_for_user", "tool_failed"].includes(type)) source.novaTerminalObserved = true;
+    onEvent(JSON.parse(message.data));
+  }));
+  source.onerror = () => {
+    const expectedClose = Boolean(source.novaCloseReason || source.novaTerminalObserved);
+    source.close();
+    if (!expectedClose) onOffline?.(new Error("Backend Agent Runtime event stream disconnected."));
+  };
+  return source;
+}
+
+function applyAgentEvent(event) { window.avatarController?.applyBackendAgentEvent(event); }
+function updateWorkbenchFromAgentState(state) { window.avatarController?.updateWorkbenchFromAgentState(state); }
+window.startBackendAgentTask = startBackendAgentTask;
+window.subscribeAgentEvents = subscribeAgentEvents;
+window.applyAgentEvent = applyAgentEvent;
+window.updateWorkbenchFromAgentState = updateWorkbenchFromAgentState;
 
 class AgentOrchestrator extends EventTarget {
   constructor(brainMode = AGENT_BRAIN_MODE) {
@@ -767,6 +814,11 @@ class AvatarController {
     this.agentPlaybackStepIndex = -1;
     this.agentPlaybackActive = false;
     this.agentPlaybackProfile = null;
+    this.backendEventSource = null;
+    this.backendTaskId = null;
+    this.backendRuntimeOnline = null;
+    this.backendLifecycleState = "backend_offline";
+    this.backendTerminalHandled = false;
     this.design3DEngine = null;
     this.currentWorkbenchRequest = "";
     this.browserAutomationEngine = new BrowserAutomationEngine();
@@ -954,7 +1006,7 @@ class AvatarController {
       }
     });
     this.btnClear.addEventListener("click", () => this.clearChat());
-    this.agentCloseButton.addEventListener("click", () => this.closeAgentOverlayAfterError());
+    this.agentCloseButton.addEventListener("click", () => this.returnToNova());
     this.workbenchTabs.forEach((tab) => {
       tab.addEventListener("click", () => {
         this.workbenchTabs.forEach((item) => item.classList.toggle("is-active", item === tab));
@@ -1168,7 +1220,176 @@ class AvatarController {
 
   async startAgentTaskRuntime(task, taskType) {
     this.agentLogs = [];
-    await this.agentOrchestrator.startTask(task, this.getAgentIntent(taskType));
+    this.closeAgentEventSource("new_task");
+    this.backendTerminalHandled = false;
+    this.backendLifecycleState = "backend_connected";
+    try {
+      const state = await startBackendAgentTask(task);
+      this.handleBackendTaskCreated(state, task);
+      this.backendEventSource = subscribeAgentEvents(state.taskId, (event) => this.handleBackendAgentEvent(event), (error) => {
+        if (!this.backendTerminalHandled) this.handleBackendRuntimeOffline(error, taskType, task);
+      });
+      return state;
+    } catch (error) {
+      this.handleBackendRuntimeOffline(error, taskType, task);
+      return this.agentOrchestrator.startTask(task, this.getAgentIntent(taskType));
+    }
+  }
+
+  handleBackendTaskCreated(state, task) {
+    this.backendRuntimeOnline = true;
+    this.backendLifecycleState = "backend_running";
+    this.backendTaskId = state.taskId;
+    this.agentOrchestrator.state = state;
+    this.agentPlaybackActive = true;
+    this.setServiceStatus(this.fastApiWorkbenchStatus, "Runtime online", "online");
+    this.agentTaskDesc.innerText = `Task: ${task} · BACKEND AGENT`;
+    this.agentStatusLabel.textContent = "RUNNING";
+    this.appendAgentLog(`Backend task created · ${state.taskId.slice(0, 8)}`);
+  }
+
+  closeAgentEventSource(reason = "intentional") {
+    const source = this.backendEventSource;
+    if (!source) return;
+    source.novaCloseReason = reason;
+    source.onerror = null;
+    source.close();
+    this.backendEventSource = null;
+  }
+
+  handleBackendRuntimeOffline(error, taskType, task) {
+    if (this.backendTerminalHandled || ["backend_completed", "backend_waiting_for_user", "backend_failed"].includes(this.backendLifecycleState)) return;
+    this.closeAgentEventSource("network_error");
+    this.backendLifecycleState = "backend_offline";
+    this.appendAgentLog(error?.message || "Backend Agent Runtime unavailable");
+    this.activateLocalAgentFallback(taskType, task);
+  }
+
+  activateLocalAgentFallback(taskType, task) {
+    if (this.backendRuntimeOnline === false && this.agentPlaybackActive) return;
+    this.backendRuntimeOnline = false;
+    this.backendLifecycleState = "local_fallback";
+    this.setServiceStatus(this.fastApiWorkbenchStatus, "Offline", "offline");
+    this.agentStatusLabel.textContent = "LOCAL PREVIEW";
+    this.appendAgentLog("Backend Agent Runtime offline · Running local preview mode");
+    if (!this.agentPlaybackActive) this.startAgentPlayback(taskType, task);
+  }
+
+  handleBackendAgentEvent(event) {
+    const payload = event.data || {};
+    const state = payload.task || this.agentOrchestrator.state;
+    if (state) this.agentOrchestrator.state = state;
+    this.updateWorkbenchFromAgentState(state);
+    if (event.type === "plan_created") this.appendAgentLog(`Plan ready · ${(state.steps || []).length} steps`);
+    if (event.type === "step_updated") {
+      const definition = this.getAgentPlaybackDefinition(this.currentWorkbenchTaskType);
+      const visualStep = definition.steps[payload.index];
+      if (visualStep) {
+        this.updateAgentBubble(payload.step.label);
+        this.revealWorkspaceLayer(visualStep.layer);
+        this.moveCursorTo(visualStep.target); this.clickCursorTarget(visualStep.target);
+      }
+      this.appendAgentLog(payload.step.label);
+    }
+    if (event.type === "tool_output" && payload.sceneSpec) this.design3DEngine?.applySceneSpec?.(payload.sceneSpec);
+    if (event.type === "tool_output" && payload.fileContents) this.importBackendWebsiteProject(payload.fileContents);
+    if (event.type === "tool_waiting_for_user") this.handleBackendTaskWaitingForUser(state);
+    if (event.type === "preview_ready" && state?.status === "waiting_for_user") this.handleBackendTaskWaitingForUser(state);
+    if (event.type === "task_completed") this.handleBackendTaskCompleted(state);
+    if (event.type === "tool_failed") this.handleBackendTaskFailed(payload.error || state?.output?.error || "Agent task failed.");
+  }
+
+  applyBackendAgentEvent(event) { this.handleBackendAgentEvent(event); }
+
+  handleBackendTaskCompleted(state) {
+    if (this.backendTerminalHandled) return;
+    this.backendTerminalHandled = true;
+    this.backendLifecycleState = "backend_completed";
+    this.closeAgentEventSource("task_completed");
+    this.completeAgentPlayback({ status: "preview_ready", tool: state?.toolCalls?.[0]?.name });
+    this.agentStatusLabel.textContent = "DONE";
+    this.restoreWorkbenchControls("completed");
+    hasCompletedFirstTask = true;
+    this.hasCompletedFirstTask = true;
+  }
+
+  handleBackendTaskWaitingForUser(state) {
+    if (this.backendLifecycleState === "backend_waiting_for_user") return;
+    this.backendTerminalHandled = true;
+    this.backendLifecycleState = "backend_waiting_for_user";
+    this.closeAgentEventSource("waiting_for_user");
+    this.agentStatusLabel.textContent = "WAITING FOR USER";
+    this.setAgentStatus("waiting_for_user", "Waiting for user confirmation");
+    this.updateToolChip(state?.toolCalls?.[0]?.name || "BrowserAutomationTool", "waiting_for_user");
+    this.appendAgentLog("Waiting for user · stopped before protected action");
+    this.restoreWorkbenchControls("waiting_for_user");
+  }
+
+  handleBackendTaskFailed(error) {
+    if (this.backendLifecycleState === "backend_failed") return;
+    this.backendTerminalHandled = true;
+    this.backendLifecycleState = "backend_failed";
+    this.closeAgentEventSource("task_failed");
+    this.agentStatusLabel.textContent = "FAILED";
+    this.agentStatusBadge.classList.add("is-error");
+    this.agentErrorText.textContent = String(error || "Agent task failed.");
+    this.agentErrorText.hidden = false;
+    this.restoreWorkbenchControls("failed");
+  }
+
+  restoreWorkbenchControls(status) {
+    isAgentRunning = false;
+    this.isBusy = false;
+    this.agentCompletionInProgress = false;
+    this.agentCloseButton.hidden = false;
+    this.agentCloseButton.disabled = false;
+    this.agentCloseButton.textContent = "Return to NOVA";
+    this.setInputsDisabled(false);
+    if (status === "waiting_for_user") {
+      this.workbenchTaskCanvas.querySelectorAll(".official-site-link, [data-workbench-action='save-website-code'], [data-booking-mode]").forEach((control) => { control.disabled = false; });
+    }
+  }
+
+  resetAgentRunState() {
+    this.closeAgentEventSource("reset");
+    this.clearAgentStatusPolling();
+    this.clearWorkbenchTaskAnimation();
+    this.backendTerminalHandled = false;
+    this.backendRuntimeOnline = null;
+    this.backendLifecycleState = "backend_offline";
+    this.backendTaskId = null;
+    this.agentOrchestrator.state = null;
+    this.agentPlaybackActive = false;
+    this.agentPlaybackQueue = [];
+    this.agentPlaybackStepIndex = -1;
+    isAgentRunning = false;
+    this.isBusy = false;
+  }
+
+  prepareForNextAgentTask() {
+    this.resetAgentRunState();
+    this.agentCompletionText.hidden = true;
+    this.agentErrorText.hidden = true;
+    this.agentStatusBadge.classList.remove("is-error");
+    this.agentCloseButton.hidden = true;
+    document.body.classList.remove("agent-overlay-preparing", "agent-overlay-open", "agent-overlay-closing");
+  }
+
+  updateWorkbenchFromAgentState(state) {
+    if (!state) return;
+    this.setAgentStatus(state.status, state.currentStep || state.status);
+    if (state.cursor) this.moveAgentCursor(state.cursor.x, state.cursor.y);
+    state.steps?.forEach((step, index) => this.updateStepStatus(`${this.currentWorkbenchTaskType}-${index + 1}`, step.status === "done" ? "done" : step.status));
+    const activeTool = state.toolCalls?.[0];
+    if (activeTool) this.updateToolChip(activeTool.name, state.status);
+  }
+
+  importBackendWebsiteProject(fileContents) {
+    if (!fileContents || this.generatedProjects.some((item) => item.id === `backend-${this.backendTaskId}`)) return;
+    const project = { id: `backend-${this.backendTaskId}`, name: "fashion-store", createdAt: new Date().toISOString(), files: fileContents };
+    this.generatedProjects = [project, ...this.generatedProjects.filter((item) => item.name !== project.name)];
+    this.persistGeneratedProjects();
+    this.renderFiles(Object.keys(fileContents));
   }
 
   renderCurrentWorkbenchTask(task) {
@@ -1191,7 +1412,6 @@ class AvatarController {
       taskType: this.currentWorkbenchTaskType
     });
     this.startAgentTaskRuntime(task, this.currentWorkbenchTaskType).catch((error) => console.warn("[NOVA Agent Runtime] Planning failed.", error));
-    requestAnimationFrame(() => this.runWorkbenchTaskAnimation(this.currentWorkbenchTaskType));
   }
 
   clearWorkbenchTaskAnimation() {
@@ -1394,6 +1614,11 @@ class AvatarController {
       if (result.tool) this.updateToolChip(result.tool, result.status || "done");
     }
     this.appendAgentLog("Agent playback complete");
+    if (this.backendLifecycleState === "local_fallback") {
+      this.backendTerminalHandled = true;
+      this.agentStatusLabel.textContent = result.status === "waiting_for_user" ? "WAITING FOR USER" : "PREVIEW READY";
+      this.restoreWorkbenchControls(result.status === "waiting_for_user" ? "waiting_for_user" : "completed");
+    }
   }
 
   runWorkbenchTaskAnimation(taskType) { this.startAgentPlayback(taskType, this.currentWorkbenchRequest); }
@@ -1422,6 +1647,7 @@ class AvatarController {
     const message = this.chatInput.value.trim();
     if (!message || isAgentRunning || this.isBusy || !this.videoAvailable) return;
 
+    this.prepareForNextAgentTask();
     this.isBusy = true;
     this.setInputsDisabled(true);
     this.chatInput.value = "";
@@ -1456,40 +1682,9 @@ class AvatarController {
     this.showAgentOverlay(task);
     this.updateStatus(AVATAR_STATES.AGENT_WORKBENCH);
 
-    try {
-      const response = await fetch(`${AGENT_API_BASE}/api/agent/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ task })
-      });
-      if (!response.ok) {
-        throw new Error(`FastAPI start returned HTTP ${response.status}`);
-      }
-      const result = await response.json();
-      if (!this.isCurrentRequest(requestId)) return;
-
-      this.setServiceStatus(this.fastApiWorkbenchStatus, "Online", "online");
-      this.agentStatusBadge.classList.remove("is-error");
-      this.agentStatusLabel.innerText = result.status === "completed" ? "MOCK COMPLETE" : "MOCK WORKING";
-      this.logFlowEvent("agent:start", {
-        requestId,
-        sessionId: result.session_id,
-        alreadyRunning: Boolean(result.already_running)
-      });
-
-      if (result.status === "completed") {
-        await this.handleAgentCompleted(requestId);
-      } else {
-        this.startAgentStatusPolling(requestId);
-      }
-    } catch (error) {
-      console.warn("[NOVA Agent] FastAPI mock server is unavailable.", error);
-      this.setServiceStatus(this.fastApiWorkbenchStatus, "Offline", "offline");
-      isAgentRunning = false;
-      this.showAgentError(
-        "FastAPI mock server is not running.\nPlease start localhost:8787 first."
-      );
-    }
+    this.agentStatusBadge.classList.remove("is-error");
+    this.agentStatusLabel.innerText = "AGENT PLANNING";
+    this.logFlowEvent("agent:start", { requestId, transport: "sse", fallback: "local_preview" });
   }
 
   /* ================================
@@ -1671,6 +1866,7 @@ class AvatarController {
   }
 
   async hideAgentOverlay() {
+    this.closeAgentEventSource("overlay_closed");
     this.clearWorkbenchTaskAnimation();
     this.destroyCapabilityEngines();
     this.agentOverlay.classList.add("is-closing");
@@ -1685,22 +1881,29 @@ class AvatarController {
     this.agentIframe.src = "about:blank";
   }
 
-  async closeAgentOverlayAfterError() {
+  async returnToNova() {
+    if (this.agentOverlay.classList.contains("is-closing")) return;
+    const completedRun = ["backend_completed", "backend_waiting_for_user", "local_fallback"].includes(this.backendLifecycleState);
     this.clear041WorkbenchCue();
-    this.clearAgentStatusPolling();
-    isAgentRunning = false;
+    this.closeAgentEventSource("return_to_nova");
     await this.hideAgentOverlay();
-    const recoveryState = hasCompletedFirstTask
-      ? AVATAR_STATES.FINAL_LOOP_043
-      : AVATAR_STATES.INITIAL_LOOP_040;
-    if (this.videoAvailable) {
-      await this.playState(recoveryState, { loop: true });
+    if (completedRun) {
+      hasCompletedFirstTask = true;
+      this.hasCompletedFirstTask = true;
     }
+    const recoveryState = hasCompletedFirstTask ? AVATAR_STATES.FINAL_LOOP_043 : AVATAR_STATES.INITIAL_LOOP_040;
+    this.resetAgentRunState();
     this.agentErrorText.hidden = true;
+    this.agentCompletionText.hidden = true;
     this.agentCloseButton.hidden = true;
-    this.isBusy = false;
+    document.body.classList.remove("agent-overlay-preparing", "agent-overlay-open", "agent-overlay-closing");
     this.setInputsDisabled(false);
     this.chatInput.focus();
+    if (this.videoAvailable) await this.playState(recoveryState, { loop: true });
+  }
+
+  async closeAgentOverlayAfterError() {
+    await this.returnToNova();
   }
 
   async playState(state, options = {}) {
