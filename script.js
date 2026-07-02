@@ -80,10 +80,22 @@ function renderWorkflowHeading(title, subtitle, icon) {
   </header>`;
 }
 
+function renderFinalBeautyPanel() {
+  return `<div class="interior-view-switch workbench-task-reveal" role="tablist" aria-label="Interior preview mode"><button type="button" class="is-active" data-workbench-action="interior-view" data-interior-view="final">Final Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">3D Draft</button><span>3D Draft · Layout Draft · Construction Preview</span></div>
+    <section class="final-beauty-render workbench-task-reveal" aria-label="Final interior render"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Preparing final beauty render</strong><span>Room Schema → material study → lighting proposal</span></div><img alt="NOVA high-quality interior design proposal render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong>Final Render</strong><span data-beauty-provider>localMockBeautyRenderProvider</span></div><p data-beauty-message>production render provider not connected</p><small data-beauty-prompt>Premium isometric interior proposal · prompt preparing</small></footer></section>`;
+}
+
+function renderRealRenderPanel() {
+  return `<section class="interior-agent-process workbench-task-reveal"><strong>Agent Process</strong><span>Universal Agent Core</span><span>Tool selected</span><span>Draft generated</span><span>Render provider check</span></section>
+    <div class="interior-view-switch workbench-task-reveal" role="tablist" aria-label="Interior preview mode"><button type="button" class="is-active" data-workbench-action="interior-view" data-interior-view="final">Render Status</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Draft Preview</button><span>3D Draft · Layout Draft · Construction Preview</span></div>
+    <section class="final-beauty-render is-provider-required workbench-task-reveal" aria-label="Interior render provider status"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Checking production render provider</strong><span>ComfyUI → workflow → raster output</span></div><div class="render-provider-required"><i class="fa-solid fa-plug-circle-xmark"></i><strong>Render Provider Required</strong><p>Production render provider not connected</p><div><button type="button" data-render-provider-action="comfyui">Connect ComfyUI</button><button type="button" data-render-provider-action="sdxl">Use SDXL / Flux</button><button type="button" data-render-provider-action="blender">Use Blender Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Continue with Draft only</button></div></div><img alt="NOVA production interior render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong data-render-title>Render Provider Required</strong><span data-beauty-provider>Checking provider</span></div><p data-beauty-message>Production render provider check in progress</p><small data-beauty-prompt>3/4 top-down interior raster target · prompt preparing</small></footer></section>`;
+}
+
 function render3DDesignTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
-  return `<div class="task-workflow task-workflow--design3d">
-    ${renderWorkflowHeading("3D Concept Studio", "NOVA is actively building a product-style 3D concept from your request.", "fa-cube")}
+  return `<div class="task-workflow task-workflow--design3d" data-design-view="final">
+    ${renderWorkflowHeading("Interior Design Studio", "NOVA is creating a final proposal render while preserving the interactive construction draft.", "fa-cube")}
+    ${renderRealRenderPanel()}
     <div class="task-workflow-grid task-workflow-grid--live">
       <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Building scene</span></div><div class="viewport-floating-hud playback-layer cafe-layer-material is-pending"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport is-playback-locked" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail playback-layer cafe-layer-shell is-pending"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar playback-layer cafe-layer-material is-pending"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading interior design request</div></section>
     </div>
@@ -508,12 +520,12 @@ async function startBackendAgentTask(userMessage, brain = "localMock") {
 
 function subscribeAgentEvents(taskId, onEvent, onOffline) {
   const source = new EventSource(`${BACKEND_AGENT_API_BASE}/agent/task/${encodeURIComponent(taskId)}/events`);
-  const types = ["task_created", "plan_created", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_waiting_for_user", "tool_completed", "tool_failed", "preview_ready", "task_completed"];
+  const types = ["task_created", "universal_agent_started", "intent_detected", "plan_created", "tool_selected", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_completed", "observation_received", "fix_started", "output_ready", "render_provider_check_started", "render_provider_available", "render_provider_unavailable", "render_workflow_missing", "render_prompt_created", "beauty_render_started", "beauty_render_progress", "beauty_render_ready", "beauty_render_blocked", "beauty_render_completed", "beauty_render_failed", "waiting_for_user", "universal_agent_completed", "universal_agent_failed", "tool_waiting_for_user", "tool_failed", "preview_ready", "task_completed"];
   source.novaTaskId = taskId;
   source.novaCloseReason = null;
   source.novaTerminalObserved = false;
   types.forEach((type) => source.addEventListener(type, (message) => {
-    if (["task_completed", "tool_waiting_for_user", "tool_failed"].includes(type)) source.novaTerminalObserved = true;
+    if (["universal_agent_completed", "waiting_for_user", "universal_agent_failed", "task_completed", "tool_waiting_for_user", "tool_failed"].includes(type)) source.novaTerminalObserved = true;
     onEvent(JSON.parse(message.data));
   }));
   source.onerror = () => {
@@ -976,6 +988,11 @@ class AvatarController {
     if (type === "download-generated-file") this.downloadGeneratedFile(action.dataset.projectId, action.dataset.filePath);
     if (type === "toggle-project") action.closest(".project-node")?.classList.toggle("is-open");
     if (type === "export-folder") this.exportGeneratedFolder();
+    if (type === "interior-view") {
+      const workflow = action.closest(".task-workflow--design3d");
+      if (workflow) workflow.dataset.designView = action.dataset.interiorView;
+      workflow?.querySelectorAll("[data-interior-view]").forEach((button) => button.classList.toggle("is-active", button === action));
+    }
     if (type === "booking-mode") {
       const panel = action.closest(".booking-live-window");
       panel?.querySelectorAll("[data-booking-mode]").forEach((button) => button.classList.toggle("is-active", button === action));
@@ -1280,6 +1297,31 @@ class AvatarController {
     const state = payload.task || this.agentOrchestrator.state;
     if (state) this.agentOrchestrator.state = state;
     this.updateWorkbenchFromAgentState(state);
+    if (event.type === "universal_agent_started") this.setAgentStatus("running", "Universal Agent started");
+    if (event.type === "intent_detected") this.appendAgentLog(`Intent detected · ${payload.intent}`);
+    if (event.type === "tool_selected") {
+      const selected = payload.tools?.[0]?.name || state?.toolCalls?.[0]?.name;
+      if (selected) this.updateToolChip(selected, "selected");
+      this.appendAgentLog(`Tool selected · ${(payload.tools || []).map((tool) => tool.name).join(", ")}`);
+    }
+    if (event.type === "tool_started") {
+      this.updateToolChip(payload.tool, "running");
+      this.setAgentStatus("using_tool", `Using ${payload.tool}`);
+    }
+    if (event.type === "tool_progress") this.setAgentStatus("tool_progress", `${payload.tool} · ${Math.round((payload.progress || 0) * 100)}%`);
+    if (event.type === "observation_received") this.appendAgentLog(`Observation · ${payload.observation?.summary || "Result received"}`);
+    if (event.type === "fix_started") this.appendAgentLog(`Fix started · ${payload.error || payload.tool}`);
+    if (event.type === "output_ready") this.appendAgentLog("Output ready");
+    if (event.type === "render_prompt_created") this.appendAgentLog("Final render prompt created");
+    if (event.type === "render_provider_check_started") this.appendAgentLog("Render provider check started");
+    if (event.type === "render_provider_available") this.appendAgentLog(`Render provider available · ${payload.provider}`);
+    if (event.type === "render_provider_unavailable") this.appendAgentLog("Production render provider unavailable");
+    if (event.type === "render_workflow_missing") this.appendAgentLog("ComfyUI connected, workflow missing");
+    if (event.type === "beauty_render_started") this.setAgentStatus("using_tool", "Rendering in ComfyUI");
+    if (event.type === "beauty_render_progress") this.setAgentStatus("tool_progress", `Final render · ${Math.round((payload.progress || 0) * 100)}%`);
+    if (event.type === "beauty_render_ready") this.showFinalBeautyRender(payload);
+    if (event.type === "beauty_render_blocked") this.showRenderProviderRequired(payload);
+    if (event.type === "beauty_render_failed") this.appendAgentLog(`Beauty render unavailable · ${payload.error || "unknown error"}`);
     if (event.type === "plan_created") this.appendAgentLog(`Plan ready · ${(state.steps || []).length} steps`);
     if (event.type === "step_updated") {
       const definition = this.getAgentPlaybackDefinition(this.currentWorkbenchTaskType);
@@ -1293,16 +1335,63 @@ class AvatarController {
     }
     if (event.type === "tool_output" && payload.sceneSpec) this.design3DEngine?.applySceneSpec?.(payload.sceneSpec);
     if (event.type === "tool_output" && payload.fileContents) this.importBackendWebsiteProject(payload.fileContents);
-    if (event.type === "tool_waiting_for_user") this.handleBackendTaskWaitingForUser(state);
+    if (event.type === "waiting_for_user" || event.type === "tool_waiting_for_user") this.handleBackendTaskWaitingForUser(state);
     if (event.type === "preview_ready" && state?.status === "waiting_for_user") this.handleBackendTaskWaitingForUser(state);
-    if (event.type === "task_completed") this.handleBackendTaskCompleted(state);
-    if (event.type === "tool_failed") this.handleBackendTaskFailed(payload.error || state?.output?.error || "Agent task failed.");
+    if (event.type === "universal_agent_completed" || event.type === "task_completed") this.handleBackendTaskCompleted(state);
+    if (event.type === "universal_agent_failed" || event.type === "tool_failed") this.handleBackendTaskFailed(payload.error || state?.output?.error || "Agent task failed.");
   }
 
   applyBackendAgentEvent(event) { this.handleBackendAgentEvent(event); }
 
+  showFinalBeautyRender(payload) {
+    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
+    const workflow = this.workbenchTaskCanvas.querySelector(".task-workflow--design3d");
+    if (!panel || !workflow) return;
+    const image = panel.querySelector("img");
+    if (image && payload.finalRenderUrl) image.src = payload.finalRenderUrl;
+    panel.classList.remove("is-provider-required");
+    panel.classList.add("is-ready");
+    workflow.dataset.designView = "final";
+    workflow.querySelectorAll("[data-interior-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.interiorView === "final"));
+    const provider = panel.querySelector("[data-beauty-provider]");
+    const message = panel.querySelector("[data-beauty-message]");
+    const prompt = panel.querySelector("[data-beauty-prompt]");
+    const title = panel.querySelector("[data-render-title]");
+    if (title) title.textContent = "Final Render Ready";
+    if (provider) provider.textContent = payload.renderProvider || "Production Render Provider";
+    if (message) message.textContent = payload.renderMessage || "Final Render Ready";
+    if (prompt) prompt.textContent = payload.renderPromptSummary || "Production interior raster render";
+  }
+
+  showRenderProviderRequired(payload) {
+    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
+    if (!panel) return;
+    panel.classList.remove("is-ready");
+    panel.classList.add("is-provider-required", "is-checked");
+    const provider = panel.querySelector("[data-beauty-provider]");
+    const message = panel.querySelector("[data-beauty-message]");
+    const prompt = panel.querySelector("[data-beauty-prompt]");
+    const title = panel.querySelector("[data-render-title]");
+    if (title) title.textContent = payload.renderStatus === "provider_ready_but_workflow_missing" ? "Workflow Missing" : "Render Provider Required";
+    if (provider) provider.textContent = payload.renderProvider || "RenderProviderNotConnected";
+    if (message) message.textContent = payload.renderMessage || "Production render provider not connected";
+    if (prompt) prompt.textContent = payload.renderPromptSummary || "Production raster render target prepared";
+  }
+
   handleBackendTaskCompleted(state) {
     if (this.backendTerminalHandled) return;
+    if (state?.output?.renderStatus && state.output.renderStatus !== "ready") {
+      this.backendTerminalHandled = true;
+      this.backendLifecycleState = "backend_completed";
+      this.closeAgentEventSource("render_provider_required");
+      this.showRenderProviderRequired(state.output);
+      this.agentStatusLabel.textContent = "RENDER PROVIDER REQUIRED";
+      this.setAgentStatus("render_provider_required", state.output.renderMessage || "Render Provider Required");
+      this.restoreWorkbenchControls("completed");
+      hasCompletedFirstTask = true;
+      this.hasCompletedFirstTask = true;
+      return;
+    }
     this.backendTerminalHandled = true;
     this.backendLifecycleState = "backend_completed";
     this.closeAgentEventSource("task_completed");

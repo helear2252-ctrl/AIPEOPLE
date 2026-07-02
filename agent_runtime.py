@@ -8,19 +8,19 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from agent_stream import AgentEventStream
-from agent_orchestrator import AgentOrchestrator
+from nova_agent_core import NovaUniversalAgentCore
 
 ROOT=Path(__file__).resolve().parent; app=FastAPI(title="NOVA Backend Agent Runtime", version="1.0")
 app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080"],allow_methods=["*"],allow_headers=["*"])
-stream=AgentEventStream(); orchestrator=AgentOrchestrator(stream); tasks={}
+stream=AgentEventStream(); orchestrator=NovaUniversalAgentCore(stream); tasks={}
 class TaskRequest(BaseModel): userMessage: str; brain: str="localMock"
 
 @app.post("/agent/task", status_code=202)
 def create_task(req: TaskRequest):
     task_id=uuid.uuid4().hex
-    task={"taskId":task_id,"intent":"default","brain":req.brain,"status":"planning","currentStep":"Planning task","steps":[],"toolCalls":[],"cursor":{"x":0,"y":0,"action":"wait"},"output":{},"files":[]}
+    task={"taskId":task_id,"intent":"general_assistant","brain":req.brain,"status":"task_received","currentStep":"Task received","steps":[],"toolCalls":[],"cursor":{"x":0,"y":0,"action":"wait"},"output":{},"files":[]}
     tasks[task_id]=task; stream.publish(task_id,"task_created",{"task":task})
-    threading.Thread(target=orchestrator.run,args=(task,req.userMessage,req.brain),daemon=True).start(); return task
+    threading.Thread(target=orchestrator.run,args=(task,req.userMessage,req.brain),name=task_id,daemon=True).start(); return task
 
 @app.get("/agent/task/{task_id}")
 def get_task(task_id: str):
