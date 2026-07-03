@@ -80,6 +80,10 @@ function renderWorkflowHeading(title, subtitle, icon) {
   </header>`;
 }
 
+function renderOperationTimeline() {
+  return `<section class="operation-console workbench-task-reveal"><div class="current-operation-card"><small>CURRENT STEP</small><strong data-operation-current>Understanding request</strong><span data-operation-wait>Preparing agent brain</span><progress data-operation-progress max="100" value="0"></progress></div><div class="tool-activity-panel"><small>TOOL ACTIVITY</small><strong data-operation-tool>Selecting tools</strong><span data-operation-status>pending</span></div><div class="artifact-preview"><small>ARTIFACT</small><strong data-operation-artifact>No artifact yet</strong></div><ol class="live-operation-timeline" data-operation-timeline></ol><details class="operation-debug"><summary>Debug</summary><pre data-operation-debug>lastEvent: —</pre></details></section>`;
+}
+
 function renderFinalBeautyPanel() {
   return `<div class="interior-view-switch workbench-task-reveal" role="tablist" aria-label="Interior preview mode"><button type="button" class="is-active" data-workbench-action="interior-view" data-interior-view="final">Final Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">3D Draft</button><span>3D Draft · Layout Draft · Construction Preview</span></div>
     <section class="final-beauty-render workbench-task-reveal" aria-label="Final interior render"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Preparing final beauty render</strong><span>Room Schema → material study → lighting proposal</span></div><img alt="NOVA high-quality interior design proposal render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong>Final Render</strong><span data-beauty-provider>RenderProviderRequired</span></div><p data-beauty-message>production render provider not connected</p><small data-beauty-prompt>Premium isometric interior proposal · prompt preparing</small></footer></section>`;
@@ -95,6 +99,7 @@ function render3DDesignTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--design3d" data-design-view="final">
     ${renderWorkflowHeading("Interior Design Studio", "NOVA is creating a final proposal render while preserving the interactive construction draft.", "fa-cube")}
+    ${renderOperationTimeline()}
     ${renderRealRenderPanel()}
     <div class="task-workflow-grid task-workflow-grid--live">
       <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Building scene</span></div><div class="viewport-floating-hud playback-layer cafe-layer-material is-pending"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport is-playback-locked" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail playback-layer cafe-layer-shell is-pending"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar playback-layer cafe-layer-material is-pending"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading interior design request</div></section>
@@ -107,6 +112,7 @@ function renderBookingTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--booking">
     ${renderWorkflowHeading("Booking Flow Agent", "NOVA is operating a booking flow and will stop safely before payment.", "fa-ticket")}
+    ${renderOperationTimeline()}
     <div class="task-workflow-grid task-workflow-grid--live">
       <section class="ai-live-canvas ai-live-window booking-live-window workbench-task-reveal"><div class="ai-window-toolbar booking-layer-browser"><i></i><i></i><i></i><div class="ai-address-bar"><i class="fa-solid fa-spinner"></i><span>loading browser workspace…</span></div><span class="browser-safe-badge playback-layer booking-layer-review is-pending"><i class="fa-solid fa-shield-halved"></i> stop_before_payment</span><a class="official-site-link playback-layer booking-layer-site is-pending" href="${VIESHOW_OFFICIAL_URL}" target="_blank" rel="noopener noreferrer">Open official site <i class="fa-solid fa-arrow-up-right-from-square"></i></a></div><div class="booking-page"><div class="booking-site-nav playback-layer booking-layer-site is-pending"><strong>VIESHOW CINEMAS</strong><span>Movies</span><span>Cinemas</span><span>Events</span><b>Safe preview</b></div><div class="booking-brand playback-layer booking-layer-site is-pending"><i class="fa-solid fa-film"></i><strong>VIESHOW Booking Assistant</strong><span>frontend_preview · playwright_ready</span></div><div class="booking-task-chip playback-layer booking-layer-site is-pending"><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</div><div class="booking-browser-grid"><div class="booking-browser-main"><div class="booking-cinema-hero playback-layer booking-layer-site is-pending"><small>TAIPEI XINYI</small><strong>Choose your next cinema experience.</strong><span>Official availability is confirmed only after opening VIESHOW.</span></div><div class="booking-form playback-layer booking-layer-search is-pending"><label data-control="theater"><span>Theater</span><b class="typed-value">台北信義威秀影城</b></label><label data-control="movie"><span>Movie</span><b class="typed-value">Movie preview</b></label><label data-control="date"><span>Date</span><b class="typed-value">Selected date</b></label><button type="button">Search sessions</button></div><div class="booking-showtimes playback-layer booking-layer-results is-pending"><button>17:10 <small>Digital</small></button><button class="is-selected">19:30 <small>Digital</small></button><button>21:50 <small>IMAX</small></button></div><div class="booking-ticket-control playback-layer booking-layer-ticket is-pending"><span>Adult ticket</span><button type="button">−</button><strong>2</strong><button type="button">＋</button><small>Preview only</small></div></div><aside class="booking-seat-preview playback-layer booking-layer-seat is-pending"><small>SCREEN</small><div>${Array.from({ length: 24 }, (_, index) => `<i class="${index === 15 || index === 16 ? "is-selected" : ""}"></i>`).join("")}</div><strong>F11 · F12 selected</strong></aside></div><div class="review-lock playback-layer booking-layer-review is-pending"><i class="fa-solid fa-shield-halved"></i><div><strong>Review before payment · User confirmation required</strong><small>No transaction executed. Continue only on the official website.</small></div></div></div><div class="booking-mode-toggle booking-mode-floating playback-layer booking-layer-review is-pending"><button type="button" class="is-active" data-workbench-action="booking-mode" data-booking-mode="safe">Safe mode</button><button type="button" data-workbench-action="booking-mode" data-booking-mode="authorized">Authorized handoff</button></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Identifying target site</div></section>
     </div>
@@ -118,6 +124,7 @@ function renderDemoToCodeTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--website">
     ${renderWorkflowHeading("Website Design Studio", "NOVA is designing a live website concept from your style request.", "fa-pen-ruler")}
+    ${renderOperationTimeline()}
     <div class="task-workflow-grid task-workflow-grid--live">
       <section class="ai-live-canvas ai-live-window website-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Website Design Canvas</strong><span>Desktop · 1440</span><button type="button" class="toolbar-action playback-layer site-layer-save is-pending" data-workbench-action="refine-design" disabled>Refine</button><button type="button" class="toolbar-action is-primary playback-layer site-layer-save is-pending" data-workbench-action="save-website-code" disabled>Save as Code</button></div><div class="website-style-toolbar playback-layer site-layer-brand is-pending"><span><i class="fa-solid fa-wand-magic-sparkles"></i>${request}</span><b>Premium glass</b><b>Ice blue</b><b>Editorial</b><b>Responsive</b></div><div class="website-builder fashion-builder"><div class="builder-nav playback-layer site-layer-header is-pending"><b>ATELIER / 01</b><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><button>Shop now</button></div><div class="builder-hero playback-layer site-layer-hero is-pending"><small>FUTURE ESSENTIALS · 2026</small><strong>Wear what comes next.</strong><p>Precision silhouettes for a new generation.</p><button>Explore collection</button></div><div class="fashion-categories playback-layer site-layer-categories is-pending"><span>Outerwear</span><span>Knitwear</span><span>Essentials</span><span>Accessories</span></div><div class="builder-products">${[["Form Jacket","NT$ 6,980"],["Glass Knit","NT$ 3,280"],["Motion Trouser","NT$ 4,680"],["Vector Coat","NT$ 8,800"],["Core Tee","NT$ 1,980"],["Orbit Bag","NT$ 3,980"]].map(([name,price],index) => `<article class="playback-layer site-layer-products is-pending" style="--product-order:${index}"><i style="--product-tone:${index}"></i><b>${name}</b><span>${price}</span></article>`).join("")}</div><div class="fashion-lookbook playback-layer site-layer-footer is-pending"><article><small>LOOKBOOK / 01</small><strong>Engineered layers</strong></article><article><small>NEW ARRIVAL</small><strong>Quiet utility</strong></article></div><footer class="fashion-footer playback-layer site-layer-footer is-pending"><strong>ATELIER / 01</strong><span>New Arrival</span><span>Lookbook</span><span>Best Seller</span><small>© 2026</small></footer><div class="responsive-blocks playback-layer site-layer-footer is-pending"><i></i><i></i><i></i></div></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Parsing fashion store request</div></section>
     </div>
@@ -129,6 +136,7 @@ function renderDefaultWorkbenchTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--default">
     ${renderWorkflowHeading("NOVA Workspace", "NOVA is preparing your workspace and organizing the current request.", "fa-wand-magic-sparkles")}
+    ${renderOperationTimeline()}
     <section class="ai-live-canvas ai-live-window default-agent-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Agent Execution Workspace</strong><span>localMock · backend_proxy_required</span></div><div class="default-agent-request"><small>CURRENT REQUEST</small><h4 id="workbench-current-task">${request}</h4></div><div class="default-agent-plan"><span class="playback-layer default-layer-plan is-pending"><i>01</i>Understand request</span><span class="playback-layer default-layer-plan is-pending"><i>02</i>Create execution plan</span><span class="playback-layer default-layer-tools is-pending"><i>03</i>Select tools</span><span class="playback-layer default-layer-output is-pending"><i>04</i>Prepare output</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Understanding your request</div></section>
     <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Received", "Planning", "Selecting tools", "Preparing output"].map((step, index) => `<span class="ai-step" data-step-id="default-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
@@ -520,7 +528,7 @@ async function startBackendAgentTask(userMessage, brain = "localMock") {
 
 function subscribeAgentEvents(taskId, onEvent, onOffline) {
   const source = new EventSource(`${BACKEND_AGENT_API_BASE}/agent/task/${encodeURIComponent(taskId)}/events`);
-  const types = ["task_created", "universal_agent_started", "intent_detected", "plan_created", "tool_selected", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_completed", "observation_received", "fix_started", "output_ready", "render_provider_check_started", "render_provider_available", "render_provider_unavailable", "render_workflow_missing", "render_prompt_created", "beauty_render_started", "beauty_render_progress", "collecting_output", "beauty_render_ready", "beauty_render_blocked", "beauty_render_completed", "beauty_render_failed", "waiting_for_user", "universal_agent_completed", "universal_agent_failed", "tool_waiting_for_user", "tool_failed", "preview_ready", "task_completed"];
+  const types = ["task_created", "agent_brain_started", "brain_provider_selected", "brain_fallback_used", "intent_detected", "plan_created", "step_started", "step_progress", "step_completed", "tool_selected", "tool_started", "tool_stdout", "tool_stderr", "tool_progress", "tool_output", "tool_completed", "tool_observation", "artifact_created", "browser_action_started", "browser_action_completed", "computer_action_started", "computer_action_completed", "render_provider_check_started", "render_provider_available", "render_workflow_missing", "render_job_submitted", "render_queue_waiting", "render_sampling_progress", "render_collecting_output", "render_image_saved", "render_prompt_created", "beauty_render_started", "beauty_render_progress", "collecting_output", "beauty_render_ready", "beauty_render_blocked", "beauty_render_completed", "beauty_render_failed", "safety_confirmation_required", "waiting_for_user", "tool_waiting_for_user", "preview_ready", "task_completed", "task_failed", "step_updated"];
   source.novaTaskId = taskId;
   source.novaCloseReason = null;
   source.novaTerminalObserved = false;
@@ -1299,6 +1307,7 @@ class AvatarController {
     const payload = event.data || {};
     const state = payload.task || this.agentOrchestrator.state;
     if (state) this.agentOrchestrator.state = state;
+    this.updateOperationTimeline(event.type, payload);
     const renderActivityEvents = ["render_provider_available", "beauty_render_started", "beauty_render_progress", "collecting_output", "beauty_render_ready", "beauty_render_completed"];
     if (renderActivityEvents.includes(event.type)) this.startBeautyRenderTimeout();
     this.updateBeautyRenderDebug({ lastEvent: event.type, ...(payload || {}) });
@@ -1354,7 +1363,26 @@ class AvatarController {
     if (event.type === "waiting_for_user" || event.type === "tool_waiting_for_user") this.handleBackendTaskWaitingForUser(state);
     if (event.type === "preview_ready" && state?.status === "waiting_for_user") this.handleBackendTaskWaitingForUser(state);
     if (event.type === "universal_agent_completed" || event.type === "task_completed") this.handleBackendTaskCompleted(state);
-    if (event.type === "universal_agent_failed" || event.type === "tool_failed") this.handleBackendTaskFailed(payload.error || state?.output?.error || "Agent task failed.");
+    if (event.type === "task_failed") this.handleBackendTaskFailed(payload.debug?.error || state?.output?.error || "Agent task failed.");
+  }
+
+  updateOperationTimeline(type, payload = {}) {
+    const root = this.workbenchTaskCanvas.querySelector(".operation-console");
+    if (!root) return;
+    const list = root.querySelector("[data-operation-timeline]");
+    const item = document.createElement("li");
+    item.className = `is-${payload.status || "running"}`;
+    item.innerHTML = `<i></i><div><strong>${escapeWorkbenchText(payload.title || type.replaceAll("_", " "))}</strong><span>${escapeWorkbenchText(payload.visibleAction || payload.message || "Operation updated")}</span></div><small>${escapeWorkbenchText(payload.tool || payload.status || "running")}</small>`;
+    list?.append(item); if (list?.children.length > 30) list.firstElementChild?.remove();
+    const current = root.querySelector("[data-operation-current]"); const wait = root.querySelector("[data-operation-wait]"); const tool = root.querySelector("[data-operation-tool]"); const status = root.querySelector("[data-operation-status]"); const progress = root.querySelector("[data-operation-progress]"); const artifact = root.querySelector("[data-operation-artifact]");
+    if (current) current.textContent = payload.title || type.replaceAll("_", " ");
+    if (wait) wait.textContent = payload.visibleAction || payload.reason || "Operation updated";
+    if (tool && payload.tool) tool.textContent = payload.tool;
+    if (status) status.textContent = payload.status || "running";
+    if (progress) progress.value = Math.round((payload.progress || 0) * 100);
+    const artifactValue = Array.isArray(payload.artifact) ? payload.artifact.at(-1) : payload.artifact;
+    if (artifact && artifactValue) artifact.textContent = String(artifactValue);
+    const debug = root.querySelector("[data-operation-debug]"); if (debug) debug.textContent = `lastEvent: ${type}\ntaskId: ${payload.taskId || this.backendTaskId || "—"}\nstepId: ${payload.stepId || "—"}\nstatus: ${payload.status || "running"}\nprogress: ${Math.round((payload.progress || 0) * 100)}`;
   }
 
   applyBackendAgentEvent(event) { this.handleBackendAgentEvent(event); }
@@ -1369,6 +1397,7 @@ class AvatarController {
       return;
     }
     panel.dataset.imageLoadStatus = "loading";
+    this.updateOperationTimeline("image_load_started", { title: "Loading final image", visibleAction: "Checking final_render.png over HTTP", status: "running", progress: .98, artifact: payload.finalRenderUrl });
     panel.dataset.renderStatus = "ready";
     panel.dataset.providerStatus = "available";
     panel.classList.remove("is-provider-required", "is-checked", "is-ready", "is-image-error");
@@ -1381,6 +1410,7 @@ class AvatarController {
       const message = panel.querySelector("[data-beauty-message]");
       if (title) title.textContent = "Final Render Ready";
       if (message) message.textContent = payload.renderMessage || "Final Render Ready";
+      this.updateOperationTimeline("image_load_completed", { title: "Final Render Ready", visibleAction: "final_render.png loaded successfully", status: "completed", progress: 1, artifact: payload.finalRenderUrl });
       this.updateBeautyRenderDebug({ renderStatus: "ready", imageLoadStatus: "loaded", progress: 100, finalRenderExists: true, imageUrl: payload.finalRenderUrl });
     };
     image.onerror = () => this.showBeautyRenderImageError(payload.finalRenderUrl);

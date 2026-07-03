@@ -2008,6 +2008,12 @@ body.agent-overlay-open {
 .task-workflow--design3d[data-design-view="draft"] .task-workflow-grid { display:grid; }
 @media(max-width:720px){.interior-view-switch span{display:none}.interior-agent-process{grid-template-columns:1fr 1fr}.interior-agent-process strong{grid-column:1/-1}.final-beauty-render{min-height:300px}.final-beauty-render footer{grid-template-columns:1fr}.final-beauty-render footer p{grid-column:1}}
 @keyframes beauty-render-spin { to { transform:rotate(360deg); } }
+.operation-console { display:grid; grid-template-columns:1.2fr .8fr .8fr; gap:8px; padding:10px; border:1px solid rgba(148,207,235,.28); border-radius:16px; color:#dff4ff; background:rgba(10,27,38,.72); }
+.current-operation-card,.tool-activity-panel,.artifact-preview { display:grid; gap:4px; min-width:0; padding:9px; border-radius:10px; background:rgba(255,255,255,.07); }
+.operation-console small { color:#79b9d8; font-size:6px; letter-spacing:.1em; }.operation-console strong { overflow:hidden; font-size:9px; text-overflow:ellipsis; white-space:nowrap; }.operation-console span { color:rgba(222,242,251,.65); font-size:7px; }
+.current-operation-card progress { width:100%; height:3px; accent-color:#65caf3; }.live-operation-timeline { grid-column:1/-1; display:flex; gap:8px; margin:0; padding:2px 0 4px; overflow:auto; list-style:none; }
+.live-operation-timeline li { flex:0 0 190px; display:grid; grid-template-columns:7px 1fr; gap:6px; padding:7px; border-radius:9px; background:rgba(255,255,255,.05); }.live-operation-timeline li>i { width:6px; height:6px; margin-top:2px; border-radius:50%; background:#63c9f3; }.live-operation-timeline li>div { display:grid; gap:2px; min-width:0; }.live-operation-timeline li>small { grid-column:2; }.live-operation-timeline .is-completed>i { background:#71d5a0; }.live-operation-timeline .is-failed>i { background:#ff7d7d; }.live-operation-timeline .is-waiting_for_user>i { background:#ffd06a; }
+.operation-debug { grid-column:1/-1; font-size:7px; }.operation-debug pre { margin:5px 0 0; color:#9ed5ed; white-space:pre-wrap; }
 .task-canvas-heading {
   min-height:62px;
   display:flex;

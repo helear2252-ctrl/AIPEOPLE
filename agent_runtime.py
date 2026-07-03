@@ -9,14 +9,20 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from agent_stream import AgentEventStream
 from nova_agent_core import NovaUniversalAgentCore
+from nova_runtime_config import NovaRuntimeConfig
 
 ROOT=Path(__file__).resolve().parent; app=FastAPI(title="NOVA Backend Agent Runtime", version="1.0")
 RENDER_TIMEOUT_SECONDS=max(480,int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS","480")))
 os.environ.setdefault("NOVA_RENDER_TIMEOUT_SECONDS",str(RENDER_TIMEOUT_SECONDS))
+RUNTIME_CONFIG=NovaRuntimeConfig.load()
 GENERATED_ASSETS_DIR=ROOT / "generated_assets"; GENERATED_ASSETS_DIR.mkdir(parents=True,exist_ok=True)
 app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080"],allow_methods=["*"],allow_headers=["*"])
 stream=AgentEventStream(); orchestrator=NovaUniversalAgentCore(stream); tasks={}
 class TaskRequest(BaseModel): userMessage: str; brain: str="localMock"
+
+@app.get("/agent/config")
+def runtime_config():
+    return {"gptBrainAvailable":bool(RUNTIME_CONFIG.openai_api_key),"renderTimeoutSeconds":RENDER_TIMEOUT_SECONDS,"apiKeyExposed":False}
 
 @app.post("/agent/task", status_code=202)
 def create_task(req: TaskRequest):

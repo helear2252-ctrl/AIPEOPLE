@@ -134,13 +134,17 @@ class ComfyUIRenderProvider(RenderProviderBase):
         check = self.check()
         if check.status != "available": return check
         workflow = self.loadWorkflowTemplate()
+        emit("render_queue_waiting", {"progress": 0, "stage": "workflow_loaded", "visibleAction": "ComfyUI workflow loaded"})
         graph = workflow.get("prompt", workflow)
         graph = self._inject(graph, request)
         checkpoint = self._checkpoint_name()
         if not checkpoint: return self.returnProviderResult("failed", "No ComfyUI checkpoint is available.")
+        emit("render_queue_waiting", {"progress": .05, "stage": "checkpoint_loaded", "visibleAction": "Checkpoint loaded"})
         graph = self._replace_checkpoint(graph, checkpoint)
         client_id = uuid.uuid4().hex
         prompt_id = self.submitRenderJob(graph, client_id)
+        emit("render_job_submitted", {"progress": .1, "promptId": prompt_id, "visibleAction": "Render job submitted to ComfyUI"})
+        emit("render_queue_waiting", {"progress": .12, "promptId": prompt_id, "visibleAction": "Waiting in ComfyUI queue"})
         emit("beauty_render_progress", {"progress": .18, "stage": "workflow_submitted", "promptId": prompt_id, "provider": self.name})
         final_path = self.root / "generated_assets" / "interior_renders" / request.task_id / "final_render.png"
         try:
@@ -154,6 +158,7 @@ class ComfyUIRenderProvider(RenderProviderBase):
         if not images: return RenderResult(self.name, "failed", "ComfyUI completed without an image output.", metadata={"promptId": prompt_id})
         emit("collecting_output", {"progress": 1, "stage": "collecting_output", "promptId": prompt_id, "provider": self.name})
         path = self.saveFinalRender(request, images[0])
+        emit("render_image_saved", {"progress": 1, "promptId": prompt_id, "artifact": path, "visibleAction": "Saved final_render.png"})
         return self.returnProviderResult("ready", "Final Render Ready", path, {"promptId": prompt_id})
 
     def _replace_checkpoint(self, value, checkpoint: str):

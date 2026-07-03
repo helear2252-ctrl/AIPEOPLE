@@ -43,6 +43,9 @@ runtime/
 .env
 .env.local
 .env.*.local
+*.key
+secrets/
+generated_assets/
 
 # Node and local build output
 
