@@ -2,6 +2,8 @@ streamlit>=1.25.0
 watchdog>=3.0.0
 fastapi
 uvicorn
+requests
+pydantic
 playwright
 openai
 google-generativeai
