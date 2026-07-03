@@ -1989,6 +1989,7 @@ body.agent-overlay-open {
 .beauty-render-loading i { width:44px; height:44px; border:1px solid rgba(255,231,183,.46); border-top-color:#ffe1a3; border-radius:50%; animation:beauty-render-spin 1.2s linear infinite; }
 .beauty-render-loading strong { font-size:11px; letter-spacing:.08em; }.beauty-render-loading span { color:rgba(255,245,224,.58); font-size:8px; }
 .final-beauty-render.is-ready .beauty-render-loading { opacity:0; }
+.final-beauty-render.is-ready .beauty-render-loading i { animation:none; }
 .render-provider-required { position:absolute; z-index:3; inset:0; display:none; place-content:center; justify-items:center; gap:9px; padding:26px; color:#eef7fb; text-align:center; background:radial-gradient(circle at 50% 35%,rgba(78,127,153,.22),transparent 36%); }
 .final-beauty-render.is-provider-required.is-checked .render-provider-required { display:grid; }.final-beauty-render.is-provider-required.is-checked .beauty-render-loading { opacity:0; pointer-events:none; }
 .render-provider-required > i { color:#82b9d2; font-size:28px; }.render-provider-required > strong { font-size:18px; letter-spacing:.04em; }.render-provider-required > p { margin:0; color:rgba(225,239,246,.62); font-size:9px; }
@@ -1999,6 +2000,9 @@ body.agent-overlay-open {
 .final-beauty-render footer div { display:flex; align-items:center; gap:9px; }.final-beauty-render footer strong { font-size:12px; }
 .final-beauty-render footer div span { padding:4px 7px; border:1px solid #bcae99; border-radius:999px; color:#725c3f; font-size:6px; font-weight:800; }
 .final-beauty-render footer p { margin:0; color:#876c4d; font-size:7px; }.final-beauty-render footer small { grid-column:1/-1; color:#665c50; font-size:7px; }
+.beauty-render-debug { grid-column:1/-1; color:#665c50; font-size:7px; }
+.beauty-render-debug summary { cursor:pointer; user-select:none; }
+.beauty-render-debug pre { max-height:90px; margin:5px 0 0; overflow:auto; padding:7px; border-radius:7px; color:#d8edf7; background:rgba(19,32,40,.88); font:6px/1.45 ui-monospace,monospace; white-space:pre-wrap; }
 .task-workflow--design3d[data-design-view="final"] .task-workflow-grid { display:none; }
 .task-workflow--design3d[data-design-view="draft"] .final-beauty-render { display:none; }
 .task-workflow--design3d[data-design-view="draft"] .task-workflow-grid { display:grid; }

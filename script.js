@@ -88,7 +88,7 @@ function renderFinalBeautyPanel() {
 function renderRealRenderPanel() {
   return `<section class="interior-agent-process workbench-task-reveal"><strong>Agent Process</strong><span>Universal Agent Core</span><span>Tool selected</span><span>Draft generated</span><span>Render provider check</span></section>
     <div class="interior-view-switch workbench-task-reveal" role="tablist" aria-label="Interior preview mode"><button type="button" class="is-active" data-workbench-action="interior-view" data-interior-view="final">Render Status</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Draft Preview</button><span>3D Draft · Layout Draft · Construction Preview</span></div>
-    <section class="final-beauty-render is-provider-required workbench-task-reveal" aria-label="Interior render provider status"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Checking production render provider</strong><span>ComfyUI → workflow → raster output</span></div><div class="render-provider-required"><i class="fa-solid fa-plug-circle-xmark"></i><strong>Render Provider Required</strong><p>Production render provider not connected</p><div><button type="button" data-render-provider-action="comfyui">Connect ComfyUI</button><button type="button" data-render-provider-action="sdxl">Use SDXL / Flux</button><button type="button" data-render-provider-action="blender">Use Blender Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Continue with Draft only</button></div></div><img alt="NOVA production interior render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong data-render-title>Render Provider Required</strong><span data-beauty-provider>Checking provider</span></div><p data-beauty-message>Production render provider check in progress</p><small data-beauty-prompt>3/4 top-down interior raster target · prompt preparing</small></footer></section>`;
+    <section class="final-beauty-render is-provider-required workbench-task-reveal" aria-label="Interior render provider status"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Checking production render provider</strong><span>ComfyUI → workflow → raster output</span></div><div class="render-provider-required"><i class="fa-solid fa-plug-circle-xmark"></i><strong>Render Provider Required</strong><p>Production render provider not connected</p><div><button type="button" data-render-provider-action="comfyui">Connect ComfyUI</button><button type="button" data-render-provider-action="sdxl">Use SDXL / Flux</button><button type="button" data-render-provider-action="blender">Use Blender Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Continue with Draft only</button></div></div><img alt="NOVA production interior render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong data-render-title>Checking provider</strong><span data-beauty-provider>Checking provider</span></div><p data-beauty-message>Production render provider check in progress</p><small data-beauty-prompt>3/4 top-down interior raster target · prompt preparing</small><details class="beauty-render-debug"><summary>Render debug</summary><pre data-render-debug></pre></details></footer></section>`;
 }
 
 function render3DDesignTask(userMessage) {
@@ -520,7 +520,7 @@ async function startBackendAgentTask(userMessage, brain = "localMock") {
 
 function subscribeAgentEvents(taskId, onEvent, onOffline) {
   const source = new EventSource(`${BACKEND_AGENT_API_BASE}/agent/task/${encodeURIComponent(taskId)}/events`);
-  const types = ["task_created", "universal_agent_started", "intent_detected", "plan_created", "tool_selected", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_completed", "observation_received", "fix_started", "output_ready", "render_provider_check_started", "render_provider_available", "render_provider_unavailable", "render_workflow_missing", "render_prompt_created", "beauty_render_started", "beauty_render_progress", "beauty_render_ready", "beauty_render_blocked", "beauty_render_completed", "beauty_render_failed", "waiting_for_user", "universal_agent_completed", "universal_agent_failed", "tool_waiting_for_user", "tool_failed", "preview_ready", "task_completed"];
+  const types = ["task_created", "universal_agent_started", "intent_detected", "plan_created", "tool_selected", "step_updated", "tool_started", "tool_progress", "tool_output", "tool_completed", "observation_received", "fix_started", "output_ready", "render_provider_check_started", "render_provider_available", "render_provider_unavailable", "render_workflow_missing", "render_prompt_created", "beauty_render_started", "beauty_render_progress", "collecting_output", "beauty_render_ready", "beauty_render_blocked", "beauty_render_completed", "beauty_render_failed", "waiting_for_user", "universal_agent_completed", "universal_agent_failed", "tool_waiting_for_user", "tool_failed", "preview_ready", "task_completed"];
   source.novaTaskId = taskId;
   source.novaCloseReason = null;
   source.novaTerminalObserved = false;
@@ -1299,6 +1299,9 @@ class AvatarController {
     const payload = event.data || {};
     const state = payload.task || this.agentOrchestrator.state;
     if (state) this.agentOrchestrator.state = state;
+    const renderActivityEvents = ["render_provider_available", "beauty_render_started", "beauty_render_progress", "collecting_output", "beauty_render_ready", "beauty_render_completed"];
+    if (renderActivityEvents.includes(event.type)) this.startBeautyRenderTimeout();
+    this.updateBeautyRenderDebug({ lastEvent: event.type, ...(payload || {}) });
     this.updateWorkbenchFromAgentState(state);
     if (event.type === "universal_agent_started") this.setAgentStatus("running", "Universal Agent started");
     if (event.type === "intent_detected") this.appendAgentLog(`Intent detected · ${payload.intent}`);
@@ -1321,8 +1324,13 @@ class AvatarController {
     if (event.type === "render_provider_unavailable") this.appendAgentLog("Production render provider unavailable");
     if (event.type === "render_workflow_missing") this.appendAgentLog("ComfyUI connected, workflow missing");
     if (event.type === "beauty_render_started") this.setAgentStatus("using_tool", "Rendering in ComfyUI");
-    if (event.type === "beauty_render_progress") this.setAgentStatus("tool_progress", `Final render · ${Math.round((payload.progress || 0) * 100)}%`);
-    if (event.type === "beauty_render_ready") this.showFinalBeautyRender(payload);
+    if (event.type === "beauty_render_progress") {
+      const progress = Math.round((payload.progress || 0) * 100);
+      this.setAgentStatus("tool_progress", progress >= 100 ? "Collecting final image" : `Final render · ${progress}%`);
+      if (progress >= 100) this.showBeautyRenderCollecting(payload);
+    }
+    if (event.type === "collecting_output") this.showBeautyRenderCollecting(payload);
+    if (event.type === "beauty_render_ready" || event.type === "beauty_render_completed") this.showFinalBeautyRender(payload);
     if (event.type === "beauty_render_blocked") { this.clearBeautyRenderTimeout(); this.showRenderProviderRequired(payload); }
     if (event.type === "beauty_render_failed") {
       this.clearBeautyRenderTimeout();
@@ -1361,15 +1369,19 @@ class AvatarController {
       return;
     }
     panel.dataset.imageLoadStatus = "loading";
+    panel.dataset.renderStatus = "ready";
+    panel.dataset.providerStatus = "available";
     panel.classList.remove("is-provider-required", "is-checked", "is-ready", "is-image-error");
     image.onload = () => {
       this.clearBeautyRenderTimeout();
       panel.dataset.imageLoadStatus = "loaded";
       panel.classList.add("is-ready");
+      panel.classList.remove("is-provider-required", "is-checked", "is-image-error");
       const title = panel.querySelector("[data-render-title]");
       const message = panel.querySelector("[data-beauty-message]");
       if (title) title.textContent = "Final Render Ready";
       if (message) message.textContent = payload.renderMessage || "Final Render Ready";
+      this.updateBeautyRenderDebug({ renderStatus: "ready", imageLoadStatus: "loaded", progress: 100, finalRenderExists: true, imageUrl: payload.finalRenderUrl });
     };
     image.onerror = () => this.showBeautyRenderImageError(payload.finalRenderUrl);
     image.src = payload.finalRenderUrl;
@@ -1383,6 +1395,28 @@ class AvatarController {
     if (provider) provider.textContent = payload.renderProvider || "Production Render Provider";
     if (message) message.textContent = "Loading final render image";
     if (prompt) prompt.textContent = payload.renderPromptSummary || "Production interior raster render";
+    this.updateBeautyRenderDebug({ providerStatus: "available", renderStatus: "ready", imageLoadStatus: "loading", progress: 100, imageUrl: payload.finalRenderUrl, outputPath: payload.finalRenderUrl, finalRenderExists: true });
+  }
+
+  showBeautyRenderCollecting(payload = {}) {
+    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
+    if (!panel) return;
+    panel.dataset.renderStatus = "collecting_output";
+    panel.dataset.providerStatus = "available";
+    panel.classList.remove("is-provider-required", "is-checked");
+    panel.querySelector("[data-render-title]")?.replaceChildren("Collecting final image");
+    panel.querySelector("[data-beauty-message]")?.replaceChildren("ComfyUI finished; waiting for final image");
+    this.setAgentStatus("tool_progress", "Collecting final image");
+    this.updateBeautyRenderDebug({ providerStatus: "available", renderStatus: "collecting_output", progress: 100, promptId: payload.promptId });
+  }
+
+  updateBeautyRenderDebug(values = {}) {
+    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
+    const node = panel?.querySelector("[data-render-debug]");
+    if (!panel || !node) return;
+    this.beautyRenderDebug = { timeoutSeconds: 540, finalRenderExists: false, ...this.beautyRenderDebug, ...values };
+    node.textContent = ["providerStatus", "renderStatus", "imageLoadStatus", "lastEvent", "progress", "timeoutSeconds", "promptId", "imageUrl", "outputPath", "finalRenderExists"]
+      .map((key) => `${key}: ${this.beautyRenderDebug[key] ?? "—"}`).join("\n");
   }
 
   clearBeautyRenderTimeout() {
@@ -1393,21 +1427,28 @@ class AvatarController {
 
   startBeautyRenderTimeout() {
     this.clearBeautyRenderTimeout();
-    this.beautyRenderTimeoutId = window.setTimeout(() => {
-      if (this.backendTerminalHandled) return;
-      this.appendAgentLog("Final render timed out after 180 seconds");
-      this.showBeautyRenderTerminalState({ title: "Render Timeout", provider: "RenderProviderRequired", message: "Final render did not complete within 180 seconds" });
-      this.backendTerminalHandled = true;
-      this.backendLifecycleState = "backend_failed";
-      this.closeAgentEventSource("render_timeout");
+    this.beautyRenderTimeoutId = window.setTimeout(async () => {
+      const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
+      if (panel?.dataset.renderStatus === "ready") return;
+      const imageUrl = this.backendTaskId ? `/generated_assets/interior_renders/${this.backendTaskId}/final_render.png` : "";
+      if (imageUrl) {
+        try {
+          const response = await fetch(imageUrl, { method: "HEAD", cache: "no-store" });
+          if (response.ok) { this.showFinalBeautyRender({ finalRenderUrl: imageUrl, renderProvider: "ComfyUIRenderProvider", renderMessage: "Final Render Ready" }); return; }
+        } catch (_) { /* The ready event may still arrive after this recoverable UI timeout. */ }
+      }
+      this.appendAgentLog("Final render timed out after 540 seconds");
+      this.showBeautyRenderTerminalState({ title: "Render Timeout", provider: "ComfyUIRenderProvider", message: "Final render did not complete within 540 seconds" });
       this.restoreWorkbenchControls("failed");
-    }, 180000);
+    }, 540000);
   }
 
   showBeautyRenderTerminalState({ title, provider, message, detail = "3D Draft remains available" }) {
     const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
     if (!panel) return;
     this.clearBeautyRenderTimeout();
+    panel.dataset.renderStatus = title === "Render Timeout" ? "timeout" : "failed";
+    panel.dataset.providerStatus = provider;
     panel.classList.remove("is-ready");
     panel.classList.add("is-provider-required", "is-checked");
     const statusTitle = panel.querySelector(".render-provider-required > strong");

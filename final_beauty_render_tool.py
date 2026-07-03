@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
@@ -40,7 +41,17 @@ class FinalBeautyRenderTool:
             result = check
         elif check.status == "available":
             emit("beauty_render_started", {"tool": self.name, "provider": provider.name})
-            result = provider.render(request, emit)
+            try:
+                result = provider.render(request, emit)
+            except TimeoutError as exc:
+                final_path = output_dir / "final_render.png"
+                if final_path.is_file() and final_path.stat().st_size:
+                    result = provider.returnProviderResult("ready", "Final Render Ready", f"{relative_root}/final_render.png",
+                                                           {"recoveredAfterTimeout": True})
+                else:
+                    result = provider.returnProviderResult("render_timeout", str(exc), metadata={
+                        "reason": "render_timeout", "timeoutSeconds": max(480, int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS", "480")))
+                    })
         else:
             result = provider.render(request, emit)
 
@@ -56,6 +67,8 @@ class FinalBeautyRenderTool:
             output["finalRenderUrl"] = "/" + result.image_path
             files.append(result.image_path)
             emit("beauty_render_ready", output); emit("beauty_render_completed", output)
+        elif result.status == "render_timeout":
+            emit("beauty_render_failed", {**output, "reason": "render_timeout", "error": result.message})
         else:
             required = {**output, "actions": ["Connect ComfyUI", "Use SDXL / Flux", "Use Blender Render", "Continue with Draft only"]}
             self._write_json(output_dir / "render_provider_required.json", required)

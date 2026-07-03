@@ -22,6 +22,7 @@ class ComfyUIRenderProvider(RenderProviderBase):
         self.url = (url or os.getenv("COMFYUI_URL", "http://127.0.0.1:8188")).rstrip("/")
         configured = workflow_template or os.getenv("COMFYUI_WORKFLOW_TEMPLATE", "")
         self.workflow_template = Path(configured).expanduser() if configured else root / "comfyui_workflows" / "interior_sd15_lowvram.json"
+        self.render_timeout_seconds = max(480, int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS", "480")))
 
     def _request(self, path: str, data: dict | None = None, timeout: float = 3):
         body = json.dumps(data).encode("utf-8") if data is not None else None
@@ -68,13 +69,36 @@ class ComfyUIRenderProvider(RenderProviderBase):
         if not prompt_id: raise RuntimeError("ComfyUI did not return a prompt id")
         return prompt_id
 
-    def pollQueueStatus(self, prompt_id: str, timeout_seconds: int = 300) -> dict:
+    def _queue_contains(self, queue: dict, prompt_id: str) -> bool:
+        return any(str(item[1] if isinstance(item, list) and len(item) > 1 else item.get("prompt_id", "") if isinstance(item, dict) else "") == prompt_id
+                   for key in ("queue_running", "queue_pending") for item in queue.get(key, []))
+
+    def pollQueueStatus(self, prompt_id: str, emit, timeout_seconds: int | None = None) -> dict:
+        timeout_seconds = timeout_seconds or self.render_timeout_seconds
         deadline = time.monotonic() + timeout_seconds
+        last_progress_emit = 0.0
         while time.monotonic() < deadline:
             history = self._request(f"/history/{prompt_id}", timeout=10)
             if history.get(prompt_id): return history[prompt_id]
+            queue = self._request("/queue", timeout=10)
+            now = time.monotonic()
+            if self._queue_contains(queue, prompt_id) and now - last_progress_emit >= 5:
+                elapsed = timeout_seconds - max(0, deadline - now)
+                progress = min(.95, .18 + (elapsed / timeout_seconds) * .77)
+                emit("beauty_render_progress", {"progress": progress, "stage": "rendering", "promptId": prompt_id, "provider": self.name})
+                last_progress_emit = now
             time.sleep(1)
-        raise TimeoutError("ComfyUI render timed out")
+        history = self._request(f"/history/{prompt_id}", timeout=15)
+        if history.get(prompt_id): return history[prompt_id]
+        queue = self._request("/queue", timeout=15)
+        if self._queue_contains(queue, prompt_id):
+            emit("collecting_output", {"progress": 1, "stage": "collecting_output", "promptId": prompt_id, "provider": self.name})
+            grace_deadline = time.monotonic() + 60
+            while time.monotonic() < grace_deadline:
+                history = self._request(f"/history/{prompt_id}", timeout=15)
+                if history.get(prompt_id): return history[prompt_id]
+                time.sleep(1)
+        raise TimeoutError(f"ComfyUI render timed out after {timeout_seconds} seconds")
 
     def collectOutputImages(self, history_record: dict) -> list[dict]:
         return [image for output in history_record.get("outputs", {}).values() for image in output.get("images", [])]
@@ -117,10 +141,18 @@ class ComfyUIRenderProvider(RenderProviderBase):
         graph = self._replace_checkpoint(graph, checkpoint)
         client_id = uuid.uuid4().hex
         prompt_id = self.submitRenderJob(graph, client_id)
-        emit("beauty_render_progress", {"progress": .18, "stage": "workflow_submitted", "provider": self.name})
-        record = self.pollQueueStatus(prompt_id)
+        emit("beauty_render_progress", {"progress": .18, "stage": "workflow_submitted", "promptId": prompt_id, "provider": self.name})
+        final_path = self.root / "generated_assets" / "interior_renders" / request.task_id / "final_render.png"
+        try:
+            record = self.pollQueueStatus(prompt_id, emit)
+        except TimeoutError:
+            if final_path.is_file() and final_path.stat().st_size:
+                relative = f"generated_assets/interior_renders/{request.task_id}/final_render.png"
+                return self.returnProviderResult("ready", "Final Render Ready", relative, {"promptId": prompt_id, "recoveredAfterTimeout": True})
+            raise
         images = self.collectOutputImages(record)
         if not images: return RenderResult(self.name, "failed", "ComfyUI completed without an image output.", metadata={"promptId": prompt_id})
+        emit("collecting_output", {"progress": 1, "stage": "collecting_output", "promptId": prompt_id, "provider": self.name})
         path = self.saveFinalRender(request, images[0])
         return self.returnProviderResult("ready", "Final Render Ready", path, {"promptId": prompt_id})
 

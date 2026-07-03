@@ -1,6 +1,6 @@
 """Run: python agent_runtime.py, then open http://127.0.0.1:8080/nova.html"""
 from __future__ import annotations
-import json, threading, uuid
+import json, os, threading, uuid
 from pathlib import Path
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,6 +11,8 @@ from agent_stream import AgentEventStream
 from nova_agent_core import NovaUniversalAgentCore
 
 ROOT=Path(__file__).resolve().parent; app=FastAPI(title="NOVA Backend Agent Runtime", version="1.0")
+RENDER_TIMEOUT_SECONDS=max(480,int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS","480")))
+os.environ.setdefault("NOVA_RENDER_TIMEOUT_SECONDS",str(RENDER_TIMEOUT_SECONDS))
 GENERATED_ASSETS_DIR=ROOT / "generated_assets"; GENERATED_ASSETS_DIR.mkdir(parents=True,exist_ok=True)
 app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080"],allow_methods=["*"],allow_headers=["*"])
 stream=AgentEventStream(); orchestrator=NovaUniversalAgentCore(stream); tasks={}
@@ -19,7 +21,7 @@ class TaskRequest(BaseModel): userMessage: str; brain: str="localMock"
 @app.post("/agent/task", status_code=202)
 def create_task(req: TaskRequest):
     task_id=uuid.uuid4().hex
-    task={"taskId":task_id,"intent":"general_assistant","brain":req.brain,"status":"task_received","currentStep":"Task received","steps":[],"toolCalls":[],"cursor":{"x":0,"y":0,"action":"wait"},"output":{},"files":[]}
+    task={"taskId":task_id,"intent":"general_assistant","brain":req.brain,"status":"task_received","currentStep":"Task received","steps":[],"toolCalls":[],"cursor":{"x":0,"y":0,"action":"wait"},"output":{},"files":[],"renderTimeoutSeconds":RENDER_TIMEOUT_SECONDS}
     tasks[task_id]=task; stream.publish(task_id,"task_created",{"task":task})
     threading.Thread(target=orchestrator.run,args=(task,req.userMessage,req.brain),name=task_id,daemon=True).start(); return task
 
