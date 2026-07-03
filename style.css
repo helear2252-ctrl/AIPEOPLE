@@ -2014,6 +2014,12 @@ body.agent-overlay-open {
 .current-operation-card progress { width:100%; height:3px; accent-color:#65caf3; }.live-operation-timeline { grid-column:1/-1; display:flex; gap:8px; margin:0; padding:2px 0 4px; overflow:auto; list-style:none; }
 .live-operation-timeline li { flex:0 0 190px; display:grid; grid-template-columns:7px 1fr; gap:6px; padding:7px; border-radius:9px; background:rgba(255,255,255,.05); }.live-operation-timeline li>i { width:6px; height:6px; margin-top:2px; border-radius:50%; background:#63c9f3; }.live-operation-timeline li>div { display:grid; gap:2px; min-width:0; }.live-operation-timeline li>small { grid-column:2; }.live-operation-timeline .is-completed>i { background:#71d5a0; }.live-operation-timeline .is-failed>i { background:#ff7d7d; }.live-operation-timeline .is-waiting_for_user>i { background:#ffd06a; }
 .operation-debug { grid-column:1/-1; font-size:7px; }.operation-debug pre { margin:5px 0 0; color:#9ed5ed; white-space:pre-wrap; }
+[data-result-viewer="main"],.nova-main-result-viewer { position:relative; width:100%; min-height:380px; overflow:hidden; border-radius:24px; background:#071018; }
+[data-result-viewer="main"] .beauty-render-image { display:block; width:100%; height:100%; min-height:380px; object-fit:cover; opacity:1; visibility:visible; position:relative; z-index:5; }
+.result-state { min-height:380px; display:grid; place-content:center; justify-items:center; text-align:center; color:rgba(255,255,255,.88); }
+.result-state strong { display:block; font-size:18px; }.result-state span,.result-state small { display:block; margin-top:8px; opacity:.72; }.result-state--error { color:#ffd6d6; }
+.interior-draft-reference { border:1px solid rgba(255,255,255,.18); border-radius:14px; background:rgba(7,16,24,.62); }.interior-draft-reference>summary { padding:9px 12px; color:rgba(220,240,250,.62); cursor:pointer; font-size:8px; }.interior-draft-reference[open]>summary { border-bottom:1px solid rgba(255,255,255,.12); }
+[data-result-tab],[data-workbench-tab="render-status"],[data-workbench-tab="draft-preview"],.render-status-tab,.draft-preview-tab,.result-tab-bar { display:none!important; }
 .task-canvas-heading {
   min-height:62px;
   display:flex;

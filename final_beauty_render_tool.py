@@ -45,12 +45,14 @@ class FinalBeautyRenderTool:
                 result = provider.render(request, emit)
             except TimeoutError as exc:
                 final_path = output_dir / "final_render.png"
-                if final_path.is_file() and final_path.stat().st_size:
+                image_stats = provider.validateOutputImage(final_path) if hasattr(provider, "validateOutputImage") else {"valid": False}
+                if image_stats.get("valid"):
                     result = provider.returnProviderResult("ready", "Final Render Ready", f"{relative_root}/final_render.png",
-                                                           {"recoveredAfterTimeout": True})
+                                                           {"recoveredAfterTimeout": True, "imageStats": image_stats})
                 else:
                     result = provider.returnProviderResult("render_timeout", str(exc), metadata={
-                        "reason": "render_timeout", "timeoutSeconds": max(480, int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS", "480")))
+                        "reason": "render_timeout", "timeoutSeconds": max(480, int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS", "480"))),
+                        "imageStats": image_stats
                     })
         else:
             result = provider.render(request, emit)
@@ -63,12 +65,22 @@ class FinalBeautyRenderTool:
                   "renderMessage": result.message, "renderPrompt": request.prompt, "negativePrompt": request.negative_prompt,
                   "renderPromptSummary": "3/4 top-down warm minimal luxury interior · cream · oak · marble · black metal",
                   "renderMetadataUrl": f"/{relative_root}/render_metadata.json", "isFinalRender": metadata["isFinalRender"]}
+        debug_report_path = result.metadata.get("debugReportPath")
+        if debug_report_path:
+            output["renderDebugReportUrl"] = "/" + debug_report_path
+            files.append(debug_report_path)
         if result.status == "ready" and result.image_path:
             output["finalRenderUrl"] = "/" + result.image_path
             files.append(result.image_path)
             emit("beauty_render_ready", output); emit("beauty_render_completed", output)
         elif result.status == "render_timeout":
             emit("beauty_render_failed", {**output, "reason": "render_timeout", "error": result.message})
+            raise RuntimeError(result.message)
+        elif result.status == "failed" and result.metadata.get("reason") in {"invalid_black_output", "invalid_image_output", "comfyui_environment_failure"}:
+            failed = {**output, "reason": result.metadata.get("reason"), "message": result.message, "error": result.message,
+                      "imageStats": result.metadata.get("imageStats", {}), "fallbackUsed": result.metadata.get("fallbackUsed", False)}
+            emit("beauty_render_failed", failed)
+            raise RuntimeError(result.message)
         else:
             required = {**output, "actions": ["Connect ComfyUI", "Use SDXL / Flux", "Use Blender Render", "Continue with Draft only"]}
             self._write_json(output_dir / "render_provider_required.json", required)

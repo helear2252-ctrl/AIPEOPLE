@@ -33,6 +33,11 @@ const BACKEND_AGENT_API_BASE = window.location.origin;
 const STREAMLIT_WORKBENCH_URL = "http://127.0.0.1:8501";
 const VIESHOW_OFFICIAL_URL = "https://www.vscinemas.com.tw/";
 const WORKBENCH_PROJECTS_STORAGE_KEY = "nova.workbench.projects.v1";
+window.NOVA_WORKBENCH_DISPLAY_STATE = {
+  taskType: "interior_design", phase: "idle", taskId: null, provider: null, progress: 0,
+  imageUrl: null, imageLoadStatus: "idle", previewDomStatus: "idle", badge: "IDLE",
+  lastEvent: null, updatedAt: null
+};
 const AGENT_BRAIN_MODE = "localMock";
 const AGENT_PLAYBACK_SPEED = "normal";
 const FIRST_ACK_PREPARE_SECONDS = 3.2;
@@ -84,26 +89,20 @@ function renderOperationTimeline() {
   return `<section class="operation-console workbench-task-reveal"><div class="current-operation-card"><small>CURRENT STEP</small><strong data-operation-current>Understanding request</strong><span data-operation-wait>Preparing agent brain</span><progress data-operation-progress max="100" value="0"></progress></div><div class="tool-activity-panel"><small>TOOL ACTIVITY</small><strong data-operation-tool>Selecting tools</strong><span data-operation-status>pending</span></div><div class="artifact-preview"><small>ARTIFACT</small><strong data-operation-artifact>No artifact yet</strong></div><ol class="live-operation-timeline" data-operation-timeline></ol><details class="operation-debug"><summary>Debug</summary><pre data-operation-debug>lastEvent: —</pre></details></section>`;
 }
 
-function renderFinalBeautyPanel() {
-  return `<div class="interior-view-switch workbench-task-reveal" role="tablist" aria-label="Interior preview mode"><button type="button" class="is-active" data-workbench-action="interior-view" data-interior-view="final">Final Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">3D Draft</button><span>3D Draft · Layout Draft · Construction Preview</span></div>
-    <section class="final-beauty-render workbench-task-reveal" aria-label="Final interior render"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Preparing final beauty render</strong><span>Room Schema → material study → lighting proposal</span></div><img alt="NOVA high-quality interior design proposal render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong>Final Render</strong><span data-beauty-provider>RenderProviderRequired</span></div><p data-beauty-message>production render provider not connected</p><small data-beauty-prompt>Premium isometric interior proposal · prompt preparing</small></footer></section>`;
-}
-
 function renderRealRenderPanel() {
   return `<section class="interior-agent-process workbench-task-reveal"><strong>Agent Process</strong><span>Universal Agent Core</span><span>Tool selected</span><span>Draft generated</span><span>Render provider check</span></section>
-    <div class="interior-view-switch workbench-task-reveal" role="tablist" aria-label="Interior preview mode"><button type="button" class="is-active" data-workbench-action="interior-view" data-interior-view="final">Render Status</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Draft Preview</button><span>3D Draft · Layout Draft · Construction Preview</span></div>
-    <section class="final-beauty-render is-provider-required workbench-task-reveal" aria-label="Interior render provider status"><div class="beauty-render-stage"><div class="beauty-render-loading"><i></i><strong>Checking production render provider</strong><span>ComfyUI → workflow → raster output</span></div><div class="render-provider-required"><i class="fa-solid fa-plug-circle-xmark"></i><strong>Render Provider Required</strong><p>Production render provider not connected</p><div><button type="button" data-render-provider-action="comfyui">Connect ComfyUI</button><button type="button" data-render-provider-action="sdxl">Use SDXL / Flux</button><button type="button" data-render-provider-action="blender">Use Blender Render</button><button type="button" data-workbench-action="interior-view" data-interior-view="draft">Continue with Draft only</button></div></div><img alt="NOVA production interior render"><div class="beauty-render-overlay"><span><i class="fa-solid fa-magnifying-glass-plus"></i> Drag / View detail</span></div></div><footer><div><strong data-render-title>Checking provider</strong><span data-beauty-provider>Checking provider</span></div><p data-beauty-message>Production render provider check in progress</p><small data-beauty-prompt>3/4 top-down interior raster target · prompt preparing</small><details class="beauty-render-debug"><summary>Render debug</summary><pre data-render-debug></pre></details></footer></section>`;
+    <section class="nova-main-result-viewer final-render-preview workbench-task-reveal" data-result-viewer="main" data-result-phase="idle" data-image-load-status="idle" aria-label="Interior main result"><div class="result-state"><strong>Understanding request</strong><span>Preparing the interior design task.</span></div></section>`;
 }
 
 function render3DDesignTask(userMessage) {
   const request = escapeWorkbenchText(userMessage);
-  return `<div class="task-workflow task-workflow--design3d" data-design-view="final">
+  return `<div class="task-workflow task-workflow--design3d">
     ${renderWorkflowHeading("Interior Design Studio", "NOVA is creating a final proposal render while preserving the interactive construction draft.", "fa-cube")}
     ${renderOperationTimeline()}
     ${renderRealRenderPanel()}
-    <div class="task-workflow-grid task-workflow-grid--live">
+    <details class="interior-draft-reference workbench-task-reveal"><summary>Draft reference</summary><div class="task-workflow-grid task-workflow-grid--live">
       <section class="ai-live-canvas ai-live-window design-live-window workbench-task-reveal"><div class="ai-window-toolbar"><i></i><i></i><i></i><strong>Modern Cafe · 3D Interior Viewport</strong><span>Building scene</span></div><div class="viewport-floating-hud playback-layer cafe-layer-material is-pending"><small>REQUEST</small><strong>${request}</strong><div><span>Modern cafe</span><span>Wood + metal</span><span>Warm lighting</span><span>Orbit enabled</span></div></div><div class="cafe-3d-viewport is-playback-locked" data-3d-viewport aria-label="Draggable modern cafe 3D viewport"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div><span class="viewport-drag-hint playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-arrows-rotate"></i> Drag to explore</span></div><div class="design-tool-rail playback-layer cafe-layer-shell is-pending"><b>↖</b><b>◇</b><b>◫</b><b>☼</b></div><div class="preview-ready playback-layer cafe-layer-ready is-pending"><i class="fa-solid fa-check"></i> Preview ready</div><div class="viewport-mode-bar playback-layer cafe-layer-material is-pending"><span>Perspective</span><span>Material · Modern</span><span>Lighting · Warm</span><span>Quality · High</span></div><span class="ai-cursor" aria-hidden="true"></span><div class="ai-action-bubble">Reading interior design request</div></section>
-    </div>
+    </div></details>
     <div class="ai-step-timeline workflow-progress workbench-task-reveal">${["Planning", "Space shell", "Counter", "Seating", "Lighting", "Materials", "Details", "Preview ready"].map((step, index) => `<span class="ai-step" data-step-id="design3d-${index}"><i></i>${step}</span>`).join("")}</div>
   </div>`;
 }
@@ -836,6 +835,9 @@ class AvatarController {
     this.agentPlaybackProfile = null;
     this.backendEventSource = null;
     this.backendTaskId = null;
+    this.pendingWorkbenchImageUrl = null;
+    this.pendingRenderTaskCompletion = null;
+    window.NOVA_WORKBENCH_DISPLAY_STATE = { taskType:"interior_design", phase:"idle", taskId:null, provider:null, progress:0, imageUrl:null, imageLoadStatus:"idle", previewDomStatus:"idle", badge:"IDLE", lastEvent:null, updatedAt:null };
     this.backendRuntimeOnline = null;
     this.backendLifecycleState = "backend_offline";
     this.backendTerminalHandled = false;
@@ -997,11 +999,6 @@ class AvatarController {
     if (type === "download-generated-file") this.downloadGeneratedFile(action.dataset.projectId, action.dataset.filePath);
     if (type === "toggle-project") action.closest(".project-node")?.classList.toggle("is-open");
     if (type === "export-folder") this.exportGeneratedFolder();
-    if (type === "interior-view") {
-      const workflow = action.closest(".task-workflow--design3d");
-      if (workflow) workflow.dataset.designView = action.dataset.interiorView;
-      workflow?.querySelectorAll("[data-interior-view]").forEach((button) => button.classList.toggle("is-active", button === action));
-    }
     if (type === "booking-mode") {
       const panel = action.closest(".booking-live-window");
       panel?.querySelectorAll("[data-booking-mode]").forEach((button) => button.classList.toggle("is-active", button === action));
@@ -1242,7 +1239,69 @@ class AvatarController {
   runAgentCursorStep(step) { const point = step.cursor || { x: step.x, y: step.y }; this.updateAgentBubble(step.message); this.moveCursorTo(point); this.clickCursorTarget(step.target || point); }
   renderLivePreview(payload) { const root = this.workbenchTaskCanvas.querySelector(".task-workflow"); if (root && payload?.ready) root.classList.add("is-ready"); }
   renderFiles(files) { if (!files.length) return; this.appendAgentLog(`${files.length} output files ready`); }
-  setAgentStatus(status, message = "") { const node = this.workbenchTaskCanvas.querySelector("[data-agent-status]"); if (node) node.textContent = message || status.replaceAll("_", " "); this.agentStatusLabel.textContent = status.replaceAll("_", " ").toUpperCase(); }
+  setAgentStatus(status, message = "") { if (this.currentWorkbenchTaskType === "design3d") return; const node = this.workbenchTaskCanvas.querySelector("[data-agent-status]"); if (node) node.textContent = message || status.replaceAll("_", " "); this.agentStatusLabel.textContent = status.replaceAll("_", " ").toUpperCase(); }
+
+  getMainResultViewer() { return this.workbenchTaskCanvas.querySelector("[data-result-viewer='main']"); }
+
+  renderMainResultViewer(phase, payload = {}) {
+    const viewer = this.getMainResultViewer();
+    if (!viewer) return;
+    viewer.dataset.resultPhase = phase;
+    const states = {
+      idle: ["Understanding request", "Preparing the interior design task."],
+      plan_created: ["Plan created", "NOVA created the interior design execution plan."],
+      provider_checking: ["Checking render provider", "Connecting to local ComfyUI provider."],
+      provider_ready: ["Render provider ready", "Local ComfyUI provider is available."],
+      render_submitted: ["Render job submitted", "Workflow submitted to ComfyUI."],
+      rendering: ["Rendering image", "Sampling final image in ComfyUI."],
+      collecting_output: ["Collecting output", "Retrieving final image from ComfyUI."],
+      image_loading: ["Loading final image", "Waiting for final_render.png to load into the viewer."],
+      image_failed: ["Result failed", payload.message || "The final image could not be displayed."],
+      failed: ["Result failed", payload.message || "The result could not be displayed."],
+      timeout: ["Result failed", payload.message || "The render timed out."]
+    };
+    if (phase === "final_image" && payload.imageElement) {
+      const image = payload.imageElement; image.className = "beauty-render-image"; image.alt = "Final render";
+      viewer.replaceChildren(image); viewer.dataset.imageLoadStatus = "loaded"; return;
+    }
+    const [title, detail] = states[phase] || states.idle;
+    const state = document.createElement("div"); state.className = `result-state${["image_failed", "failed", "timeout"].includes(phase) ? " result-state--error" : ""}`;
+    const strong = document.createElement("strong"); strong.textContent = title;
+    const span = document.createElement("span"); span.textContent = detail;
+    state.append(strong, span);
+    if (phase === "rendering") { const small = document.createElement("small"); small.textContent = `${window.NOVA_WORKBENCH_DISPLAY_STATE.progress}%`; state.append(small); }
+    viewer.replaceChildren(state);
+  }
+
+  setWorkbenchDisplayPhase(phase, payload = {}) {
+    const allowed = ["idle", "plan_created", "provider_checking", "provider_ready", "render_submitted", "rendering", "collecting_output", "image_loading", "final_image", "image_failed", "failed", "timeout"];
+    if (!allowed.includes(phase)) return;
+    const previous = window.NOVA_WORKBENCH_DISPLAY_STATE;
+    const candidateUrl = payload.imageUrl || payload.finalRenderUrl || (typeof payload.artifact === "string" && payload.artifact.startsWith("/generated_assets/") ? payload.artifact : null);
+    const rawProgress = Number(payload.progress ?? previous.progress ?? 0);
+    const progress = rawProgress <= 1 ? Math.round(rawProgress * 100) : Math.round(rawProgress);
+    const badgeMap = { idle:"IDLE", plan_created:"PLAN CREATED", provider_checking:"CHECKING PROVIDER", provider_ready:"PROVIDER READY", render_submitted:"RENDER SUBMITTED", rendering:"RENDERING", collecting_output:"COLLECTING OUTPUT", image_loading:"LOADING IMAGE", final_image:"DONE", image_failed:"IMAGE FAILED", failed:"FAILED", timeout:"TIMEOUT" };
+    const imageLoadStatus = phase === "final_image" ? "loaded" : phase === "image_loading" ? "loading" : phase === "image_failed" ? "error" : previous.imageLoadStatus;
+    const previewDomStatus = phase === "final_image" ? "visible" : phase === "image_loading" ? "loading" : ["image_failed", "failed", "timeout"].includes(phase) ? "error" : previous.previewDomStatus;
+    window.NOVA_WORKBENCH_DISPLAY_STATE = { ...previous, phase, taskId:this.backendTaskId || previous.taskId, provider:payload.provider || payload.renderProvider || previous.provider, progress, imageUrl:candidateUrl || previous.imageUrl, imageLoadStatus, previewDomStatus, badge:badgeMap[phase], lastEvent:payload.eventType || payload.lastEvent || phase, updatedAt:new Date().toISOString() };
+    const viewer = this.getMainResultViewer(); if (viewer) { viewer.dataset.resultPhase = phase; viewer.dataset.imageLoadStatus = imageLoadStatus; }
+    this.renderMainResultViewer(phase, payload);
+    const badge = this.workbenchTaskCanvas.querySelector("[data-agent-status]"); if (badge) badge.textContent = badgeMap[phase];
+    this.agentStatusLabel.textContent = badgeMap[phase];
+    const current = this.workbenchTaskCanvas.querySelector("[data-operation-current]"); if (current) current.textContent = badgeMap[phase];
+    const timelineMap = { idle:["understanding-request","Understanding request"], plan_created:["planning-room-layout","Planning room layout"], provider_checking:["checking-render-provider","Checking render provider"], provider_ready:["checking-render-provider","Checking render provider"], render_submitted:["submitting-render-job","Submitting render job"], rendering:["rendering-image","Rendering image"], collecting_output:["collecting-output","Collecting output"], image_loading:["loading-final-image","Loading final image"], final_image:["final-render-ready","Final image ready"], image_failed:["loading-final-image","Loading final image"], failed:["final-render-ready","Final image ready"], timeout:["final-render-ready","Final image ready"] };
+    const [stepId, title] = timelineMap[phase]; this.updateOperationTimeline(`display_${phase}`, { stepId, title, visibleAction:title, status:phase === "final_image" ? "completed" : ["image_failed","failed","timeout"].includes(phase) ? "failed" : "running", progress:progress / 100 });
+    window.NOVA_DEBUG_RENDER_STATE = { imageLoadStatus, previewDomStatus, renderStatus:phase, imageUrl:window.NOVA_WORKBENCH_DISPLAY_STATE.imageUrl };
+    this.updateBeautyRenderDebug({ renderStatus:phase, imageLoadStatus, progress, imageUrl:window.NOVA_WORKBENCH_DISPLAY_STATE.imageUrl, lastEvent:window.NOVA_WORKBENCH_DISPLAY_STATE.lastEvent });
+    if (phase === "image_loading" && candidateUrl?.startsWith("/generated_assets/interior_renders/") && candidateUrl.endsWith("/final_render.png") && this.pendingWorkbenchImageUrl !== candidateUrl) {
+      this.pendingWorkbenchImageUrl = candidateUrl;
+      const image = new Image();
+      image.onload = () => image.naturalWidth > 0 && image.naturalHeight > 0 ? this.setWorkbenchDisplayPhase("final_image", { imageUrl:candidateUrl, imageElement:image, progress:100, eventType:"image_load_completed" }) : this.setWorkbenchDisplayPhase("image_failed", { imageUrl:candidateUrl, message:"Final image has invalid dimensions.", eventType:"image_load_failed" });
+      image.onerror = () => this.setWorkbenchDisplayPhase("image_failed", { imageUrl:candidateUrl, message:"Final image failed to load.", eventType:"image_load_failed" });
+      image.src = candidateUrl;
+    }
+    if (phase === "final_image") { this.clearBeautyRenderTimeout(); this.backendTerminalHandled = true; this.backendLifecycleState = "backend_completed"; this.closeAgentEventSource("final_image_loaded"); this.restoreWorkbenchControls("completed"); }
+  }
 
   async startAgentTaskRuntime(task, taskType) {
     this.agentLogs = [];
@@ -1271,7 +1330,8 @@ class AvatarController {
     this.agentPlaybackActive = true;
     this.setServiceStatus(this.fastApiWorkbenchStatus, "Runtime online", "online");
     this.agentTaskDesc.innerText = `Task: ${task} · BACKEND AGENT`;
-    this.agentStatusLabel.textContent = "RUNNING";
+    if (this.currentWorkbenchTaskType === "design3d") this.setWorkbenchDisplayPhase("idle", { eventType:"task_created" });
+    else this.agentStatusLabel.textContent = "RUNNING";
     this.appendAgentLog(`Backend task created · ${state.taskId.slice(0, 8)}`);
   }
 
@@ -1339,7 +1399,7 @@ class AvatarController {
       if (progress >= 100) this.showBeautyRenderCollecting(payload);
     }
     if (event.type === "collecting_output") this.showBeautyRenderCollecting(payload);
-    if (event.type === "beauty_render_ready" || event.type === "beauty_render_completed") this.showFinalBeautyRender(payload);
+    if (["beauty_render_ready", "beauty_render_completed"].includes(event.type) || (event.type === "render_image_saved" && (payload.finalRenderUrl?.startsWith("/generated_assets/") || payload.artifact?.startsWith?.("/generated_assets/")))) this.showFinalBeautyRender(payload);
     if (event.type === "beauty_render_blocked") { this.clearBeautyRenderTimeout(); this.showRenderProviderRequired(payload); }
     if (event.type === "beauty_render_failed") {
       this.clearBeautyRenderTimeout();
@@ -1364,18 +1424,37 @@ class AvatarController {
     if (event.type === "preview_ready" && state?.status === "waiting_for_user") this.handleBackendTaskWaitingForUser(state);
     if (event.type === "universal_agent_completed" || event.type === "task_completed") this.handleBackendTaskCompleted(state);
     if (event.type === "task_failed") this.handleBackendTaskFailed(payload.debug?.error || state?.output?.error || "Agent task failed.");
+    if (this.currentWorkbenchTaskType === "design3d") {
+      const phaseByEvent = { task_created:"idle", plan_created:"plan_created", render_provider_check_started:"provider_checking", render_provider_available:"provider_ready", render_job_submitted:"render_submitted", beauty_render_started:"rendering", render_queue_waiting:"rendering", render_sampling_progress:"rendering", beauty_render_progress:"rendering", render_collecting_output:"collecting_output", collecting_output:"collecting_output", render_image_saved:"image_loading", beauty_render_ready:"image_loading", beauty_render_completed:"image_loading", beauty_render_failed:"failed", task_failed:"failed", render_timeout:"timeout" };
+      const phase = phaseByEvent[event.type];
+      if (phase) this.setWorkbenchDisplayPhase(phase, { ...payload, eventType:event.type });
+    }
   }
 
   updateOperationTimeline(type, payload = {}) {
     const root = this.workbenchTaskCanvas.querySelector(".operation-console");
     if (!root) return;
     const list = root.querySelector("[data-operation-timeline]");
-    const item = document.createElement("li");
+    const stepMap = {
+      agent_brain_started: ["understanding-request", "Understanding request"],
+      intent_detected: ["planning-room-layout", "Planning room layout"], plan_created: ["planning-room-layout", "Planning room layout"],
+      tool_selected: ["selecting-tools", "Selecting tools"],
+      tool_output: ["generating-draft", "Generating draft"],
+      render_provider_check_started: ["checking-render-provider", "Checking render provider"], render_provider_available: ["checking-render-provider", "Checking render provider"],
+      render_job_submitted: ["submitting-render-job", "Submitting render job"], render_queue_waiting: ["submitting-render-job", "Submitting render job"],
+      beauty_render_progress: ["rendering-image", "Rendering image"], render_sampling_progress: ["rendering-image", "Rendering image"],
+      collecting_output: ["collecting-output", "Collecting output"], render_collecting_output: ["collecting-output", "Collecting output"],
+      beauty_render_ready: ["loading-final-image", "Loading final image"], beauty_render_completed: ["loading-final-image", "Loading final image"], render_image_saved: ["loading-final-image", "Loading final image"], task_completed: ["loading-final-image", "Loading final image"], image_load_started: ["loading-final-image", "Loading final image"],
+      image_load_completed: ["final-render-ready", "Final render ready"]
+    };
+    if (this.currentWorkbenchTaskType === "design3d" && !stepMap[type] && !type.startsWith("display_")) return;
+    const [stepId, stableTitle] = stepMap[type] || [payload.stepId || type, payload.title || type.replaceAll("_", " ")];
+    let item = list?.querySelector(`[data-step-id="${stepId}"]`);
+    if (!item) { item = document.createElement("li"); item.dataset.stepId = stepId; list?.append(item); }
     item.className = `is-${payload.status || "running"}`;
-    item.innerHTML = `<i></i><div><strong>${escapeWorkbenchText(payload.title || type.replaceAll("_", " "))}</strong><span>${escapeWorkbenchText(payload.visibleAction || payload.message || "Operation updated")}</span></div><small>${escapeWorkbenchText(payload.tool || payload.status || "running")}</small>`;
-    list?.append(item); if (list?.children.length > 30) list.firstElementChild?.remove();
+    item.innerHTML = `<i></i><div><strong>${escapeWorkbenchText(stableTitle)}</strong><span>${escapeWorkbenchText(payload.visibleAction || payload.message || "Operation updated")}</span></div><small>${escapeWorkbenchText(payload.tool || payload.status || "running")}</small>`;
     const current = root.querySelector("[data-operation-current]"); const wait = root.querySelector("[data-operation-wait]"); const tool = root.querySelector("[data-operation-tool]"); const status = root.querySelector("[data-operation-status]"); const progress = root.querySelector("[data-operation-progress]"); const artifact = root.querySelector("[data-operation-artifact]");
-    if (current) current.textContent = payload.title || type.replaceAll("_", " ");
+    if (current) current.textContent = stableTitle;
     if (wait) wait.textContent = payload.visibleAction || payload.reason || "Operation updated";
     if (tool && payload.tool) tool.textContent = payload.tool;
     if (status) status.textContent = payload.status || "running";
@@ -1388,56 +1467,12 @@ class AvatarController {
   applyBackendAgentEvent(event) { this.handleBackendAgentEvent(event); }
 
   showFinalBeautyRender(payload) {
-    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
-    const workflow = this.workbenchTaskCanvas.querySelector(".task-workflow--design3d");
-    if (!panel || !workflow) return;
-    const image = panel.querySelector("img");
-    if (!image || !payload.finalRenderUrl) {
-      this.showBeautyRenderImageError(payload.finalRenderUrl || "missing imageUrl");
-      return;
-    }
-    panel.dataset.imageLoadStatus = "loading";
-    this.updateOperationTimeline("image_load_started", { title: "Loading final image", visibleAction: "Checking final_render.png over HTTP", status: "running", progress: .98, artifact: payload.finalRenderUrl });
-    panel.dataset.renderStatus = "ready";
-    panel.dataset.providerStatus = "available";
-    panel.classList.remove("is-provider-required", "is-checked", "is-ready", "is-image-error");
-    image.onload = () => {
-      this.clearBeautyRenderTimeout();
-      panel.dataset.imageLoadStatus = "loaded";
-      panel.classList.add("is-ready");
-      panel.classList.remove("is-provider-required", "is-checked", "is-image-error");
-      const title = panel.querySelector("[data-render-title]");
-      const message = panel.querySelector("[data-beauty-message]");
-      if (title) title.textContent = "Final Render Ready";
-      if (message) message.textContent = payload.renderMessage || "Final Render Ready";
-      this.updateOperationTimeline("image_load_completed", { title: "Final Render Ready", visibleAction: "final_render.png loaded successfully", status: "completed", progress: 1, artifact: payload.finalRenderUrl });
-      this.updateBeautyRenderDebug({ renderStatus: "ready", imageLoadStatus: "loaded", progress: 100, finalRenderExists: true, imageUrl: payload.finalRenderUrl });
-    };
-    image.onerror = () => this.showBeautyRenderImageError(payload.finalRenderUrl);
-    image.src = payload.finalRenderUrl;
-    workflow.dataset.designView = "final";
-    workflow.querySelectorAll("[data-interior-view]").forEach((button) => button.classList.toggle("is-active", button.dataset.interiorView === "final"));
-    const provider = panel.querySelector("[data-beauty-provider]");
-    const message = panel.querySelector("[data-beauty-message]");
-    const prompt = panel.querySelector("[data-beauty-prompt]");
-    const title = panel.querySelector("[data-render-title]");
-    if (title) title.textContent = "Loading Final Render";
-    if (provider) provider.textContent = payload.renderProvider || "Production Render Provider";
-    if (message) message.textContent = "Loading final render image";
-    if (prompt) prompt.textContent = payload.renderPromptSummary || "Production interior raster render";
-    this.updateBeautyRenderDebug({ providerStatus: "available", renderStatus: "ready", imageLoadStatus: "loading", progress: 100, imageUrl: payload.finalRenderUrl, outputPath: payload.finalRenderUrl, finalRenderExists: true });
+    const imageUrl = payload.finalRenderUrl || (typeof payload.artifact === "string" ? payload.artifact : "");
+    this.setWorkbenchDisplayPhase("image_loading", { ...payload, imageUrl, eventType:"image_load_started" });
   }
 
   showBeautyRenderCollecting(payload = {}) {
-    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
-    if (!panel) return;
-    panel.dataset.renderStatus = "collecting_output";
-    panel.dataset.providerStatus = "available";
-    panel.classList.remove("is-provider-required", "is-checked");
-    panel.querySelector("[data-render-title]")?.replaceChildren("Collecting final image");
-    panel.querySelector("[data-beauty-message]")?.replaceChildren("ComfyUI finished; waiting for final image");
-    this.setAgentStatus("tool_progress", "Collecting final image");
-    this.updateBeautyRenderDebug({ providerStatus: "available", renderStatus: "collecting_output", progress: 100, promptId: payload.promptId });
+    this.setWorkbenchDisplayPhase("collecting_output", { ...payload, eventType:"collecting_output" });
   }
 
   updateBeautyRenderDebug(values = {}) {
@@ -1474,35 +1509,12 @@ class AvatarController {
   }
 
   showBeautyRenderTerminalState({ title, provider, message, detail = "3D Draft remains available" }) {
-    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
-    if (!panel) return;
-    this.clearBeautyRenderTimeout();
-    panel.dataset.renderStatus = title === "Render Timeout" ? "timeout" : "failed";
-    panel.dataset.providerStatus = provider;
-    panel.classList.remove("is-ready");
-    panel.classList.add("is-provider-required", "is-checked");
-    const statusTitle = panel.querySelector(".render-provider-required > strong");
-    const statusMessage = panel.querySelector(".render-provider-required > p");
-    const footerTitle = panel.querySelector("[data-render-title]");
-    const providerBadge = panel.querySelector("[data-beauty-provider]");
-    const footerMessage = panel.querySelector("[data-beauty-message]");
-    const footerDetail = panel.querySelector("[data-beauty-prompt]");
-    if (statusTitle) statusTitle.textContent = title;
-    if (statusMessage) statusMessage.textContent = message;
-    if (footerTitle) footerTitle.textContent = title;
-    if (providerBadge) providerBadge.textContent = provider;
-    if (footerMessage) footerMessage.textContent = message;
-    if (footerDetail) footerDetail.textContent = detail;
+    this.setWorkbenchDisplayPhase(title === "Render Timeout" ? "timeout" : "failed", { provider, message, detail, eventType:title === "Render Timeout" ? "render_timeout" : "task_failed" });
   }
 
   showBeautyRenderImageError(imageUrl) {
-    const panel = this.workbenchTaskCanvas.querySelector(".final-beauty-render");
-    if (panel) {
-      panel.dataset.imageLoadStatus = "error";
-      panel.classList.add("is-image-error");
-    }
     this.appendAgentLog(`Final render image failed to load · ${imageUrl}`);
-    this.showBeautyRenderTerminalState({ title: "Image Load Failed", provider: "ImageLoadFailed", message: "Final render image could not be loaded", detail: imageUrl });
+    this.setWorkbenchDisplayPhase("image_failed", { imageUrl, message:"Final render image could not be loaded", eventType:"image_load_failed" });
     this.restoreWorkbenchControls("failed");
   }
 
@@ -1517,6 +1529,12 @@ class AvatarController {
 
   handleBackendTaskCompleted(state) {
     if (this.backendTerminalHandled) return;
+    if (this.currentWorkbenchTaskType === "design3d") {
+      this.pendingRenderTaskCompletion = state;
+      if (state?.output?.renderStatus && state.output.renderStatus !== "ready") this.setWorkbenchDisplayPhase("failed", { message:state.output.renderMessage, eventType:"task_failed" });
+      if (window.NOVA_WORKBENCH_DISPLAY_STATE.phase === "final_image") { this.backendTerminalHandled = true; this.backendLifecycleState = "backend_completed"; this.closeAgentEventSource("task_completed"); this.restoreWorkbenchControls("completed"); }
+      return;
+    }
     if (state?.output?.renderStatus && state.output.renderStatus !== "ready") {
       this.backendTerminalHandled = true;
       this.backendLifecycleState = "backend_completed";
@@ -1552,6 +1570,7 @@ class AvatarController {
   }
 
   handleBackendTaskFailed(error) {
+    if (this.currentWorkbenchTaskType === "design3d") { this.setWorkbenchDisplayPhase("failed", { message:error, eventType:"task_failed" }); this.restoreWorkbenchControls("failed"); return; }
     if (this.backendLifecycleState === "backend_failed") return;
     this.backendTerminalHandled = true;
     this.backendLifecycleState = "backend_failed";
@@ -1604,7 +1623,7 @@ class AvatarController {
 
   updateWorkbenchFromAgentState(state) {
     if (!state) return;
-    this.setAgentStatus(state.status, state.currentStep || state.status);
+    if (this.currentWorkbenchTaskType !== "design3d") this.setAgentStatus(state.status, state.currentStep || state.status);
     if (state.cursor) this.moveAgentCursor(state.cursor.x, state.cursor.y);
     state.steps?.forEach((step, index) => this.updateStepStatus(`${this.currentWorkbenchTaskType}-${index + 1}`, step.status === "done" ? "done" : step.status));
     const activeTool = state.toolCalls?.[0];
