@@ -545,3 +545,43 @@ Client/provider支援：`COLAB_CONFIG_MISSING`、`COLAB_UNREACHABLE`、`COLAB_AU
 - 全 repo pytest：22 passed，無 collection error。
 - 驗證：`python -m compileall .` passed；`node --check script.js` passed；`npm run build` exit 0，36 modules transformed。
 - Phase 2A 可建立 checkpoint；Phase 2B 尚未開始。
+
+## 13. Phase 2B — Google Colab Live GPU Render
+
+### Live runtime
+
+- Colab runtime：Tesla T4（nominal 16 GB VRAM；實際 free VRAM 由 Notebook Runtime Check cell 動態輸出，不寫死）。
+- 模型：`stabilityai/stable-diffusion-xl-base-1.0`，官方 model card 為 CreativeML Open RAIL++-M；Diffusers `StableDiffusionXLPipeline`、FP16、safetensors。
+- 設定：Tesla T4 使用 1024×576、30 steps、guidance 6.5、attention slicing、VAE slicing；低於 14 GB VRAM 時改 768×432 並啟用 sequential CPU offload，絕不 CPU fallback 假完成。
+- Tunnel：Cloudflare Quick Tunnel 臨時 HTTPS URL，Bearer 驗證成功；URL/token 未寫入 source、report 或 Git，僅存在 ignored `.env`。
+- API：authenticated `GET /health`、`POST /render`、`GET /jobs/{job_id}`、`GET /jobs/{job_id}/result`、`GET /result/{job_id}`、`POST /jobs/{job_id}/cancel`，另保留 Phase 2A client 相容的 `DELETE /jobs/{job_id}`。
+- Health 實測：HTTP 200，`available=true`、`gpu_available=true`、`model_loaded=true`、GPU=`Tesla T4`。
+
+### First independent live render
+
+- 第一次由本機 Phase 2A client 提交並完整下載的成功 job：`1ec31d7eddfe4e3396f695b5f50fbfb8`；task/job identity一致。
+- 狀態：queued → loading_model → sampling → decoding → saving → completed。
+- 模型輸出：1024×576，seed `1619228786`，GPU generation 24.15 秒，PNG 857,138 bytes。
+- Quality Gate：pass；可解碼、尺寸有效、非全黑、非全白、非單色、mean為 finite。Artifact 位於 ignored `generated_assets/phase2b_live/`，不是預生成或舊圖片。
+
+### NOVA end-to-end
+
+- Agent Runtime provider=`colab`；DeterministicFallback 以明確 `interior design`/`architectural render` prompt 選擇室內工具，FinalBeautyRenderTool 使用 `ColabRenderProvider`。
+- 後端成功 task `656ed3e78ae046f5937d755a51848d6e`，remote job `208f94e067dc47ada939206b062ed174`，640×384，generation 9.26 秒，Quality Gate pass，backend lifecycle=`completed`。
+- Playwright 首頁端到端成功 task `bcd0edd9ba314e51847511d365bc1fe4`：單一 Main Result Viewer、phase=`final_image`、lifecycle=`DONE`、terminal=`true`、image load=`loaded`、preview visible、640×384、badge=`DONE`。
+- Console errors=0、Page errors=0、asset 404=0；Return to NOVA成功。DONE只在本次圖片 load completed後出現。
+- 中文-only prompt在既有 DeterministicFallback可能落入 general assistant；前端固定入口也需要 `render/3d/concept` 關鍵字才能選 design3d canvas。本階段遵守限制，未修改 GPT Brain、Planner、Router或 `script.js`，驗收 prompt明確包含 `interior design` 與 `architectural render`。
+
+### Failure matrix
+
+- 26 tests passed。已覆蓋 Notebook/tunnel unreachable、expired URL、wrong token、GPU unavailable、remote job failed、job timeout、HTML result、corrupt image、black image、missing config，以及 token log redaction。
+- 所有 provider failure均回傳辨識碼或 unavailable狀態，不產生 ready/completed artifact、不切 local假圖；FinalBeauty failure沿既有 `beauty_render_failed` 進 task FAILED。
+- 前端 terminal lock沿 Phase 0.5/0.6既有驗收保持不變；本階段未修改 Viewer、Workbench、media/terminal lock或 Quality Gate。
+
+### Files and remaining scope
+
+- 新增 `colab_notebooks/nova_colab_render_backend.ipynb`（14個清楚階段）與 `colab_notebooks/README.md`。
+- `colab_render_client.py` 補讀 `NOVA_COLAB_MAX_RESULT_BYTES`；新增相應 failure/limit regression tests。
+- 尚未完成的 Agent 模組仍包括動態 Room Schema、Moodboard、Zoning、家具配置、材質/燈光規劃、Browser/Computer adapters，以及真實 Cursor DOM操作。
+- Phase 3 前置條件：Phase 2B diff/security review、重跑完整 tests/build、建立獨立 checkpoint；Cloudflare URL每次 Colab重啟都必須更新，不能視為永久 server。
+- Phase 3 尚未開始；本階段未 commit、push 或 tag。

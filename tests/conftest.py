@@ -27,6 +27,7 @@ class MockState:
     image = image_bytes()
     image_content_type = "image/png"
     result_status = 200
+    health_payload = {"provider":"ColabRenderProvider","available":True,"gpu_available":True,"model_loaded":True,"detail":"ready"}
 
     def __init__(self): self.job_index = 0; self.seen_authorization = []
 
@@ -52,7 +53,7 @@ def mock_colab_server(configure=None):
             if not self.authorized(): return
             if self.path == "/health":
                 if state.health_invalid_json: return self.send_payload(200, b"not-json", "application/json")
-                return self.send_payload(state.health_status, {"provider":"ColabRenderProvider","available":True,"gpu_available":True,"model_loaded":True,"detail":"ready"})
+                return self.send_payload(state.health_status, state.health_payload)
             if self.path == "/expired": return self.send_payload(410, {"error":"expired"})
             if self.path == "/image.png": return self.send_payload(200, state.image, state.image_content_type)
             if self.path == "/html-result": return self.send_payload(200, b"<html>expired</html>", "text/html")

@@ -24,6 +24,11 @@ def test_missing_config():
     assert error.value.failure.code == "COLAB_CONFIG_MISSING"
 
 
+def test_max_result_bytes_loads_from_environment(monkeypatch):
+    monkeypatch.setenv("NOVA_COLAB_MAX_RESULT_BYTES", "12345")
+    assert ColabRenderClient("", "").max_download_bytes == 12345
+
+
 def test_submit_and_poll_state_sequence():
     with mock_colab_server() as (url, _):
         value = client(url); job = value.submit_render(RemoteRenderRequest("task-1","prompt","",128,128)); states=[value.get_job(job.job_id).status for _ in range(5)]
@@ -51,3 +56,9 @@ def test_token_never_appears_in_logs(caplog):
     caplog.set_level(logging.DEBUG)
     with mock_colab_server() as (url, state): client(url).health()
     assert state.seen_authorization == ["Bearer secret-token"] and "secret-token" not in caplog.text
+
+
+def test_notebook_or_tunnel_unreachable_maps_cleanly():
+    with pytest.raises(ColabRenderError) as error:
+        ColabRenderClient("http://127.0.0.1:1", "temporary", connect_timeout=.05).health()
+    assert error.value.failure.code == "COLAB_UNREACHABLE" and error.value.failure.retryable

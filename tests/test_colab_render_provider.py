@@ -31,6 +31,20 @@ def test_black_image_is_rejected(tmp_path):
     assert result.status=="failed" and result.metadata["reason"]=="invalid_black_output"
 
 
+def test_corrupt_image_is_rejected(tmp_path):
+    def configure(state):
+        state.image=b"not-a-decodable-image"
+    with mock_colab_server(configure) as (url, _): result=make_provider(tmp_path,url).render(request(),lambda *_:None)
+    assert result.status=="failed" and result.metadata["reason"]=="invalid_image_output"
+
+
+def test_gpu_unavailable_health_never_reports_available(tmp_path):
+    def configure(state):
+        state.health_payload={"provider":"google_colab","available":False,"gpu_available":False,"model_loaded":False,"detail":"GPU unavailable"}
+    with mock_colab_server(configure) as (url, _): health=make_provider(tmp_path,url).check()
+    assert health.status=="unavailable" and health.metadata["health"]["gpu_available"] is False
+
+
 def test_missing_config_health_and_render_fail_without_crash(tmp_path):
     provider=ColabRenderProvider(tmp_path,ColabRenderClient("","")); health=provider.check(); result=provider.render(request(),lambda *_:None)
     assert health.status=="unavailable" and result.status=="failed" and result.metadata["reason"]=="COLAB_CONFIG_MISSING"

@@ -20,14 +20,14 @@ class ColabRenderError(RuntimeError):
 class ColabRenderClient:
     provider = "ColabRenderProvider"
 
-    def __init__(self, base_url: str | None = None, token: str | None = None, *, connect_timeout: float | None = None, read_timeout: float | None = None, poll_interval: float | None = None, max_poll_seconds: float | None = None, max_download_bytes: int = 25 * 1024 * 1024):
+    def __init__(self, base_url: str | None = None, token: str | None = None, *, connect_timeout: float | None = None, read_timeout: float | None = None, poll_interval: float | None = None, max_poll_seconds: float | None = None, max_download_bytes: int | None = None):
         self.base_url = self._normalize_url(base_url if base_url is not None else os.getenv("NOVA_COLAB_BASE_URL", ""))
         self.token = token if token is not None else os.getenv("NOVA_COLAB_TOKEN", "")
         self.connect_timeout = float(connect_timeout if connect_timeout is not None else os.getenv("NOVA_COLAB_CONNECT_TIMEOUT_SECONDS", "5"))
         self.read_timeout = float(read_timeout if read_timeout is not None else os.getenv("NOVA_COLAB_READ_TIMEOUT_SECONDS", "30"))
         self.poll_interval = float(poll_interval if poll_interval is not None else os.getenv("NOVA_COLAB_POLL_INTERVAL_SECONDS", "2"))
         self.max_poll_seconds = float(max_poll_seconds if max_poll_seconds is not None else os.getenv("NOVA_COLAB_MAX_POLL_SECONDS", "480"))
-        self.max_download_bytes = max_download_bytes
+        self.max_download_bytes = int(max_download_bytes if max_download_bytes is not None else os.getenv("NOVA_COLAB_MAX_RESULT_BYTES", str(25 * 1024 * 1024)))
 
     @staticmethod
     def _normalize_url(value: str) -> str:
