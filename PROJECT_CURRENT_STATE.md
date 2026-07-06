@@ -283,3 +283,206 @@ Phase 1 本次沒有開始。
 - `git ls-files` 仍列出五個 `.pyc`，因為它們是 HEAD 既有 tracked files，而 Phase 0 刪除尚未 commit；working tree 狀態是五筆 `D`。
 - `.gitignore` 已有 `__pycache__/`、`*.pyc`（重複規則亦存在），能阻止新的 untracked cache 被加入；本次不修改 `.gitignore`。
 - 最終 build 因 `script.js` 正式修改產生新的 NOVA hashed JS，`docs/nova/index.html` 與對應 `docs/assets/nova-*.js` 有預期內容 diff；未用 checkout/reset 清除。
+
+## 10. Phase 1 — Real Agent Architecture Audit
+
+本章是只讀架構稽核；除本報告外沒有修改 source、UI、GPT Brain、Workbench、Provider 或 playback。
+
+### 10.1 真實端到端呼叫鏈
+
+前端正式鏈：
+
+1. `nova.html:92-96` 的 `#chat-input` / `#btn-send` 由 `script.js:1027-1032` 綁定至 `AvatarController.handleSendMessageFlow()`。
+2. `handleSendMessageFlow()`（`script.js:1930-1960`）讀取字串 prompt、鎖定 input、處理 avatar cue，呼叫 `startAgentWorkbench()`（`1963-1971`）。這是 async browser flow；錯誤由 `catch` 進 `showAgentError()`。
+3. `showAgentOverlay()`（`1979` 起）呼叫 `renderCurrentWorkbenchTask()`；後者以 keyword 決定前端 canvas、建立 Workbench DOM，並呼叫 `startAgentTaskRuntime()`（`script.js:1679-1698`）。
+4. `startAgentTaskRuntime()`（`1344-1360`）以 `startBackendAgentTask()` POST JSON `{"userMessage": string, "brain": "localMock"}` 到 `/agent/task`（`script.js:515-525`）。HTTP/abort error 進 `handleBackendRuntimeOffline()` 與 local fallback。
+5. backend 回傳 task JSON 後，`subscribeAgentEvents()` 建立 `/agent/task/{id}/events` 的 `EventSource`（`script.js:528-543`），註冊具名 SSE events。非預期斷線才呼叫 offline handler。
+6. `handleBackendAgentEvent()`（`1404-1468`）把 `event.data.task` 設為前端 state，依序更新 Timeline、debug、Workbench、tool chip、render state、terminal state。
+7. Timeline 由 `updateOperationTimeline()`（`script.js:1472-1503`）使用真實 event type/payload 更新；Viewer 由 `setWorkbenchDisplayPhase()`（`1312-1342`）與 `renderMainResultViewer()` 更新；backend 提供 `state.cursor` 時由 `updateWorkbenchFromAgentState()`（`1662-1669`）轉成百分比座標。
+
+後端正式鏈：
+
+1. `TaskRequest` 是 Pydantic model：`userMessage: str`、`brain: str="localMock"`（`agent_runtime.py:21`）。`POST /agent/task`（`27-32`）建立 memory-only task dict、先 publish `task_created`，再以 daemon thread 同步呼叫 `NovaUniversalAgentCore.run()`。
+2. `NovaUniversalAgentCore` 建立 Planner、Registry、Router、Observer、Safety、Workspace（`nova_agent_core.py:12-14`）。`run()` 本身同步，因 FastAPI route 在 thread 中啟動，所以 API 非阻塞。
+3. Core 建立 `GPTBrainAdapter`，先 `plan()`；任何 exception（包括無 key、HTTP、JSON）都進 deterministic `fallback()`，發 `brain_fallback_used`，不會直接 FAILED（`nova_agent_core.py:18-24`）。
+4. tool names 優先採 Brain `selectedTools` 中存在 descriptor 的項目；若結果為空才 `router.select(intent)`（`nova_agent_core.py:24`）。Core 再呼叫本地 `planner.create_plan()` 重建執行 steps（`26`），沒有直接執行 Brain 的 `plan[]`。
+5. descriptor status 必須是 `available` 才進 executable list（`nova_agent_core.py:32`）。每個 tool 的同步 `run(message, emit)` 被 try/catch 包住；ObservationEngine 將 result/files 或 exception 正規化（`37-49`、`nova_observation.py:3-6`）。
+6. tool events 經 `tool_emit()` 送入 `NovaAgentTimeline.emit()`；部分事件建立 alias（例如 `beauty_render_progress` → `render_sampling_progress`）（`nova_agent_core.py:38-42`）。
+7. 成功終點依序是 `artifact_created`、`preview_ready`、`task_completed`（`nova_agent_core.py:52-55`）；未捕捉 exception 會把 task 設為 `failed` 並發 `task_failed`（`56-57`）；safety 可產生 `waiting_for_user`（`30-31`、`53-54`）。
+8. `NovaAgentTimeline.emit()` 將 payload 補成 `AgentTimelineEvent` 後 publish（`nova_agent_timeline.py:3-12`）。事件 schema 是 `eventType/taskId/stepId/title/visibleAction/tool/status/progress/timestamp/artifact/debug`（`nova_agent_event_schema.py:5-12`）。
+9. `AgentEventStream` 以 Condition 保存每 task 的 in-memory event list（`agent_stream.py:6-17`）；SSE route 將 event 轉為 `id/event/data` frames，terminal task status 後結束（`agent_runtime.py:39-50`）。
+
+### 10.2 GPT Brain、Planner 與 Tool Router
+
+- 真正 Agent Brain：`GPTBrainAdapter`（`gpt_brain_adapter.py:5-20`）。當 `OPENAI_API_KEY` 存在時，會以 `urllib.request` 真實 POST `https://api.openai.com/v1/chat/completions`，timeout 45 秒（`10-17`）。
+- model 來自 `NOVA_OPENAI_MODEL`，default `gpt-4.1-mini`；key 只從 backend process environment 的 `OPENAI_API_KEY` 讀取（`nova_runtime_config.py:5-14`），前端 `/agent/config` 只收到 availability boolean，不會收到 token（`agent_runtime.py:23-25`）。
+- Brain response 是 JSON object；預設 public schema：
+
+```json
+{"brainProvider":"GPTBrainAdapter","intent":"general_assistant","confidence":0.0,"plan":[],"selectedTools":[],"safetyLevel":"safe","requiresUserConfirmation":false}
+```
+
+- 沒有 runtime validator/Pydantic model 驗證 GPT JSON 欄位；只以 default dict `update()`（`gpt_brain_adapter.py:12-17`）。malformed/missing critical data可在 core 觸發 exception，最外層才會 FAILED；GPT call 本身失敗則通常被降級為 fallback，而非 FAILED。
+- fallback 是 keyword intent detection（`nova_task_planner.py:4-9`）+ hard-coded router（`nova_tool_router.py:1-5`）+ hard-coded step templates（`nova_task_planner.py:10-12`），不是模型推理。
+- Planner 產生 `AgentPlan(intent, steps, tools, goal)` dataclass（`nova_agent_types.py:21-24`）。
+- Brain 的 `selectedTools` 真正影響 tool selection，但 Brain 的 `plan[]` 不驅動執行 steps；core 會用 local planner 重建。因此 Planner 與 Router 是「部分由 Brain intent/tools 引導、主要由 hard-coded mappings 執行」。
+- 若 Brain 回傳不存在 descriptor 的 tools，會被濾掉並回到 Router；若至少一個合法 tool 存在，Router 不再補工具（`nova_agent_core.py:24`）。
+- 固定 mock data：fallback confidence=1、所有 planner step labels、router routes、Interior scene spec、booking result、website product/catalog、FinalBeauty positive/negative base prompts。
+
+### 10.3 Tool Registry 實際狀態
+
+| Tool id | 實體 class / intent | 分類與 side effect | Artifact / SSE / 驗證狀態 |
+|---|---|---|---|
+| `InteriorDesignTool`, `Interior3DTool` | 同一 `Interior3DTool`; `interior_design` | PARTIAL；回固定 scene dict，無 filesystem side effect（`agent_tools.py:13-17`） | `tool_output` SSE；無檔案；成功路徑已 smoke，沒有獨立 failure validation |
+| `FinalBeautyRenderTool` | `FinalBeautyRenderTool`; `interior_design` | IMPLEMENTED orchestration；寫 generated JSON/image（`final_beauty_render_tool.py:18-89`） | 多個 render SSE/artifacts；provider unavailable、timeout/invalid 分支存在，成功需 ComfyUI 環境 |
+| `FileWorkspaceTool` | `FileWorkspaceTool`; interior/website/code/file | PLACEHOLDER/no-op，固定 `Workspace ready`（`agent_tools.py:41-43`） | 無 artifact、無自身 SSE；core 仍把它視為成功 |
+| `BrowserBookingTool`, `BrowserAutomationTool` | 同一 `BrowserAutomationTool`; booking | MOCK/PARTIAL；只回固定 Vieshow preview，未啟動 Playwright（`agent_tools.py:19-24`） | `tool_output` + `tool_waiting_for_user`; 無真實 browser side effect |
+| `WebsiteBuilderTool` | `WebsiteBuilderTool`; website | IMPLEMENTED template writer；真的建立/覆寫 `generated_projects/fashion-store` 三檔（`agent_tools.py:26-39`） | `tool_output`、3 artifacts；內容與商品固定，只 prompt 未真正塑形 |
+| `CodeBuilderTool` | `PassiveTool`; code | PLACEHOLDER；固定 summary（`nova_tool_registry.py:12-14,21`） | 無 artifact；core emits generic observation |
+| `ResearchTool` | `PassiveTool`; research/general | PLACEHOLDER；固定 summary（`nova_tool_registry.py:22`） | 無外部搜尋、無 artifact |
+| `GPTBrainAdapter` | `PlaceholderTool` registry entry | registry tool 是 PLACEHOLDER；真正 Brain 在 core 直接 new，不由 registry tool 執行（`nova_tool_registry.py:23`） | 無 |
+| `CodexAdapter` | `CodexAdapter`; 無 Router route | PARTIAL/UNUSED | 見 10.9 |
+| `BrowserUseAdapter` | `BrowserUseAdapter`; booking/research | descriptor `placeholder`，故 core executable filter 會跳過（`nova_tool_registry.py:39`; `nova_agent_core.py:32`） | 若直接 run 只發 started/completed blocked |
+| `ComputerUseAdapter` | `ComputerUseAdapter`; 無 Router route | PLACEHOLDER/UNUSED，descriptor `placeholder` | 若直接 run 只發 started |
+| `ComfyUIRenderProvider` | registry value是 `PlaceholderTool` | 直接 tool id 是 PLACEHOLDER；真正 provider 由 FinalBeauty 的 provider registry 使用 | 不應由 Tool Registry 直接執行 |
+| `GitTool`, `ComputerUseTool`, `BrowserUseTool`, `RenderTool` | `PlaceholderTool` | PLACEHOLDER，且多數無 route | 固定 placeholder result |
+
+Registry descriptor default status 是 `available`（`nova_agent_types.py:16-19`）；所以 `PassiveTool`、`FileWorkspaceTool` 等會被 core 當成 executable success。這是目前「顯示完成」與「真實能力」間的重要落差。
+
+### 10.4 室內設計真實路徑
+
+實際鏈：prompt → fallback/GPT intent `interior_design` → Router 預設 `[InteriorDesignTool, FinalBeautyRenderTool, FileWorkspaceTool]`（`nova_tool_router.py:2`）→ core 順序 run → render provider → quality validation → SSE terminal。
+
+- `Interior3DTool` 真實產生 `sceneSpec` dict，但內容全部固定為 modern cafe、固定 objects/count/material/lighting/camera/layers；prompt 沒有參與計算（`agent_tools.py:13-17`）。
+- Room Schema：沒有獨立 schema model；只有固定 sceneSpec。ComfyUI 的 `buildPrompt(roomSchema)` 存在（`comfyui_render_provider.py:56-58`），但 FinalBeauty 呼叫時沒有傳入 sceneSpec。
+- Moodboard：沒有 backend artifact、model 或 event。
+- Zoning：沒有演算法或 artifact。
+- Furniture placement/material/lighting：backend 只回固定 counts/labels；前端 WebGL scene 的幾何與座標硬編碼於 `script.js:280-318`，不是 prompt 計算結果。`applySceneSpec()` 只更新 HUD文字（`356-361`）。
+- Prompt Analysis / Style Extraction：GPT/fallback 有 intent/plan，但沒有專門 analysis artifact；畫面文案是前端固定模板。
+- 3D Blockout：前端 `Interior3DEngine` 真實建立 Three.js geometry，能 drag rotation；但模型佈局固定，不是 backend spatial solver。
+- render prompt：`FinalBeautyRenderTool` 使用固定 `POSITIVE_PROMPT` + `. Client brief: {message}`，固定 negative prompt，輸出 640×384 `RenderRequest`（`final_beauty_render_tool.py:14-15,26-32`）。
+- workflow：provider default `interior_sd15_lowvram.json`，fallback `interior_sd15_minimal_stable.json`（`comfyui_render_provider.py:23-29`）；placeholder tokens由 `_inject()` 取代（`222-228`），checkpoint 由 env/API選取（`63-69,253-256`）。
+- 真實 render：POST ComfyUI `/prompt`、poll `/history/{id}` 和 `/queue`、GET `/view`、儲存 `final_render.png`（`71-117,162-209`）。
+- Image Quality Gate：沒有獨立 class；內嵌在 `validateOutputImage()`，驗證可開啟、>10KB、dimensions、非全黑/全白/單色、finite mean（`119-140`）。黑圖會用 fallback workflow 重試一次（`230-250`）。
+- final image 回傳：相對 path 寫入 `RenderResult.image_path`；FinalBeauty 轉為 `/generated_assets/.../final_render.png`，發 `beauty_render_ready/completed`（`final_beauty_render_tool.py:60-75`）；FastAPI static mount 提供檔案（`agent_runtime.py:52`）。
+- FAILED：timeout、invalid image、environment failure會 raise，core 發 `task_failed`；provider unavailable則寫 `render_provider_required.json`、發 `beauty_render_blocked`，tool本身仍 return，最後可能是 `task_completed` 但前端轉成 FAILED/blocked display（`final_beauty_render_tool.py:76-89`）。
+
+畫面來源分類：
+
+| 可見步驟 | 真實 artifact/backend event | 實際來源 | Phase 2 最小缺口 |
+|---|---|---|---|
+| Prompt Analysis | intent/plan event；無 analysis artifact | 部分真實 | typed analysis schema + persisted artifact |
+| Style Extraction | 無專門 event/artifact | 固定前端文字 | prompt-derived style model |
+| Moodboard | 無 | NOT_IMPLEMENTED/固定畫面概念 | moodboard generator + artifact event |
+| Zoning Layout | 無 | 固定 scene | zoning solver/schema |
+| Room Schema | 固定 sceneSpec `tool_output` | PARTIAL | validated dynamic RoomSchema |
+| 3D Blockout | 前端 Three.js geometry；無 backend model file | 真 UI、固定模型 | schema-to-geometry mapping |
+| Furniture Placement | 固定 coordinates/count | 固定 playback/geometry | placement computation + artifact |
+| Material Pass | 固定 material palette | 固定 playback | material assignments from schema |
+| Lighting Pass | 固定 lights | 固定 playback | lighting plan from schema |
+| Final Render | 真 ComfyUI job/image/quality events（環境可用時） | REAL provider path | remote-provider abstraction + job schema |
+
+### 10.5 Render Provider 抽象程度與建議 schema
+
+已存在：
+
+- `RenderProviderBase.check()` / `render()`、`RenderRequest`、`RenderResult`（`render_provider_base.py:9-38`）。
+- `RenderProviderRegistry`，但 providers list 與優先序 hard-coded，只真正 check ComfyUI；local reference 與 `RenderProviderNotConnected` 選擇不完整（`render_provider_registry.py:8-22`）。
+- standardized request/result：有，但欄位不足以表達 remote job、progress、failure code、cancellation。
+- health check：ComfyUI `detectAvailability()` 呼叫 `/system_stats`、`/queue`、`/object_info`（`comfyui_render_provider.py:38-49`）。
+- timeout：有 poll timeout + 60秒 grace（`81-106`）。
+- retry：僅 invalid-black-output fallback workflow 一次；沒有 transport retry/backoff。
+- cancellation：沒有。
+- provider factory/environment selection：沒有；`NOVA_RENDER_PROVIDER` 不存在。
+- standardized job status：沒有獨立 model；ComfyUI prompt id/status藏在 dict/metadata。
+
+Colab 可共用 `RenderProviderBase`、`RenderRequest` 的 prompt/dimensions、`RenderResult`、FinalBeauty artifact/emit contract、quality validation概念。建議只提出、不實作：
+
+```text
+RenderRequest {task_id, prompt, negative_prompt, width, height, seed?, workflow_id?, metadata}
+RenderJob {job_id, provider, task_id, status, submitted_at, remote_ref}
+RenderProgress {job_id, stage, progress, message, updated_at}
+RenderResult {job_id, provider, status, image_path|download_url, metadata}
+RenderFailure {job_id?, provider, code, message, retryable, details}
+RenderProviderHealth {provider, available, latency_ms, capabilities, reason, checked_at}
+```
+
+### 10.6 Google Colab GPU 接入缺口
+
+必須新增（此 audit 不實作）：
+
+- backend：`colab_render_provider.py`、`colab_render_client.py`、`colab_render_schema.py`、`render_provider_factory.py`。
+- Colab：`nova_colab_render_backend.ipynb`，內含 FastAPI server、單一 GPU model worker、bounded job queue、`GET /health`、`POST /render`、`GET /jobs/{id}`、`GET /jobs/{id}/result`、Bearer token middleware與 tunnel bootstrap。
+- configuration：`NOVA_RENDER_PROVIDER`、`NOVA_COLAB_BASE_URL`、`NOVA_COLAB_TOKEN`、`NOVA_COLAB_TIMEOUT_SECONDS`。
+
+需要抽象/修改：
+
+- `render_provider_base.py`：加入 remote job/progress/cancel/health contract，但保留現有 request/result backward compatibility。
+- `render_provider_registry.py`：改由 factory/env 選 provider，禁止 hard-code secret或把 token放 payload。
+- `final_beauty_render_tool.py`：只依 provider interface，不呼叫 ComfyUI-specific `validateOutputImage/returnProviderResult`。
+- quality validation應抽成 shared service，讓 local與Colab result使用同一規則；目前邏輯在 `comfyui_render_provider.py:119-140`。
+- `nova_runtime_config.py`：backend-only 讀取 Colab env；`agent_runtime.py /agent/config` 只能暴露 availability/capability，不可回 token/base credentials。
+
+不可直接修改：已驗收的 NOVA 首頁視覺、Workbench layout、單一 Main Viewer、media fallback/terminal lock、GPT Brain prompt logic、現有 ComfyUI workflow與 quality thresholds；接入應在 provider boundary 後方。
+
+最小接入：一個 factory + 一個 Colab provider/client/schema + notebook API；維持 `FinalBeautyRenderTool.run(message, emit)` 與前端 SSE names。最大風險是 Colab runtime/tunnel不穩、GPU memory/model cold start、job重複提交、token外洩、result下載中斷與 timeout 後 late result。斷線必須轉成 `RenderFailure(code="colab_disconnected", retryable=true)`，provider return/raise後由 FinalBeauty 發 `beauty_render_failed`，core 發 `task_failed`；不可降級成假 DONE。Token只在 Python backend request header中使用，永不寫 artifact、SSE、frontend config或URL query。
+
+### 10.7 SSE、local playback、media 與真實操作感分界
+
+- Backend SSE：真實 task/brain/plan/tool/provider/artifact/terminal資料。來源是 `NovaAgentTimeline` → `AgentEventStream` → FastAPI SSE。
+- 根據真實資料的 UI event：`handleBackendAgentEvent()`、`updateOperationTimeline()`、`setWorkbenchDisplayPhase()`；render progress部分基於真 queue elapsed time估算（`comfyui_render_provider.py:81-95`），不是 sampler精確進度。
+- local EventTarget：`AgentOrchestrator` / `AgentStatusStream`（`script.js:506-590`）是 frontend fallback bus，不代表 backend工作。
+- polling：`AgentStatusStream.connectPolling()`（`511`）與 legacy `startAgentStatusPolling/pollAgentStatus`（`2041-2079`）存在，但正式 submit path 使用 SSE，audit未找到其啟動呼叫。
+- fixed playback/local playback：`getAgentPlaybackDefinition()` 的固定 steps（`1734-1789`），由 `setTimeout` queue執行（`1792-1844`）；只在 offline/local fallback或相容流程使用，不是工具執行證據。
+- media state：`NOVA_MEDIA_STATE` 是真實 browser media/fallback狀態，不是 Agent event（`script.js:788-789,1097-1127`）。
+
+### 10.8 Cursor 真實程度
+
+- 控制函式：`moveAgentCursor()`、`moveCursorTo()`、`clickCursorTarget()`、`runAgentCursorStep()`（`script.js:1247-1275`），以及 playback wrappers `moveAgentCursorToTarget/clickAgentTarget`（`1871-1872`）。
+- 座標可來自 backend `state.cursor.x/y`（`1665`，百分比）或固定 playback point；selector模式會以真實 DOM bounding box計算視覺座標（`1253-1261`）。
+- click沒有呼叫 `target.click()`；只加 `.is-agent-target` / `.is-clicking` classes（`1264-1270`）。
+- drag：使用者真的拖 Three.js viewport會改 rotation（`script.js:289-341`的 pointer/render path），但 Agent cursor不會 dispatch pointer drag。
+- typing：沒有寫入目標 form field；booking typed value是固定 HTML。
+- 結論：Cursor 是視覺動畫，不是 browser/computer automation。可保留 DOM selector定位、CSS cursor layer、backend cursor payload；固定座標、假 click、假 typing需由未來 action-result events取代。
+
+### 10.9 Browser / Computer / Codex adapters
+
+| Adapter | 分類 | 實際行為 / SSE / error / safety | 保留判定 |
+|---|---|---|---|
+| `BrowserUseAdapter` | PLACEHOLDER | 不呼叫外部服務；固定發 `browser_action_started/completed(blocked)` 並回 waiting_for_user（`browser_use_adapter.py:1-4`）；無 exception handling；safe boundary字串 | 保留 contract，Phase 2實作前 descriptor持續 placeholder |
+| `ComputerUseAdapter` | PLACEHOLDER | 不操作電腦；只發 started並回 waiting_for_user（`computer_use_adapter.py:1-4`）；無 completed/error event | 保留但不可宣稱 implemented |
+| `CodexAdapter` | PARTIAL、目前 Router UNUSED | 可偵測 CLI、列/讀檔、以 `subprocess.run(shell=False, timeout=60)` 真執行 command/test（`codex_adapter.py:4-14`）；封鎖部分 git字串，但無 allowlist、return-code/stderr處理，`propose_patch/summarize_diff`部分 placeholder；本身不 emit SSE | 保留，使用前需更強 sandbox/command schema/observability |
+
+前端 `BrowserAutomationEngine` 也是 `frontend_preview`（`script.js:424-436`）；`openOfficialSite()` 只有使用者觸發才 `window.open`，playback本身不操作網站。
+
+### 10.10 Website Builder 與 File Workspace
+
+| 能力 | 分類 | 證據 |
+|---|---|---|
+| backend `WebsiteBuilderTool` | REAL template file creation / PARTIAL generation | 寫三個實檔並回 paths/content（`agent_tools.py:26-39`）；內容固定 fashion template |
+| frontend `WebsiteBuildEngine` | PARTIAL | keyword style解析、固定 site model、產生 HTML/CSS/JS strings（`script.js:439-478`） |
+| backend `FileWorkspaceTool` | MOCK | 只回 `Workspace ready`，不讀寫（`agent_tools.py:41-43`） |
+| frontend file storage | REAL browser-local | `FileWorkspaceEngine` 使用 localStorage、project/file CRUD（`script.js:481-490`） |
+| file diff | NOT_IMPLEMENTED | 沒有 diff model/algorithm |
+| preview rebuild | NOT_IMPLEMENTED | 沒有 bundler/rebuild；只有固定 live canvas |
+| iframe preview | NOT_IMPLEMENTED/legacy shell | iframe保持 `about:blank`；網站 preview不是執行生成檔 |
+| generated project storage | REAL但雙軌 | backend filesystem `generated_projects/` + frontend localStorage；沒有一致 source of truth |
+| Save as Code | PARTIAL/REAL download | frontend產 code strings並以 browser download/export；backend也會寫固定 files；兩路未統一 |
+
+### 10.11 Phase 2 最小安全範圍
+
+必須新增：provider factory、Colab provider/client/schema、Colab notebook API，以及 remote render job/progress/failure/health models。
+
+必須修改（最小）：`render_provider_base.py`、`render_provider_registry.py`、`final_beauty_render_tool.py`、`nova_runtime_config.py`；必要時 `agent_runtime.py` 只增加 backend-only provider capability。`comfyui_render_provider.py`應透過 shared quality service適配，但不可改變已驗收 quality semantics。
+
+不可碰：`nova.html` 視覺、Workbench layout與 task canvas、Main Result Viewer single-view contract、`script.js` media state/fallback與 FAILED terminal lock、GPT Brain既有邏輯、Planner/Router（除非另立驗收）、既有 ComfyUI workflows。
+
+Phase 2 最小成果應只有：Colab health → submit → poll progress → download → shared quality gate → 現有 render SSE → 現有 Viewer；加上 disconnect/timeout/token-redaction tests。不要同時新增 Playback Engine、重構 Workbench、實作 Browser/Computer/Codex或改 GPT planning。
+
+### 10.12 Audit 結論
+
+- 完整真實執行：FastAPI task/SSE、GPT API（有 key時）、tool orchestration、Website template filesystem write、ComfyUI local submit/poll/download/quality gate（環境可用時）、frontend SSE-driven Timeline/Viewer terminal。
+- 部分完成：Planner/Brain coupling、Interior schema/3D、Codex、Website Builder/File Workspace、provider abstraction。
+- Placeholder/local mock：Browser/Computer adapters、Code/Research/FileWorkspace tools、registry內 GPT/ComfyUI/Git/Render placeholders、booking automation、local playback/cursor actions。
+- audit build：`npm run build` exit 0，Vite 36 modules transformed，SPA fallback成功。
+- Phase 2 本章沒有開始。
