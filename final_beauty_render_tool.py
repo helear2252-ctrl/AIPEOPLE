@@ -39,18 +39,20 @@ class FinalBeautyRenderTool:
 
         if check.status == "provider_ready_but_workflow_missing":
             result = check
+        elif check.status != "available" and provider.is_remote:
+            result = provider.make_result("failed", check.message, metadata={**check.metadata, "reason": check.metadata.get("reason", "REMOTE_PROVIDER_UNAVAILABLE")})
         elif check.status == "available":
             emit("beauty_render_started", {"tool": self.name, "provider": provider.name})
             try:
                 result = provider.render(request, emit)
             except TimeoutError as exc:
                 final_path = output_dir / "final_render.png"
-                image_stats = provider.validateOutputImage(final_path) if hasattr(provider, "validateOutputImage") else {"valid": False}
+                image_stats = provider.validate_output_image(final_path)
                 if image_stats.get("valid"):
-                    result = provider.returnProviderResult("ready", "Final Render Ready", f"{relative_root}/final_render.png",
-                                                           {"recoveredAfterTimeout": True, "imageStats": image_stats})
+                    result = provider.make_result("ready", "Final Render Ready", f"{relative_root}/final_render.png",
+                                                  {"recoveredAfterTimeout": True, "imageStats": image_stats})
                 else:
-                    result = provider.returnProviderResult("render_timeout", str(exc), metadata={
+                    result = provider.make_result("render_timeout", str(exc), metadata={
                         "reason": "render_timeout", "timeoutSeconds": max(480, int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS", "480"))),
                         "imageStats": image_stats
                     })
@@ -76,7 +78,7 @@ class FinalBeautyRenderTool:
         elif result.status == "render_timeout":
             emit("beauty_render_failed", {**output, "reason": "render_timeout", "error": result.message})
             raise RuntimeError(result.message)
-        elif result.status == "failed" and result.metadata.get("reason") in {"invalid_black_output", "invalid_image_output", "comfyui_environment_failure"}:
+        elif result.status == "failed":
             failed = {**output, "reason": result.metadata.get("reason"), "message": result.message, "error": result.message,
                       "imageStats": result.metadata.get("imageStats", {}), "fallbackUsed": result.metadata.get("fallbackUsed", False)}
             emit("beauty_render_failed", failed)

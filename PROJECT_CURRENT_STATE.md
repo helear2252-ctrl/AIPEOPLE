@@ -486,3 +486,62 @@ Phase 2 最小成果應只有：Colab health → submit → poll progress → do
 - Placeholder/local mock：Browser/Computer adapters、Code/Research/FileWorkspace tools、registry內 GPT/ComfyUI/Git/Render placeholders、booking automation、local playback/cursor actions。
 - audit build：`npm run build` exit 0，Vite 36 modules transformed，SPA fallback成功。
 - Phase 2 本章沒有開始。
+
+## 11. Phase 2A — Colab Remote Render Contract
+
+### 完成範圍
+
+- `colab_render_schema.py`：新增嚴格 remote contracts：`RenderProviderHealth`、`RemoteRenderRequest`、`RemoteRenderJob`、`RemoteRenderProgress`、`RemoteRenderResult`、`RemoteRenderFailure`。Job status只允許 `queued/loading_model/sampling/decoding/saving/completed/failed/cancelled`。
+- `colab_render_client.py`：新增 authenticated HTTP client，支援 `health/submit_render/get_job/download_result/cancel_job`、Bearer token、URL normalization、connect/read/poll timeout、HTTP/error mapping、JSON schema validation、Content-Type與最大下載限制。未使用 `verify=False`，不記錄 token。
+- `colab_render_provider.py`：實作既有 `RenderProviderBase`，流程為 health → submit → poll → result metadata → image download → `generated_assets/interior_renders/{task_id}/final_render.png` → shared Quality Gate → `RenderResult`。
+- `render_provider_factory.py`：由 backend env `NOVA_RENDER_PROVIDER=comfyui|colab` 選 provider；unknown value拋明確 `RenderProviderConfigurationError`，不自動 fallback假圖。
+- `image_quality_gate.py`：把 ComfyUI 既有判定原樣抽成 `ImageQualityGate.validate()`。ComfyUI `validateOutputImage()` 現在 delegate共用 gate；仍要求可解碼、>10KB、有效尺寸、非全黑/全白/單色、finite mean，沒有降低門檻。
+- `render_provider_base.py`：保留既有 `RenderRequest/RenderResult/check/render`，只補 `is_remote`、共用 `validate_output_image()` 與 `make_result()` helper，沒有建立第二套 provider base。
+- `render_provider_registry.py`：使用 factory；ComfyUI unavailable時保留既有 local reference行為，Colab unavailable時不默默切 local假完成。
+- `final_beauty_render_tool.py`：改用 base helpers；remote health unavailable直接產生正式 failed result；所有 `failed` result沿既有 `beauty_render_failed` + exception進 Agent `task_failed`，不由 provider設定前端 DONE。
+- `nova_runtime_config.py`：加入 provider、Colab base URL與四個 timeout/poll設定。Bearer token仍只由 client在 backend environment讀取，不進 config dataclass repr/API。
+- `agent_runtime.py`：startup記錄 provider name、sanitized host、timeout、health status；`/agent/config` 只新增 render provider name，沒有 token或敏感 query。
+
+### Environment variables
+
+```text
+NOVA_RENDER_PROVIDER
+NOVA_COLAB_BASE_URL
+NOVA_COLAB_TOKEN
+NOVA_COLAB_CONNECT_TIMEOUT_SECONDS
+NOVA_COLAB_READ_TIMEOUT_SECONDS
+NOVA_COLAB_POLL_INTERVAL_SECONDS
+NOVA_COLAB_MAX_POLL_SECONDS
+```
+
+### Error mapping
+
+Client/provider支援：`COLAB_CONFIG_MISSING`、`COLAB_UNREACHABLE`、`COLAB_AUTH_FAILED`、`COLAB_URL_EXPIRED`、`COLAB_BAD_RESPONSE`、`COLAB_JOB_FAILED`、`COLAB_JOB_TIMEOUT`、`COLAB_RESULT_INVALID`、`COLAB_RESULT_DOWNLOAD_FAILED`。Failure metadata不含 Authorization header/token。Colab missing config時 runtime可啟動，health=`unavailable`；任務執行會發 `beauty_render_failed` 並進 FAILED，不會發 completed或切換假圖。
+
+### Tests
+
+- 新增 `tests/test_colab_render_schema.py`、`tests/test_colab_render_client.py`、`tests/test_colab_render_provider.py`、`tests/test_render_provider_factory.py`，以及本機 `ThreadingHTTPServer` fixture。
+- 22 tests passed：health success/auth failure/missing config、submit、完整 state sequence、failed/timeout/expired URL、invalid JSON、HTML/non-image result、black image、valid image、token log redaction、factory三分支、FinalBeauty failure lifecycle與 ComfyUI factory regression。
+- `python -m pytest -q` 對全 repo額外收集兩個既有 `tools/*_test.py`，因環境未安裝 `cv2` 在 collection階段停止；Phase 2A 的 `tests/` 全部通過，此缺口不是本次 source regression。
+- `python -m compileall .` exit 0。
+- `node --check script.js`（UTF-8 module stdin等價執行）exit 0；`script.js` 未修改。
+- `npm run build` exit 0，Vite 36 modules，SPA fallback成功。
+
+### 尚未完成
+
+- 尚未建立真正 Colab GPU notebook/FastAPI worker、公開 tunnel、模型下載或 live GPU render。
+- 尚未執行真 Colab連線；本階段全部 remote測試使用本機 mock HTTP server，沒有預生成完成圖片。
+- 前端、NOVA視覺、Workbench、Main Viewer、Cursor、local playback、GPT Brain、Planner、Tool Router與既有 workflow JSON均未修改。
+- Phase 2B 沒有開始。
+
+## 12. Phase 2A.5 — Fix cv2 Pytest Collection Blocker
+
+- 根因：pytest 預設收集 `*_test.py`，因此 collection 階段會 import `tools/cut_transition_test.py` 與 `tools/talking_emphasis_transition_test.py`。兩個 optional 離線影片轉場工具原先在 module scope import `cv2`，缺少 OpenCV 的環境會在實際測試收集完成前失敗。這兩個模組不屬於 `agent_runtime` 啟動必要模組，只屬於 vision/video optional tooling。
+- 修復前受影響 import：`tools/cut_transition_test.py:5`、`tools/talking_emphasis_transition_test.py:4`。
+- 修復方式：改為明確的 `require_cv2()` lazy dependency guard，只在實際執行影像處理函式時載入。缺少 OpenCV 時會拋出附安裝指引的 `OptionalDependencyUnavailable`，不會阻擋 pytest collection 或 Agent Runtime 啟動。
+- 後續 collection blocker：延後 OpenCV 載入後，同兩個 optional 模組另暴露 module-level `imageio_ffmpeg` 缺失；同樣改為各自 `write_video()` 內的明確 lazy guard，不吞錯誤、不產生假成功。
+- 依賴決策：未新增 `opencv-python-headless`，因為這些程式是 optional offline video tools，而非正式 runtime dependency。
+- Phase 2A regression：schema、client、provider、factory 共 22/22 passed。
+- 全 repo pytest：22 passed，無 collection error。
+- 驗證：`python -m compileall .` passed；`node --check script.js` passed；`npm run build` exit 0，36 modules transformed。
+- Phase 2A 可建立 checkpoint；Phase 2B 尚未開始。

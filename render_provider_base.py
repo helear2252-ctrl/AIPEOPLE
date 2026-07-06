@@ -5,6 +5,8 @@ from abc import ABC, abstractmethod
 from dataclasses import asdict, dataclass, field
 from typing import Callable
 
+from image_quality_gate import ImageQualityGate
+
 
 @dataclass
 class RenderRequest:
@@ -30,9 +32,16 @@ class RenderResult:
 class RenderProviderBase(ABC):
     name = "RenderProviderBase"
     is_production = False
+    is_remote = False
 
     @abstractmethod
     def check(self) -> RenderResult: ...
 
     @abstractmethod
     def render(self, request: RenderRequest, emit: Callable) -> RenderResult: ...
+
+    def validate_output_image(self, path) -> dict:
+        return ImageQualityGate.validate(path)
+
+    def make_result(self, status: str, message: str, image_path: str | None = None, metadata: dict | None = None) -> RenderResult:
+        return RenderResult(self.name, status, message, image_path, metadata or {})

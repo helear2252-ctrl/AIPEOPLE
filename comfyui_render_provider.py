@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import json
-import math
 import os
 import time
 import urllib.error
@@ -10,8 +9,6 @@ import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
-
-from PIL import Image, ImageStat
 
 from render_provider_base import RenderProviderBase, RenderRequest, RenderResult
 
@@ -117,27 +114,7 @@ class ComfyUIRenderProvider(RenderProviderBase):
         return "generated_assets/interior_renders/" + request.task_id + "/final_render.png"
 
     def validateOutputImage(self, path: Path) -> dict:
-        stats = {"exists": path.is_file(), "fileSize": path.stat().st_size if path.is_file() else 0,
-                 "imageSize": [0, 0], "mean": [0.0, 0.0, 0.0], "extrema": [[0, 0], [0, 0], [0, 0]],
-                 "isAllBlack": False, "isAllWhite": False, "isSingleColor": False, "hasNonFinite": False,
-                 "canOpen": False, "valid": False}
-        if not stats["exists"]: return stats
-        try:
-            with Image.open(path) as source:
-                image = source.convert("RGB"); image.load()
-                stats["canOpen"] = True; stats["imageSize"] = [image.width, image.height]
-                stats["mean"] = [float(value) for value in ImageStat.Stat(image).mean]
-                stats["extrema"] = [[int(low), int(high)] for low, high in image.getextrema()]
-                stats["hasNonFinite"] = not all(math.isfinite(value) for value in stats["mean"])
-                stats["isAllBlack"] = all(pair == [0, 0] for pair in stats["extrema"])
-                stats["isAllWhite"] = all(pair == [255, 255] for pair in stats["extrema"])
-                stats["isSingleColor"] = all(low == high for low, high in stats["extrema"])
-                stats["valid"] = bool(stats["fileSize"] > 10 * 1024 and image.width > 0 and image.height > 0
-                                      and not stats["isAllBlack"] and not stats["isAllWhite"]
-                                      and not stats["isSingleColor"] and not stats["hasNonFinite"])
-        except Exception as exc:
-            stats["openError"] = f"{type(exc).__name__}: {exc}"
-        return stats
+        return self.validate_output_image(path)
 
     def _workflow_debug(self, graph: dict) -> dict:
         by_type = {node.get("class_type"): node for node in graph.values() if isinstance(node, dict)}
@@ -209,7 +186,7 @@ class ComfyUIRenderProvider(RenderProviderBase):
                                          {"promptId": prompt_id, "imageStats": image_stats, "fallbackUsed": fallback_used}), report
 
     def returnProviderResult(self, status: str, message: str, image_path: str | None = None, metadata: dict | None = None) -> RenderResult:
-        return RenderResult(self.name, status, message, image_path, metadata or {})
+        return self.make_result(status, message, image_path, metadata)
 
     def check(self) -> RenderResult:
         availability = self.detectAvailability()

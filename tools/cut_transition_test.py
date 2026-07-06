@@ -2,8 +2,6 @@ import argparse
 import subprocess
 from pathlib import Path
 
-import cv2
-import imageio_ffmpeg
 import numpy as np
 
 
@@ -12,7 +10,32 @@ HEIGHT = 720
 FPS = 24
 
 
+class OptionalDependencyUnavailable(RuntimeError):
+    pass
+
+
+def require_cv2():
+    try:
+        import cv2
+        return cv2
+    except ImportError as exc:
+        raise OptionalDependencyUnavailable(
+            "cv2 is required for this vision/video operation. Install opencv-python or opencv-python-headless."
+        ) from exc
+
+
+def require_imageio_ffmpeg():
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg
+    except ImportError as exc:
+        raise OptionalDependencyUnavailable(
+            "imageio-ffmpeg is required to write this video output. Install imageio-ffmpeg."
+        ) from exc
+
+
 def read_clip(path: Path, start_sec: float, duration_sec: float):
+    cv2 = require_cv2()
     cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {path}")
@@ -37,6 +60,7 @@ def read_clip(path: Path, start_sec: float, duration_sec: float):
 
 
 def zoom_frame(frame, scale):
+    cv2 = require_cv2()
     h, w = frame.shape[:2]
     crop_w = max(2, int(w / scale))
     crop_h = max(2, int(h / scale))
@@ -47,6 +71,7 @@ def zoom_frame(frame, scale):
 
 
 def motion_blur(frame, ksize=31):
+    cv2 = require_cv2()
     ksize = max(3, int(ksize) | 1)
     kernel = np.zeros((ksize, ksize), dtype=np.float32)
     kernel[ksize // 2, :] = 1.0 / ksize
@@ -58,6 +83,7 @@ def adjust_brightness(frame, delta):
 
 
 def make_transition(prep, entry, style):
+    cv2 = require_cv2()
     if style == "soft_cut":
         # Tiny two-frame dissolve: enough to hide luminance discontinuity without feeling like an effect.
         return prep[:-1] + [
@@ -89,6 +115,7 @@ def make_transition(prep, entry, style):
 
 
 def write_video(frames, output: Path):
+    imageio_ffmpeg = require_imageio_ffmpeg()
     output.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         imageio_ffmpeg.get_ffmpeg_exe(),

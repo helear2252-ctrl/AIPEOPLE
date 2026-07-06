@@ -1,7 +1,8 @@
 """Run: python agent_runtime.py, then open http://127.0.0.1:8080/nova.html"""
 from __future__ import annotations
-import json, os, threading, uuid
+import json, logging, os, threading, uuid
 from pathlib import Path
+from urllib.parse import urlsplit
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -10,8 +11,10 @@ from pydantic import BaseModel
 from agent_stream import AgentEventStream
 from nova_agent_core import NovaUniversalAgentCore
 from nova_runtime_config import NovaRuntimeConfig
+from render_provider_factory import create_render_provider
 
 ROOT=Path(__file__).resolve().parent; app=FastAPI(title="NOVA Backend Agent Runtime", version="1.0")
+LOGGER=logging.getLogger("nova.runtime")
 RENDER_TIMEOUT_SECONDS=max(480,int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS","480")))
 os.environ.setdefault("NOVA_RENDER_TIMEOUT_SECONDS",str(RENDER_TIMEOUT_SECONDS))
 RUNTIME_CONFIG=NovaRuntimeConfig.load()
@@ -22,7 +25,15 @@ class TaskRequest(BaseModel): userMessage: str; brain: str="localMock"
 
 @app.get("/agent/config")
 def runtime_config():
-    return {"gptBrainAvailable":bool(RUNTIME_CONFIG.openai_api_key),"renderTimeoutSeconds":RENDER_TIMEOUT_SECONDS,"apiKeyExposed":False}
+    return {"gptBrainAvailable":bool(RUNTIME_CONFIG.openai_api_key),"renderTimeoutSeconds":RENDER_TIMEOUT_SECONDS,"renderProvider":RUNTIME_CONFIG.render_provider,"apiKeyExposed":False}
+
+@app.on_event("startup")
+def log_render_provider_status():
+    provider=create_render_provider(ROOT,RUNTIME_CONFIG.render_provider)
+    health=provider.check()
+    host=urlsplit(RUNTIME_CONFIG.colab_base_url).hostname or "local"
+    timeout=RUNTIME_CONFIG.colab_max_poll_seconds if RUNTIME_CONFIG.render_provider=="colab" else RUNTIME_CONFIG.render_timeout_seconds
+    LOGGER.info("render_provider=%s host=%s timeout=%s health=%s",provider.name,host,timeout,health.status)
 
 @app.post("/agent/task", status_code=202)
 def create_task(req: TaskRequest):

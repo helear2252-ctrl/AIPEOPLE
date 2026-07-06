@@ -1,8 +1,6 @@
 import subprocess
 from pathlib import Path
 
-import cv2
-import imageio_ffmpeg
 import numpy as np
 
 
@@ -11,7 +9,32 @@ HEIGHT = 720
 FPS = 24
 
 
+class OptionalDependencyUnavailable(RuntimeError):
+    pass
+
+
+def require_cv2():
+    try:
+        import cv2
+        return cv2
+    except ImportError as exc:
+        raise OptionalDependencyUnavailable(
+            "cv2 is required for this vision/video operation. Install opencv-python or opencv-python-headless."
+        ) from exc
+
+
+def require_imageio_ffmpeg():
+    try:
+        import imageio_ffmpeg
+        return imageio_ffmpeg
+    except ImportError as exc:
+        raise OptionalDependencyUnavailable(
+            "imageio-ffmpeg is required to write this video output. Install imageio-ffmpeg."
+        ) from exc
+
+
 def read_clip(path: Path, start_sec: float, duration_sec: float):
+    cv2 = require_cv2()
     cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {path}")
@@ -33,6 +56,7 @@ def read_clip(path: Path, start_sec: float, duration_sec: float):
 
 
 def read_boundary(path: Path, mode: str, count: int):
+    cv2 = require_cv2()
     cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
         raise RuntimeError(f"Cannot open video: {path}")
@@ -49,6 +73,7 @@ def read_boundary(path: Path, mode: str, count: int):
 
 
 def stats(frames):
+    cv2 = require_cv2()
     ys = []
     sats = []
     rgbs = []
@@ -84,6 +109,7 @@ def build_correction(source_stats, target_stats):
 
 
 def apply_correction(frame, correction, strength):
+    cv2 = require_cv2()
     original = frame
     rgb = frame[:, :, ::-1].astype(np.float32)
     rgb *= (1.0 + (correction["rgb_gains"] - 1.0) * strength).reshape(1, 1, 3)
@@ -117,6 +143,7 @@ def progressive_tail(frames, correction, tail_frames):
 
 
 def crossfade(prep_frames, entry_frames, fade_frames):
+    cv2 = require_cv2()
     keep = prep_frames[:-fade_frames]
     faded = []
     for i in range(fade_frames):
@@ -126,6 +153,7 @@ def crossfade(prep_frames, entry_frames, fade_frames):
 
 
 def write_video(frames, output: Path):
+    imageio_ffmpeg = require_imageio_ffmpeg()
     output.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
         imageio_ffmpeg.get_ffmpeg_exe(),
