@@ -785,6 +785,8 @@ class AvatarController {
     this.currentState = AVATAR_STATES.INITIAL_LOOP_040;
     this.hasCompletedFirstTask = hasCompletedFirstTask;
     this.videoAvailable = false;
+    this.mediaState = "MEDIA_LOADING";
+    window.NOVA_MEDIA_STATE = this.mediaState;
     this.imageFallbackExists = false;
     this.isBusy = false;
     this.currentTaskName = "";
@@ -837,7 +839,7 @@ class AvatarController {
     this.backendTaskId = null;
     this.pendingWorkbenchImageUrl = null;
     this.pendingRenderTaskCompletion = null;
-    window.NOVA_WORKBENCH_DISPLAY_STATE = { taskType:"interior_design", phase:"idle", taskId:null, provider:null, progress:0, imageUrl:null, imageLoadStatus:"idle", previewDomStatus:"idle", badge:"IDLE", lastEvent:null, updatedAt:null };
+    window.NOVA_WORKBENCH_DISPLAY_STATE = { taskType:"interior_design", phase:"idle", lifecycle:"IDLE", terminal:false, taskId:null, provider:null, progress:0, imageUrl:null, imageLoadStatus:"idle", previewDomStatus:"idle", badge:"IDLE", lastEvent:null, updatedAt:null };
     this.backendRuntimeOnline = null;
     this.backendLifecycleState = "backend_offline";
     this.backendTerminalHandled = false;
@@ -858,6 +860,9 @@ class AvatarController {
     this.generatedProjects = this.loadGeneratedProjects();
 
     this.crossfade = new CrossfadeController(this.videoA, this.videoB, this.config.crossfade_ms);
+    [this.videoA, this.videoB].forEach((video) => video.addEventListener("error", () => {
+      if (video === this.crossfade.activeVideo) this.activateMediaFallback("active_video_error");
+    }));
     this.bindAgentRuntimeEvents();
   }
 
@@ -869,14 +874,12 @@ class AvatarController {
     this.configureWorkbenchChrome();
     this.bindEvents();
     this.videoAvailable = await this.verifyRequiredVideos();
-    this.imageFallbackExists = this.videoAvailable
-      ? false
-      : await this.checkImageExists(this.config.video_paths.Fallback);
+    this.imageFallbackExists = false;
     this.setupVisualMode();
 
     if (!this.videoAvailable) {
-      this.showFallbackAvatar();
-      console.error("[NOVA Phase 0.7] Required 040-043 video assets are incomplete.");
+      this.activateMediaFallback("required_video_unavailable");
+      console.warn("[NOVA Phase 0.7] Required 040-043 video assets are incomplete; CSS fallback is active.");
       return;
     }
 
@@ -1091,6 +1094,39 @@ class AvatarController {
     this.cssFallbackContainer.style.display = "none";
   }
 
+  setMediaState(state, reason = null) {
+    this.mediaState = state;
+    window.NOVA_MEDIA_STATE = state;
+    document.body.dataset.mediaState = state;
+    this.logFlowEvent("media:state", { mediaState: state, reason });
+  }
+
+  activateMediaFallback(reason) {
+    this.videoAvailable = false;
+    this.showFallbackAvatar();
+    this.setMediaState("MEDIA_FALLBACK", reason);
+    this.setInputsDisabled(false);
+  }
+
+  async confirmMediaPlaying(video, timeoutMs = 2500) {
+    const startedAt = performance.now();
+    const initialTime = Number(video.currentTime || 0);
+    while (performance.now() - startedAt < timeoutMs) {
+      await this.wait(120);
+      if (!video.paused && video.readyState >= HTMLMediaElement.HAVE_CURRENT_DATA && video.currentTime > initialTime + 0.03) {
+        this.videoAvailable = true;
+        this.videoWrapper.style.display = "block";
+        this.imageFallbackContainer.style.display = "none";
+        this.cssFallbackContainer.style.display = "none";
+        this.setMediaState("MEDIA_PLAYING");
+        return true;
+      }
+      if (video.error) break;
+    }
+    this.activateMediaFallback("playback_not_advancing");
+    return false;
+  }
+
   waitFor041WorkbenchCue(video, requestId, seconds = FIRST_ACK_WORKBENCH_CUE_SECONDS) {
     this.clear041WorkbenchCue();
     if (!video) return Promise.resolve(false);
@@ -1283,7 +1319,9 @@ class AvatarController {
     const badgeMap = { idle:"IDLE", plan_created:"PLAN CREATED", provider_checking:"CHECKING PROVIDER", provider_ready:"PROVIDER READY", render_submitted:"RENDER SUBMITTED", rendering:"RENDERING", collecting_output:"COLLECTING OUTPUT", image_loading:"LOADING IMAGE", final_image:"DONE", image_failed:"IMAGE FAILED", failed:"FAILED", timeout:"TIMEOUT" };
     const imageLoadStatus = phase === "final_image" ? "loaded" : phase === "image_loading" ? "loading" : phase === "image_failed" ? "error" : previous.imageLoadStatus;
     const previewDomStatus = phase === "final_image" ? "visible" : phase === "image_loading" ? "loading" : ["image_failed", "failed", "timeout"].includes(phase) ? "error" : previous.previewDomStatus;
-    window.NOVA_WORKBENCH_DISPLAY_STATE = { ...previous, phase, taskId:this.backendTaskId || previous.taskId, provider:payload.provider || payload.renderProvider || previous.provider, progress, imageUrl:candidateUrl || previous.imageUrl, imageLoadStatus, previewDomStatus, badge:badgeMap[phase], lastEvent:payload.eventType || payload.lastEvent || phase, updatedAt:new Date().toISOString() };
+    const terminal = ["final_image", "image_failed", "failed", "timeout"].includes(phase);
+    const lifecycle = ["image_failed", "failed", "timeout"].includes(phase) ? "FAILED" : phase === "final_image" ? "DONE" : "RUNNING";
+    window.NOVA_WORKBENCH_DISPLAY_STATE = { ...previous, phase, lifecycle, terminal, taskId:this.backendTaskId || previous.taskId, provider:payload.provider || payload.renderProvider || previous.provider, progress, imageUrl:candidateUrl || previous.imageUrl, imageLoadStatus, previewDomStatus, badge:badgeMap[phase], lastEvent:payload.eventType || payload.lastEvent || phase, updatedAt:new Date().toISOString() };
     const viewer = this.getMainResultViewer(); if (viewer) { viewer.dataset.resultPhase = phase; viewer.dataset.imageLoadStatus = imageLoadStatus; }
     this.renderMainResultViewer(phase, payload);
     const badge = this.workbenchTaskCanvas.querySelector("[data-agent-status]"); if (badge) badge.textContent = badgeMap[phase];
@@ -1531,7 +1569,7 @@ class AvatarController {
     if (this.backendTerminalHandled) return;
     if (this.currentWorkbenchTaskType === "design3d") {
       this.pendingRenderTaskCompletion = state;
-      if (state?.output?.renderStatus && state.output.renderStatus !== "ready") this.setWorkbenchDisplayPhase("failed", { message:state.output.renderMessage, eventType:"task_failed" });
+      if (state?.output?.renderStatus && state.output.renderStatus !== "ready") { this.handleBackendTaskFailed(state.output.renderMessage || "Render failed"); return; }
       if (window.NOVA_WORKBENCH_DISPLAY_STATE.phase === "final_image") { this.backendTerminalHandled = true; this.backendLifecycleState = "backend_completed"; this.closeAgentEventSource("task_completed"); this.restoreWorkbenchControls("completed"); }
       return;
     }
@@ -1570,11 +1608,11 @@ class AvatarController {
   }
 
   handleBackendTaskFailed(error) {
-    if (this.currentWorkbenchTaskType === "design3d") { this.setWorkbenchDisplayPhase("failed", { message:error, eventType:"task_failed" }); this.restoreWorkbenchControls("failed"); return; }
     if (this.backendLifecycleState === "backend_failed") return;
     this.backendTerminalHandled = true;
     this.backendLifecycleState = "backend_failed";
     this.closeAgentEventSource("task_failed");
+    if (this.currentWorkbenchTaskType === "design3d") this.setWorkbenchDisplayPhase("failed", { message:error, eventType:"task_failed" });
     this.agentStatusLabel.textContent = "FAILED";
     this.agentStatusBadge.classList.add("is-error");
     this.agentErrorText.textContent = String(error || "Agent task failed.");
@@ -1891,7 +1929,7 @@ class AvatarController {
 
   async handleSendMessageFlow() {
     const message = this.chatInput.value.trim();
-    if (!message || isAgentRunning || this.isBusy || !this.videoAvailable) return;
+    if (!message || isAgentRunning || this.isBusy) return;
 
     this.prepareForNextAgentTask();
     this.isBusy = true;
@@ -1904,7 +1942,7 @@ class AvatarController {
     this.logFlowEvent("task:submitted", { requestId });
 
     try {
-      if (!hasCompletedFirstTask) {
+      if (!hasCompletedFirstTask && this.videoAvailable) {
         const ackVideo = await this.playState(AVATAR_STATES.FIRST_ACK_041, { loop: true });
         this.logFlowEvent("first-ack:started", { requestId, video: ackVideo.currentSrc });
         const cueReached = await this.waitFor041WorkbenchCue(ackVideo, requestId);
@@ -2164,6 +2202,8 @@ class AvatarController {
     const video = options.initial
       ? await this.crossfade.showInitial(src, { loop })
       : await this.crossfade.crossfadeTo(src, { loop, duration: this.config.crossfade_ms });
+
+    await this.confirmMediaPlaying(video);
 
     this.updateStatus(state);
     this.logFlowEvent("video:ready", {
