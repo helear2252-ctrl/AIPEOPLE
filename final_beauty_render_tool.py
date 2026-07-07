@@ -7,6 +7,7 @@ import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
+from demo_render_fallback_provider import DemoRenderFallbackProvider
 from render_provider_base import RenderRequest
 from render_provider_registry import RenderProviderRegistry
 
@@ -22,6 +23,21 @@ class FinalBeautyRenderTool:
 
     def _write_json(self, path: Path, value: dict):
         path.write_text(json.dumps(value, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    def _demo_fallback_enabled(self) -> bool:
+        return os.getenv("NOVA_RENDER_FALLBACK_MODE", "off").strip().lower() == "demo"
+
+    def _apply_demo_fallback(self, request: RenderRequest, result, emit):
+        if not self._demo_fallback_enabled() or result.status not in {"failed", "render_timeout"}:
+            return result
+        reason = result.metadata.get("reason") or result.status
+        fallback = DemoRenderFallbackProvider(ROOT, original_provider=result.provider, original_reason=reason)
+        emit("beauty_render_progress", {"provider": fallback.name, "progress": 1, "stage": "demo_fallback", "visibleAction": "Using demo fallback final render", "fallbackUsed": True})
+        fallback_result = fallback.render(request, emit)
+        if fallback_result.status == "ready":
+            fallback_result.metadata["fallbackSourceStatus"] = result.status
+            fallback_result.metadata["fallbackSourceMessage"] = result.message
+        return fallback_result
 
     def run(self, message: str, emit):
         task_id = threading.current_thread().name
@@ -58,6 +74,8 @@ class FinalBeautyRenderTool:
                     })
         else:
             result = provider.render(request, emit)
+
+        result = self._apply_demo_fallback(request, result, emit)
 
         metadata = {"taskId": task_id, "provider": result.provider, "status": result.status, "message": result.message,
                     "imagePath": result.image_path, "providerMetadata": result.metadata, "isFinalRender": result.status == "ready" and bool(result.image_path)}

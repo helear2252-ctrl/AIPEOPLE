@@ -3,6 +3,7 @@ from pathlib import Path
 from colab_render_client import ColabRenderClient
 from colab_render_provider import ColabRenderProvider
 from conftest import image_bytes, mock_colab_server
+from image_quality_gate import ImageQualityGate
 from render_provider_base import RenderRequest
 
 
@@ -54,6 +55,7 @@ def test_final_beauty_colab_failure_enters_failed_lifecycle(tmp_path, monkeypatc
     import final_beauty_render_tool
     monkeypatch.setattr(final_beauty_render_tool, "ROOT", tmp_path)
     monkeypatch.setenv("NOVA_RENDER_PROVIDER", "colab")
+    monkeypatch.delenv("NOVA_RENDER_FALLBACK_MODE", raising=False)
     monkeypatch.delenv("NOVA_COLAB_BASE_URL", raising=False)
     monkeypatch.delenv("NOVA_COLAB_TOKEN", raising=False)
     events=[]
@@ -61,3 +63,53 @@ def test_final_beauty_colab_failure_enters_failed_lifecycle(tmp_path, monkeypatc
     import pytest
     with pytest.raises(RuntimeError): provider.run("interior",lambda kind,payload:events.append(kind))
     assert "beauty_render_failed" in events and "beauty_render_completed" not in events
+
+
+def write_demo_source(root: Path):
+    path = root / "assets" / "demo" / "phase2c_demo_fallback_render.png"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(image_bytes())
+    return path
+
+
+def test_final_beauty_demo_fallback_on_colab_job_failure(tmp_path, monkeypatch):
+    import final_beauty_render_tool
+    monkeypatch.setattr(final_beauty_render_tool, "ROOT", tmp_path)
+    monkeypatch.setenv("NOVA_RENDER_PROVIDER", "colab")
+    monkeypatch.setenv("NOVA_RENDER_FALLBACK_MODE", "demo")
+    write_demo_source(tmp_path)
+    events=[]
+    payloads=[]
+    with mock_colab_server(lambda state:setattr(state,"job_states",["failed"])) as (url, _):
+        monkeypatch.setenv("NOVA_COLAB_BASE_URL", url)
+        monkeypatch.setenv("NOVA_COLAB_TOKEN", "secret-token")
+        output, files = final_beauty_render_tool.FinalBeautyRenderTool().run("interior", lambda kind,payload: (events.append(kind), payloads.append(payload)))
+    final_path = tmp_path / "generated_assets" / "interior_renders" / output["renderMetadataUrl"].split("/")[-2] / "final_render.png"
+    metadata_path = tmp_path / output["renderMetadataUrl"].lstrip("/")
+    assert output["renderStatus"] == "ready"
+    assert output["renderProvider"] == "DemoRenderFallbackProvider"
+    assert output["isFinalRender"] is True
+    assert output["finalRenderUrl"].endswith("/final_render.png")
+    assert final_path.is_file() and ImageQualityGate.validate(final_path)["valid"]
+    assert "beauty_render_ready" in events and "beauty_render_completed" in events
+    metadata = __import__("json").loads(metadata_path.read_text(encoding="utf-8"))
+    assert metadata["providerMetadata"]["fallbackUsed"] is True
+    assert metadata["providerMetadata"]["fallbackMode"] == "demo"
+    assert metadata["providerMetadata"]["originalProvider"] == "ColabRenderProvider"
+    assert "generated_assets/interior_renders" in files[-1]
+
+
+def test_final_beauty_colab_success_does_not_use_demo_fallback(tmp_path, monkeypatch):
+    import final_beauty_render_tool
+    monkeypatch.setattr(final_beauty_render_tool, "ROOT", tmp_path)
+    monkeypatch.setenv("NOVA_RENDER_PROVIDER", "colab")
+    monkeypatch.setenv("NOVA_RENDER_FALLBACK_MODE", "demo")
+    write_demo_source(tmp_path)
+    with mock_colab_server() as (url, _):
+        monkeypatch.setenv("NOVA_COLAB_BASE_URL", url)
+        monkeypatch.setenv("NOVA_COLAB_TOKEN", "secret-token")
+        output, _ = final_beauty_render_tool.FinalBeautyRenderTool().run("interior", lambda *_: None)
+    metadata = __import__("json").loads((tmp_path / output["renderMetadataUrl"].lstrip("/")).read_text(encoding="utf-8"))
+    assert output["renderStatus"] == "ready"
+    assert output["renderProvider"] == "ColabRenderProvider"
+    assert metadata["providerMetadata"].get("fallbackUsed") is not True
