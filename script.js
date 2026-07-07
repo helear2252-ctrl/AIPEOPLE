@@ -90,11 +90,18 @@ function renderOperationTimeline() {
 }
 
 function renderRealRenderPanel() {
-  return `<section class="interior-agent-process workbench-task-reveal"><strong>Agent Process</strong><span>Universal Agent Core</span><span>Tool selected</span><span>Draft generated</span><span>Render provider check</span></section>
-    <section class="nova-main-result-viewer final-render-preview workbench-task-reveal" data-result-viewer="main" data-result-phase="idle" data-image-load-status="idle" aria-label="Interior main result"><div class="result-state"><strong>Understanding request</strong><span>Preparing the interior design task.</span></div></section>`;
+  return `<section class="render-showcase workbench-task-reveal" data-result-viewer="main" data-result-phase="drafting_2d" data-image-load-status="idle" data-view-mode="scene" aria-label="Interior 3D workbench viewer">
+    <div class="render-floorplan-layer" aria-hidden="true"><div class="render-floorplan"><i class="plan-grid"></i><i class="plan-room plan-room--main"></i><i class="plan-room plan-room--service"></i><i class="plan-room plan-room--entry"></i><i class="plan-block plan-block--bar"></i><i class="plan-block plan-block--island"></i><i class="plan-block plan-block--sofa"></i><i class="plan-block plan-block--table-a"></i><i class="plan-block plan-block--table-b"></i><i class="plan-scan"></i></div></div>
+    <div class="cafe-3d-viewport real-3d-workbench is-playback-locked" data-3d-viewport aria-label="Interactive 3D interior viewer"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div></div>
+    <div class="render-material-pass" aria-hidden="true"><i></i><i></i><i></i></div>
+    <div class="final-render-layer" data-final-render-layer aria-hidden="true"></div>
+    <div class="render-view-toggle" aria-label="Workbench view mode"><button type="button" class="is-active" data-workbench-action="render-view-mode" data-render-view-mode="scene">3D Scene</button><button type="button" data-workbench-action="render-view-mode" data-render-view-mode="final">Final Render</button></div>
+    <div class="camera-preset-bar" aria-label="Camera presets"><button type="button" class="is-active" data-workbench-action="camera-preset" data-camera-preset="perspective">Perspective</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="front">Front</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="top">Top</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="detail">Detail</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="tour">Auto Tour</button></div>
+  </section>`;
 }
 
 function render3DDesignTask(userMessage) {
+  return `<div class="task-workflow task-workflow--design3d">${renderRealRenderPanel()}</div>`;
   const request = escapeWorkbenchText(userMessage);
   return `<div class="task-workflow task-workflow--design3d">
     ${renderWorkflowHeading("Interior Design Studio", "NOVA is creating a final proposal render while preserving the interactive construction draft.", "fa-cube")}
@@ -184,8 +191,16 @@ class Interior3DEngine {
   constructor(viewport) {
     this.viewport = viewport;
     this.disposed = false;
-    this.rotation = { x: -0.12, y: -0.35 };
+    this.rotation = { x: -0.08, y: -0.45 };
     this.targetRotation = { ...this.rotation };
+    this.cameraTarget = { x: 0, y: 1.45, z: 0 };
+    this.targetCameraTarget = { ...this.cameraTarget };
+    this.cameraDistance = 12.6;
+    this.targetCameraDistance = 12.6;
+    this.cameraPreset = "perspective";
+    this.autoTourActive = false;
+    this.autoTourTimer = null;
+    this.autoTourIndex = 0;
     this.drag = null;
     this.frame = null;
     this.resizeObserver = null;
@@ -198,22 +213,40 @@ class Interior3DEngine {
 
   bindPointerEvents() {
     this.onPointerDown = (event) => {
-      this.drag = { x: event.clientX, y: event.clientY, rx: this.targetRotation.x, ry: this.targetRotation.y };
+      this.stopAutoTour();
+      const mode = event.shiftKey || event.button === 2 ? "pan" : "rotate";
+      this.drag = { mode, x: event.clientX, y: event.clientY, rx: this.targetRotation.x, ry: this.targetRotation.y, tx: this.targetCameraTarget.x, ty: this.targetCameraTarget.y, tz: this.targetCameraTarget.z };
       this.viewport.classList.add("is-dragging");
-      this.viewport.setPointerCapture?.(event.pointerId);
+      try { this.viewport.setPointerCapture?.(event.pointerId); } catch {}
     };
     this.onPointerMove = (event) => {
       if (!this.drag) return;
-      this.targetRotation.y = this.drag.ry + (event.clientX - this.drag.x) * 0.008;
-      this.targetRotation.x = Math.max(-0.55, Math.min(0.3, this.drag.rx + (event.clientY - this.drag.y) * 0.006));
-      this.viewport.style.setProperty("--cafe-rx", `${this.targetRotation.x}rad`);
-      this.viewport.style.setProperty("--cafe-ry", `${this.targetRotation.y}rad`);
+      const dx = event.clientX - this.drag.x;
+      const dy = event.clientY - this.drag.y;
+      if (this.drag.mode === "pan") {
+        const scale = this.targetCameraDistance * 0.0018;
+        this.targetCameraTarget.x = this.drag.tx - dx * scale;
+        this.targetCameraTarget.y = Math.max(0.35, Math.min(3.2, this.drag.ty + dy * scale));
+      } else {
+        this.targetRotation.y = this.drag.ry + dx * 0.008;
+        this.targetRotation.x = Math.max(-1.25, Math.min(0.72, this.drag.rx + dy * 0.006));
+        this.viewport.style.setProperty("--cafe-rx", `${this.targetRotation.x}rad`);
+        this.viewport.style.setProperty("--cafe-ry", `${this.targetRotation.y}rad`);
+      }
     };
     this.onPointerUp = () => { this.drag = null; this.viewport.classList.remove("is-dragging"); };
+    this.onWheel = (event) => {
+      event.preventDefault();
+      this.stopAutoTour();
+      this.targetCameraDistance = Math.max(5.5, Math.min(19, this.targetCameraDistance + (event.deltaY > 0 ? 0.8 : -0.8)));
+    };
+    this.onContextMenu = (event) => event.preventDefault();
     this.viewport.addEventListener("pointerdown", this.onPointerDown);
     this.viewport.addEventListener("pointermove", this.onPointerMove);
     this.viewport.addEventListener("pointerup", this.onPointerUp);
     this.viewport.addEventListener("pointercancel", this.onPointerUp);
+    this.viewport.addEventListener("wheel", this.onWheel, { passive: false });
+    this.viewport.addEventListener("contextmenu", this.onContextMenu);
   }
 
   async init() {
@@ -232,8 +265,7 @@ class Interior3DEngine {
     this.scene = new THREE.Scene();
     this.scene.background = new THREE.Color(0x101a22);
     this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    this.camera.position.set(8, 5.8, 9);
-    this.camera.lookAt(0, 1.5, 0);
+    this.applyCameraPreset("perspective", false);
     this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -324,6 +356,61 @@ class Interior3DEngine {
     this.renderFrame();
   }
 
+  applyCameraPreset(name, animate = true) {
+    if (name === "tour") {
+      this.toggleAutoTour();
+      return;
+    }
+    this.cameraPreset = name;
+    const presets = {
+      perspective: { rotation:{ x:-0.08, y:-0.45 }, distance:12.6, target:{ x:0, y:1.45, z:0 }, fov:42 },
+      front: { rotation:{ x:0.02, y:0 }, distance:13.4, target:{ x:0, y:1.55, z:-.7 }, fov:36 },
+      top: { rotation:{ x:-1.18, y:-0.02 }, distance:15.2, target:{ x:0, y:.25, z:0 }, fov:34 },
+      detail: { rotation:{ x:-0.18, y:-0.78 }, distance:7.1, target:{ x:1.1, y:1.35, z:-1.55 }, fov:32 }
+    };
+    const preset = presets[name] || presets.perspective;
+    this.targetRotation = { ...preset.rotation };
+    this.targetCameraDistance = preset.distance;
+    this.targetCameraTarget = { ...preset.target };
+    if (this.camera) { this.camera.fov = preset.fov; this.camera.updateProjectionMatrix(); }
+    if (!animate) {
+      this.rotation = { ...this.targetRotation };
+      this.cameraDistance = this.targetCameraDistance;
+      this.cameraTarget = { ...this.targetCameraTarget };
+    }
+  }
+
+  toggleAutoTour() {
+    if (this.autoTourActive) {
+      this.stopAutoTour();
+      return false;
+    }
+    this.startAutoTour();
+    return true;
+  }
+
+  startAutoTour() {
+    this.stopAutoTour();
+    this.autoTourActive = true;
+    const presets = ["perspective", "front", "top", "detail"];
+    const advance = () => {
+      if (!this.autoTourActive || this.disposed) return;
+      const preset = presets[this.autoTourIndex % presets.length];
+      this.autoTourIndex += 1;
+      this.applyCameraPreset(preset);
+      this.autoTourTimer = window.setTimeout(advance, 2300);
+    };
+    advance();
+  }
+
+  stopAutoTour() {
+    this.autoTourActive = false;
+    if (this.autoTourTimer) {
+      window.clearTimeout(this.autoTourTimer);
+      this.autoTourTimer = null;
+    }
+  }
+
   resize() {
     if (!this.renderer) return;
     const width = Math.max(1, this.viewport.clientWidth);
@@ -336,7 +423,16 @@ class Interior3DEngine {
     if (!this.drag) this.targetRotation.y += 0.0015;
     this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.08;
     this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.08;
-    this.cafeRoot.rotation.x = this.rotation.x; this.cafeRoot.rotation.y = this.rotation.y;
+    this.cameraDistance += (this.targetCameraDistance - this.cameraDistance) * 0.1;
+    this.cameraTarget.x += (this.targetCameraTarget.x - this.cameraTarget.x) * 0.1;
+    this.cameraTarget.y += (this.targetCameraTarget.y - this.cameraTarget.y) * 0.1;
+    this.cameraTarget.z += (this.targetCameraTarget.z - this.cameraTarget.z) * 0.1;
+    const radius = this.cameraDistance;
+    const cx = this.cameraTarget.x;
+    const cy = this.cameraTarget.y;
+    const cz = this.cameraTarget.z;
+    this.camera.position.set(cx + Math.sin(this.rotation.y) * Math.cos(this.rotation.x) * radius, cy + Math.sin(-this.rotation.x) * radius + 2.2, cz + Math.cos(this.rotation.y) * Math.cos(this.rotation.x) * radius);
+    this.camera.lookAt(cx, cy, cz);
     this.renderer.render(this.scene, this.camera);
     this.frame = requestAnimationFrame(() => this.renderFrame());
   }
@@ -369,12 +465,15 @@ class Interior3DEngine {
 
   destroy() {
     this.disposed = true;
+    this.stopAutoTour();
     cancelAnimationFrame(this.frame);
     this.resizeObserver?.disconnect();
     this.viewport.removeEventListener("pointerdown", this.onPointerDown);
     this.viewport.removeEventListener("pointermove", this.onPointerMove);
     this.viewport.removeEventListener("pointerup", this.onPointerUp);
     this.viewport.removeEventListener("pointercancel", this.onPointerUp);
+    this.viewport.removeEventListener("wheel", this.onWheel);
+    this.viewport.removeEventListener("contextmenu", this.onContextMenu);
     if (this.scene) this.scene.traverse((object) => { object.geometry?.dispose?.(); if (Array.isArray(object.material)) object.material.forEach((item) => item.dispose()); else object.material?.dispose?.(); });
     this.renderer?.dispose();
     this.renderer?.forceContextLoss?.();
@@ -1002,6 +1101,22 @@ class AvatarController {
     if (type === "download-generated-file") this.downloadGeneratedFile(action.dataset.projectId, action.dataset.filePath);
     if (type === "toggle-project") action.closest(".project-node")?.classList.toggle("is-open");
     if (type === "export-folder") this.exportGeneratedFolder();
+    if (type === "camera-preset") {
+      const preset = action.dataset.cameraPreset || "perspective";
+      if (preset === "tour") {
+        const active = this.design3DEngine?.toggleAutoTour?.();
+        action.closest(".camera-preset-bar")?.querySelectorAll("button").forEach((button) => button.classList.toggle("is-active", active ? button === action : button.dataset.cameraPreset === this.design3DEngine?.cameraPreset));
+      } else {
+        this.design3DEngine?.stopAutoTour?.();
+        this.design3DEngine?.applyCameraPreset(preset);
+        action.closest(".camera-preset-bar")?.querySelectorAll("button").forEach((button) => button.classList.toggle("is-active", button === action));
+      }
+    }
+    if (type === "render-view-mode") {
+      const showcase = action.closest(".render-showcase");
+      if (showcase) showcase.dataset.viewMode = action.dataset.renderViewMode || "scene";
+      action.closest(".render-view-toggle")?.querySelectorAll("button").forEach((button) => button.classList.toggle("is-active", button === action));
+    }
     if (type === "booking-mode") {
       const panel = action.closest(".booking-live-window");
       panel?.querySelectorAll("[data-booking-mode]").forEach((button) => button.classList.toggle("is-active", button === action));
@@ -1297,9 +1412,19 @@ class AvatarController {
       timeout: ["Result failed", payload.message || "The render timed out."]
     };
     if (phase === "final_image" && payload.imageElement) {
+      const layer = viewer.querySelector("[data-final-render-layer]");
       const image = payload.imageElement; image.className = "beauty-render-image"; image.alt = "Final render";
-      viewer.replaceChildren(image); viewer.dataset.imageLoadStatus = "loaded"; return;
+      if (layer) {
+        layer.replaceChildren(image);
+        layer.setAttribute("aria-hidden", "false");
+        viewer.dataset.viewMode = "final";
+        viewer.querySelectorAll("[data-render-view-mode]").forEach((button) => button.classList.toggle("is-active", button.dataset.renderViewMode === "final"));
+      } else {
+        viewer.replaceChildren(image);
+      }
+      viewer.dataset.imageLoadStatus = "loaded"; return;
     }
+    if (viewer.classList.contains("render-showcase") && !["image_failed", "failed", "timeout"].includes(phase)) return;
     const [title, detail] = states[phase] || states.idle;
     const state = document.createElement("div"); state.className = `result-state${["image_failed", "failed", "timeout"].includes(phase) ? " result-state--error" : ""}`;
     const strong = document.createElement("strong"); strong.textContent = title;
@@ -1310,13 +1435,13 @@ class AvatarController {
   }
 
   setWorkbenchDisplayPhase(phase, payload = {}) {
-    const allowed = ["idle", "plan_created", "provider_checking", "provider_ready", "render_submitted", "rendering", "collecting_output", "image_loading", "final_image", "image_failed", "failed", "timeout"];
+    const allowed = ["idle", "drafting_2d", "building_3d", "materializing", "plan_created", "provider_checking", "provider_ready", "render_submitted", "rendering", "collecting_output", "image_loading", "final_image", "image_failed", "failed", "timeout"];
     if (!allowed.includes(phase)) return;
     const previous = window.NOVA_WORKBENCH_DISPLAY_STATE;
     const candidateUrl = payload.imageUrl || payload.finalRenderUrl || (typeof payload.artifact === "string" && payload.artifact.startsWith("/generated_assets/") ? payload.artifact : null);
     const rawProgress = Number(payload.progress ?? previous.progress ?? 0);
     const progress = rawProgress <= 1 ? Math.round(rawProgress * 100) : Math.round(rawProgress);
-    const badgeMap = { idle:"IDLE", plan_created:"PLAN CREATED", provider_checking:"CHECKING PROVIDER", provider_ready:"PROVIDER READY", render_submitted:"RENDER SUBMITTED", rendering:"RENDERING", collecting_output:"COLLECTING OUTPUT", image_loading:"LOADING IMAGE", final_image:"DONE", image_failed:"IMAGE FAILED", failed:"FAILED", timeout:"TIMEOUT" };
+    const badgeMap = { idle:"DRAFTING", drafting_2d:"DRAFTING", building_3d:"BUILDING 3D", materializing:"MATERIALIZING", plan_created:"DRAFTING", provider_checking:"DRAFTING", provider_ready:"BUILDING 3D", render_submitted:"MATERIALIZING", rendering:"MATERIALIZING", collecting_output:"MATERIALIZING", image_loading:"LOADING IMAGE", final_image:"DONE", image_failed:"IMAGE FAILED", failed:"FAILED", timeout:"TIMEOUT" };
     const imageLoadStatus = phase === "final_image" ? "loaded" : phase === "image_loading" ? "loading" : phase === "image_failed" ? "error" : previous.imageLoadStatus;
     const previewDomStatus = phase === "final_image" ? "visible" : phase === "image_loading" ? "loading" : ["image_failed", "failed", "timeout"].includes(phase) ? "error" : previous.previewDomStatus;
     const terminal = ["final_image", "image_failed", "failed", "timeout"].includes(phase);
@@ -1327,7 +1452,7 @@ class AvatarController {
     const badge = this.workbenchTaskCanvas.querySelector("[data-agent-status]"); if (badge) badge.textContent = badgeMap[phase];
     this.agentStatusLabel.textContent = badgeMap[phase];
     const current = this.workbenchTaskCanvas.querySelector("[data-operation-current]"); if (current) current.textContent = badgeMap[phase];
-    const timelineMap = { idle:["understanding-request","Understanding request"], plan_created:["planning-room-layout","Planning room layout"], provider_checking:["checking-render-provider","Checking render provider"], provider_ready:["checking-render-provider","Checking render provider"], render_submitted:["submitting-render-job","Submitting render job"], rendering:["rendering-image","Rendering image"], collecting_output:["collecting-output","Collecting output"], image_loading:["loading-final-image","Loading final image"], final_image:["final-render-ready","Final image ready"], image_failed:["loading-final-image","Loading final image"], failed:["final-render-ready","Final image ready"], timeout:["final-render-ready","Final image ready"] };
+    const timelineMap = { idle:["drafting-2d","Drafting 2D"], drafting_2d:["drafting-2d","Drafting 2D"], building_3d:["building-3d","Building 3D"], materializing:["materializing","Materializing"], plan_created:["drafting-2d","Drafting 2D"], provider_checking:["drafting-2d","Drafting 2D"], provider_ready:["building-3d","Building 3D"], render_submitted:["materializing","Materializing"], rendering:["materializing","Materializing"], collecting_output:["materializing","Materializing"], image_loading:["loading-final-image","Loading final image"], final_image:["final-render-ready","Final image ready"], image_failed:["loading-final-image","Loading final image"], failed:["final-render-ready","Final image ready"], timeout:["final-render-ready","Final image ready"] };
     const [stepId, title] = timelineMap[phase]; this.updateOperationTimeline(`display_${phase}`, { stepId, title, visibleAction:title, status:phase === "final_image" ? "completed" : ["image_failed","failed","timeout"].includes(phase) ? "failed" : "running", progress:progress / 100 });
     window.NOVA_DEBUG_RENDER_STATE = { imageLoadStatus, previewDomStatus, renderStatus:phase, imageUrl:window.NOVA_WORKBENCH_DISPLAY_STATE.imageUrl };
     this.updateBeautyRenderDebug({ renderStatus:phase, imageLoadStatus, progress, imageUrl:window.NOVA_WORKBENCH_DISPLAY_STATE.imageUrl, lastEvent:window.NOVA_WORKBENCH_DISPLAY_STATE.lastEvent });
@@ -1368,9 +1493,26 @@ class AvatarController {
     this.agentPlaybackActive = true;
     this.setServiceStatus(this.fastApiWorkbenchStatus, "Runtime online", "online");
     this.agentTaskDesc.innerText = `Task: ${task} · BACKEND AGENT`;
-    if (this.currentWorkbenchTaskType === "design3d") this.setWorkbenchDisplayPhase("idle", { eventType:"task_created" });
+    if (this.currentWorkbenchTaskType === "design3d") {
+      this.setWorkbenchDisplayPhase("drafting_2d", { eventType:"task_created" });
+      this.startReal3DBuildSequence();
+    }
     else this.agentStatusLabel.textContent = "RUNNING";
     this.appendAgentLog(`Backend task created · ${state.taskId.slice(0, 8)}`);
+  }
+
+  startReal3DBuildSequence() {
+    [
+      [900, "building_3d", ["shell"]],
+      [1500, "building_3d", ["counter", "seating"]],
+      [2300, "materializing", ["lighting", "material", "decor"]]
+    ].forEach(([delay, phase, layers]) => {
+      const timer = window.setTimeout(() => {
+        if (!window.NOVA_WORKBENCH_DISPLAY_STATE.terminal) this.setWorkbenchDisplayPhase(phase, { eventType:`real3d_${phase}` });
+        layers.forEach((layer) => this.revealWorkspaceLayer(`cafe-layer-${layer}`));
+      }, delay);
+      this.workbenchTaskTimers.push(timer);
+    });
   }
 
   closeAgentEventSource(reason = "intentional") {
@@ -1463,7 +1605,7 @@ class AvatarController {
     if (event.type === "universal_agent_completed" || event.type === "task_completed") this.handleBackendTaskCompleted(state);
     if (event.type === "task_failed") this.handleBackendTaskFailed(payload.debug?.error || state?.output?.error || "Agent task failed.");
     if (this.currentWorkbenchTaskType === "design3d") {
-      const phaseByEvent = { task_created:"idle", plan_created:"plan_created", render_provider_check_started:"provider_checking", render_provider_available:"provider_ready", render_job_submitted:"render_submitted", beauty_render_started:"rendering", render_queue_waiting:"rendering", render_sampling_progress:"rendering", beauty_render_progress:"rendering", render_collecting_output:"collecting_output", collecting_output:"collecting_output", render_image_saved:"image_loading", beauty_render_ready:"image_loading", beauty_render_completed:"image_loading", beauty_render_failed:"failed", task_failed:"failed", render_timeout:"timeout" };
+      const phaseByEvent = { task_created:"drafting_2d", render_provider_available:"building_3d", render_job_submitted:"materializing", beauty_render_started:"materializing", render_queue_waiting:"materializing", render_sampling_progress:"materializing", beauty_render_progress:"materializing", render_collecting_output:"materializing", collecting_output:"materializing", render_image_saved:"image_loading", beauty_render_ready:"image_loading", beauty_render_completed:"image_loading", beauty_render_failed:"failed", task_failed:"failed", render_timeout:"timeout" };
       const phase = phaseByEvent[event.type];
       if (phase) this.setWorkbenchDisplayPhase(phase, { ...payload, eventType:event.type });
     }
@@ -1682,7 +1824,7 @@ class AvatarController {
     this.currentWorkbenchRequest = task;
     this.currentWorkbenchTaskType = detectWorkbenchTaskType(task);
     this.workbenchTaskCanvas.innerHTML = renderWorkbenchTask(this.currentWorkbenchTaskType, task);
-    this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
+    if (this.currentWorkbenchTaskType !== "design3d") this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
     this.workbenchCurrentTask = document.getElementById("workbench-current-task");
     this.workbenchCards = Array.from(this.agentOverlay.querySelectorAll(".workbench-card"));
     if (this.currentWorkbenchTaskType === "design3d") {
