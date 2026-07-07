@@ -1,4 +1,6 @@
 from agent_tools import BrowserAutomationTool, FileWorkspaceTool, Interior3DTool, WebsiteBuilderTool
+from design_asset_pipeline import ProfessionalAssetPipelineTool
+from design_quality_gate import DesignQualityGateTool
 from final_beauty_render_tool import FinalBeautyRenderTool
 from nova_agent_types import ToolDescriptor
 from browser_use_adapter import BrowserUseAdapter
@@ -15,15 +17,18 @@ class PassiveTool:
 
 class NovaToolRegistry:
     def __init__(self):
-        interior=Interior3DTool(); beauty=FinalBeautyRenderTool(); booking=BrowserAutomationTool(); website=WebsiteBuilderTool(); workspace=FileWorkspaceTool()
+        interior=Interior3DTool(); beauty=FinalBeautyRenderTool(); booking=BrowserAutomationTool(); website=WebsiteBuilderTool(); workspace=FileWorkspaceTool(); pipeline=ProfessionalAssetPipelineTool(); quality=DesignQualityGateTool()
         self._tools={"InteriorDesignTool":interior,"Interior3DTool":interior,"BrowserBookingTool":booking,
           "BrowserAutomationTool":booking,"WebsiteBuilderTool":website,"FileWorkspaceTool":workspace,"FinalBeautyRenderTool":beauty,
+          "ProfessionalAssetPipelineTool":pipeline,"DesignQualityGateTool":quality,
           "CodeBuilderTool":PassiveTool("CodeBuilderTool","Code implementation plan ready."),
           "ResearchTool":PassiveTool("ResearchTool","Research synthesis ready."),
           "GPTBrainAdapter":PlaceholderTool("GPTBrainAdapter"),"CodexAdapter":CodexAdapter(),"BrowserUseAdapter":BrowserUseAdapter(),"ComputerUseAdapter":ComputerUseAdapter(),"ComfyUIRenderProvider":PlaceholderTool("ComfyUIRenderProvider"),"GitTool":PlaceholderTool("GitTool"),"ComputerUseTool":PlaceholderTool("ComputerUseTool"),"BrowserUseTool":PlaceholderTool("BrowserUseTool"),"RenderTool":PlaceholderTool("RenderTool")}
         self._descriptors={
           "InteriorDesignTool":ToolDescriptor("InteriorDesignTool","Create spatial specifications and interactive 3D drafts."),
           "Interior3DTool":ToolDescriptor("Interior3DTool","Existing NOVA interactive 3D engine."),
+          "ProfessionalAssetPipelineTool":ToolDescriptor("ProfessionalAssetPipelineTool","Inspect installed professional design assets and prepare a presentation payload."),
+          "DesignQualityGateTool":ToolDescriptor("DesignQualityGateTool","Validate professional render assets and report presentation quality."),
           "FinalBeautyRenderTool":ToolDescriptor("FinalBeautyRenderTool","Create a premium final interior proposal render using a local fallback provider."),
           "BrowserBookingTool":ToolDescriptor("BrowserBookingTool","Prepare cinema booking up to protected actions.",True,"high"),
           "BrowserAutomationTool":ToolDescriptor("BrowserAutomationTool","Existing NOVA browser automation engine.",True,"high"),

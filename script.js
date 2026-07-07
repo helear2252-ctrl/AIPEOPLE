@@ -90,13 +90,23 @@ function renderOperationTimeline() {
 }
 
 function renderRealRenderPanel() {
-  return `<section class="render-showcase workbench-task-reveal" data-result-viewer="main" data-result-phase="drafting_2d" data-image-load-status="idle" data-view-mode="scene" aria-label="Interior 3D workbench viewer">
-    <div class="render-floorplan-layer" aria-hidden="true"><div class="render-floorplan"><i class="plan-grid"></i><i class="plan-room plan-room--main"></i><i class="plan-room plan-room--service"></i><i class="plan-room plan-room--entry"></i><i class="plan-block plan-block--bar"></i><i class="plan-block plan-block--island"></i><i class="plan-block plan-block--sofa"></i><i class="plan-block plan-block--table-a"></i><i class="plan-block plan-block--table-b"></i><i class="plan-scan"></i></div></div>
-    <div class="cafe-3d-viewport real-3d-workbench is-playback-locked" data-3d-viewport aria-label="Interactive 3D interior viewer"><div class="cafe-css-fallback"><div class="cafe-room"><i class="cafe-floor playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--back playback-layer cafe-layer-shell is-pending"></i><i class="cafe-wall cafe-wall--side playback-layer cafe-layer-shell is-pending"></i><div class="cafe-counter playback-layer cafe-layer-counter is-pending"></div><div class="cafe-bench playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--one playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--two playback-layer cafe-layer-seating is-pending"></div><div class="cafe-table cafe-table--three playback-layer cafe-layer-seating is-pending"></div><div class="cafe-pendants playback-layer cafe-layer-lighting is-pending"><i></i><i></i><i></i></div><div class="cafe-fallback-decor playback-layer cafe-layer-decor is-pending"><i></i><i></i><i></i></div></div></div></div>
-    <div class="render-material-pass" aria-hidden="true"><i></i><i></i><i></i></div>
+  return `<section class="render-showcase professional-design-viewer workbench-task-reveal" data-result-viewer="main" data-result-phase="drafting_2d" data-image-load-status="idle" data-view-mode="render" aria-label="Professional interior design asset viewer">
+    <div class="pro-viewer-stage" data-pro-viewer-stage>
+      <div class="pro-viewer-pane" data-pro-mode="exterior"><img data-pro-exterior alt="Professional exterior render"><div class="pro-hotspots" data-pro-hotspots="exterior"><button type="button" data-workbench-action="design-hotspot" data-hotspot="exterior-glass">Exterior glass</button><button type="button" data-workbench-action="design-hotspot" data-hotspot="signage">Signage</button><button type="button" data-workbench-action="design-hotspot" data-hotspot="seating">Outdoor seating</button></div><div class="pro-placeholder" data-pro-placeholder="exterior"><strong>Exterior render pending</strong><span>Place exterior.jpg in assets/designs/cafe_pro/renders/</span></div></div>
+      <div class="pro-viewer-pane" data-pro-mode="interior"><img data-pro-interior alt="Professional interior render"><div class="pro-hotspots" data-pro-hotspots="interior"><button type="button" data-workbench-action="design-hotspot" data-hotspot="bar-counter">Bar counter</button><button type="button" data-workbench-action="design-hotspot" data-hotspot="lighting">Lighting</button><button type="button" data-workbench-action="design-hotspot" data-hotspot="material-palette">Materials</button></div><div class="pro-placeholder" data-pro-placeholder="interior"><strong>Interior render pending</strong><span>Place interior_bar.jpg in assets/designs/cafe_pro/renders/</span></div></div>
+      <div class="pro-viewer-pane" data-pro-mode="cutaway"><div class="pro-placeholder" data-pro-placeholder="cutaway"><strong>Cutaway presentation pending</strong><span>Install a cutaway GLB camera or renderer cutaway output.</span></div></div>
+      <div class="pro-viewer-pane" data-pro-mode="plan"><img data-pro-plan alt="Professional floor plan"><div class="pro-placeholder" data-pro-placeholder="plan"><strong>AutoCAD plan pending</strong><span>Place floor_plan.png in assets/designs/cafe_pro/plans/</span></div></div>
+      <div class="pro-viewer-pane" data-pro-mode="model"><div class="pro-model-viewport" data-3d-viewport aria-label="SketchUp GLB model viewer"></div><div class="pro-placeholder" data-pro-placeholder="model"><strong>SketchUp GLB pending</strong><span>Place cafe_showroom.glb in assets/designs/cafe_pro/models/</span></div></div>
+      <div class="pro-viewer-pane is-active" data-pro-mode="render"><img data-pro-render alt="Professional renderer output"><div class="pro-hotspots" data-pro-hotspots="render"><button type="button" data-workbench-action="design-hotspot" data-hotspot="bar-counter">Bar counter</button><button type="button" data-workbench-action="design-hotspot" data-hotspot="lighting">Lighting</button><button type="button" data-workbench-action="design-hotspot" data-hotspot="seating">Seating</button></div><div class="render-variant-bar" aria-label="Render views"><button type="button" class="is-active" data-workbench-action="render-variant" data-render-variant="hero">Hero</button><button type="button" data-workbench-action="render-variant" data-render-variant="interior">Interior</button><button type="button" data-workbench-action="render-variant" data-render-variant="exterior">Exterior</button><button type="button" data-workbench-action="render-variant" data-render-variant="detail">Detail</button></div><div class="pro-placeholder" data-pro-placeholder="render"><strong>Renderer output pending</strong><span>Expected hero.jpg in assets/designs/cafe_pro/renders/</span></div></div>
+      <div class="pro-viewer-pane" data-pro-mode="orbit"><img data-pro-orbit alt="Professional 360 orbit frame"><div class="pro-placeholder" data-pro-placeholder="orbit"><strong>360 renderer frames pending</strong><span>Place frame_0001.jpg - frame_0036.jpg in assets/designs/cafe_pro/orbit/</span></div></div>
+    </div>
     <div class="final-render-layer" data-final-render-layer aria-hidden="true"></div>
-    <div class="render-view-toggle" aria-label="Workbench view mode"><button type="button" class="is-active" data-workbench-action="render-view-mode" data-render-view-mode="scene">3D Scene</button><button type="button" data-workbench-action="render-view-mode" data-render-view-mode="final">Final Render</button></div>
-    <div class="camera-preset-bar" aria-label="Camera presets"><button type="button" class="is-active" data-workbench-action="camera-preset" data-camera-preset="perspective">Perspective</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="front">Front</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="top">Top</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="detail">Detail</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="tour">Auto Tour</button></div>
+    <div class="pro-workflow-label" data-pro-workflow-label>Renderer Material / Lighting Preview</div>
+    <div class="nova-design-cursor" data-nova-design-cursor aria-hidden="true"><i></i></div>
+    <div class="asset-mode-bar" aria-label="Professional design modes"><button type="button" data-workbench-action="pro-view-mode" data-pro-view-mode="exterior">Exterior</button><button type="button" data-workbench-action="pro-view-mode" data-pro-view-mode="interior">Interior</button><button type="button" data-workbench-action="pro-view-mode" data-pro-view-mode="cutaway">Cutaway</button><button type="button" data-workbench-action="pro-view-mode" data-pro-view-mode="plan">Plan</button><button type="button" data-workbench-action="pro-view-mode" data-pro-view-mode="model">3D Model</button><button type="button" class="is-active" data-workbench-action="pro-view-mode" data-pro-view-mode="render">Render</button><button type="button" data-workbench-action="pro-view-mode" data-pro-view-mode="orbit">360 Orbit</button></div>
+    <div class="pro-mode-hint" data-pro-mode-hint aria-live="polite"></div>
+    <div class="render-view-toggle" aria-label="Colab final render mode"><button type="button" data-workbench-action="render-view-mode" data-render-view-mode="final">Final Render</button></div>
+    <div class="camera-preset-bar" aria-label="Camera presets"><button type="button" class="is-active" data-workbench-action="camera-preset" data-camera-preset="exterior">Exterior</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="interior">Interior</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="top">Top</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="detail">Detail</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="cutaway">Cutaway</button><button type="button" data-workbench-action="camera-preset" data-camera-preset="tour">Auto Tour</button></div>
   </section>`;
 }
 
@@ -190,170 +200,544 @@ CAPABILITY ENGINE LAYER
 class Interior3DEngine {
   constructor(viewport) {
     this.viewport = viewport;
+    this.showcase = viewport.closest(".render-showcase");
+    this.interactionSurface = this.showcase.querySelector("[data-pro-viewer-stage]") || viewport;
+    this.workflowLabel = this.showcase.querySelector("[data-pro-workflow-label]");
+    this.cursor = this.showcase.querySelector("[data-nova-design-cursor]");
     this.disposed = false;
-    this.rotation = { x: -0.08, y: -0.45 };
+    this.manifestPath = assetUrl("assets/designs/cafe_pro/manifest.json");
+    this.defaultManifest = {
+      title: "Professional Café Interior Proposal",
+      workflow: { plan: "AutoCAD", model: "SketchUp", renderer: "V-Ray / Enscape / D5 Render" },
+      plans: { floor: "assets/designs/cafe_pro/plans/floor_plan.png" },
+      model: { glb: "assets/designs/cafe_pro/models/cafe_showroom.glb" },
+      renders: {
+        hero: "assets/designs/cafe_pro/renders/hero.jpg",
+        interior: "assets/designs/cafe_pro/renders/interior_bar.jpg",
+        exterior: "assets/designs/cafe_pro/renders/exterior.jpg",
+        detail: "assets/designs/cafe_pro/renders/detail_lighting.jpg"
+      },
+      orbit: { pattern: "assets/designs/cafe_pro/orbit/frame_####.jpg", count: 36 }
+    };
+    this.manifest = this.defaultManifest;
+    this.hasManifest = false;
+    this.hasPlan = false;
+    this.hasModel = false;
+    this.hasHeroRender = false;
+    this.hasInteriorRender = false;
+    this.hasExteriorRender = false;
+    this.hasDetailRender = false;
+    this.hasRender = false;
+    this.hasOrbitFrames = false;
+    this.activeMode = "render";
+    this.cameraMode = "exterior";
+    this.modelDrag = null;
+    this.orbitDrag = null;
+    this.rotation = { x: -0.12, y: -0.45 };
     this.targetRotation = { ...this.rotation };
-    this.cameraTarget = { x: 0, y: 1.45, z: 0 };
+    this.cameraTarget = { x: 0, y: 1.35, z: 0 };
     this.targetCameraTarget = { ...this.cameraTarget };
-    this.cameraDistance = 12.6;
-    this.targetCameraDistance = 12.6;
-    this.cameraPreset = "perspective";
+    this.cameraDistance = 7.5;
+    this.targetCameraDistance = 7.5;
+    this.orbitFrame = 0;
+    this.orbitZoom = 1;
+    this.orbitPan = { x: 0, y: 0 };
+    this.renderZoom = 1;
+    this.renderPan = { x: 0, y: 0 };
+    this.renderDrag = null;
     this.autoTourActive = false;
     this.autoTourTimer = null;
-    this.autoTourIndex = 0;
-    this.drag = null;
-    this.frame = null;
-    this.resizeObserver = null;
-    this.revealedLayers = new Set();
-    this.layers = {};
-    this.materials = {};
-    this.bindPointerEvents();
+    this.workflowTimer = null;
+    this.workflowStep = "render_review";
+    this.cursorVisible = false;
+    this.cursorAction = null;
+    this.initialModeResolved = false;
+    this.activeRenderVariant = "hero";
+    this.bindAssetInteractions();
     this.init();
   }
 
-  bindPointerEvents() {
-    this.onPointerDown = (event) => {
-      this.stopAutoTour();
-      const mode = event.shiftKey || event.button === 2 ? "pan" : "rotate";
-      this.drag = { mode, x: event.clientX, y: event.clientY, rx: this.targetRotation.x, ry: this.targetRotation.y, tx: this.targetCameraTarget.x, ty: this.targetCameraTarget.y, tz: this.targetCameraTarget.z };
-      this.viewport.classList.add("is-dragging");
-      try { this.viewport.setPointerCapture?.(event.pointerId); } catch {}
-    };
-    this.onPointerMove = (event) => {
-      if (!this.drag) return;
-      const dx = event.clientX - this.drag.x;
-      const dy = event.clientY - this.drag.y;
-      if (this.drag.mode === "pan") {
-        const scale = this.targetCameraDistance * 0.0018;
-        this.targetCameraTarget.x = this.drag.tx - dx * scale;
-        this.targetCameraTarget.y = Math.max(0.35, Math.min(3.2, this.drag.ty + dy * scale));
-      } else {
-        this.targetRotation.y = this.drag.ry + dx * 0.008;
-        this.targetRotation.x = Math.max(-1.25, Math.min(0.72, this.drag.rx + dy * 0.006));
-        this.viewport.style.setProperty("--cafe-rx", `${this.targetRotation.x}rad`);
-        this.viewport.style.setProperty("--cafe-ry", `${this.targetRotation.y}rad`);
-      }
-    };
-    this.onPointerUp = () => { this.drag = null; this.viewport.classList.remove("is-dragging"); };
-    this.onWheel = (event) => {
-      event.preventDefault();
-      this.stopAutoTour();
-      this.targetCameraDistance = Math.max(5.5, Math.min(19, this.targetCameraDistance + (event.deltaY > 0 ? 0.8 : -0.8)));
-    };
-    this.onContextMenu = (event) => event.preventDefault();
-    this.viewport.addEventListener("pointerdown", this.onPointerDown);
-    this.viewport.addEventListener("pointermove", this.onPointerMove);
-    this.viewport.addEventListener("pointerup", this.onPointerUp);
-    this.viewport.addEventListener("pointercancel", this.onPointerUp);
-    this.viewport.addEventListener("wheel", this.onWheel, { passive: false });
-    this.viewport.addEventListener("contextmenu", this.onContextMenu);
+  async init() {
+    await this.loadManifest();
+    this.bindAssetImages();
+    await this.initModelViewer();
+    this.prepareOrbitFrames();
+    this.updateModeAvailability();
+    this.resolveInitialMode();
+    this.startWorkflowAutoplay();
+    this.updateState();
   }
 
-  async init() {
+  async loadManifest() {
+    if (window.NOVA_CAFE_PRO_MANIFEST) {
+      this.manifest = window.NOVA_CAFE_PRO_MANIFEST;
+      this.hasManifest = true;
+      return;
+    }
     try {
-      const THREE = await loadOptionalThree();
-      if (this.disposed || !this.viewport.isConnected) return;
-      this.THREE = THREE;
-      this.createScene();
-    } catch (error) {
-      console.info("[NOVA 3D] CSS cafe fallback is active.", error.message);
+      const response = await fetch(this.manifestPath, { cache: "no-store" });
+      if (!response.ok) throw new Error(`manifest ${response.status}`);
+      this.manifest = await response.json();
+      this.hasManifest = true;
+    } catch {
+      this.manifest = this.defaultManifest;
+      this.hasManifest = false;
     }
   }
 
-  createScene() {
-    const THREE = this.THREE;
-    this.scene = new THREE.Scene();
-    this.scene.background = new THREE.Color(0x101a22);
-    this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
-    this.applyCameraPreset("perspective", false);
-    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
-    this.renderer.outputColorSpace = THREE.SRGBColorSpace;
-    this.renderer.shadowMap.enabled = true;
-    this.viewport.prepend(this.renderer.domElement);
-    this.cafeRoot = new THREE.Group();
-    this.scene.add(this.cafeRoot);
+  resolveAsset(path) {
+    return assetUrl(path || "");
+  }
 
-    ["shell", "counter", "seating", "lighting", "material", "decor"].forEach((name) => {
-      const group = new THREE.Group();
-      group.name = `cafe-layer-${name}`;
-      group.visible = false;
-      group.scale.setScalar(0.001);
-      this.layers[name] = group;
-      this.cafeRoot.add(group);
-    });
+  bindAssetImages() {
+    this.planImage = this.showcase.querySelector("[data-pro-plan]");
+    this.exteriorImage = this.showcase.querySelector("[data-pro-exterior]");
+    this.interiorImage = this.showcase.querySelector("[data-pro-interior]");
+    this.renderImage = this.showcase.querySelector("[data-pro-render]");
+    this.orbitImage = this.showcase.querySelector("[data-pro-orbit]");
+    if (window.NOVA_ENABLE_DESIGN_ASSET_PROBES) this.loadImage("plan", this.planImage, this.manifest.plans?.floor);
+    this.loadImage("hero", this.renderImage, this.manifest.renders?.hero);
+    this.loadImage("exterior", this.exteriorImage, this.manifest.renders?.exterior);
+    this.loadImage("interior", this.interiorImage, this.manifest.renders?.interior);
+    this.checkRenderAvailability("detail", this.manifest.renders?.detail);
+  }
 
-    const materials = {
-      floor: new THREE.MeshStandardMaterial({ color: 0x6f5540, roughness: 0.72 }),
-      wall: new THREE.MeshStandardMaterial({ color: 0xd8c9b7, roughness: 0.88 }),
-      wood: new THREE.MeshStandardMaterial({ color: 0x563929, roughness: 0.62 }),
-      stone: new THREE.MeshStandardMaterial({ color: 0xaca79d, roughness: 0.38 }),
-      metal: new THREE.MeshStandardMaterial({ color: 0x20262a, metalness: 0.72, roughness: 0.3 }),
-      fabric: new THREE.MeshStandardMaterial({ color: 0x9d7457, roughness: 0.82 }),
-      green: new THREE.MeshStandardMaterial({ color: 0x496b50, roughness: 0.78 }),
-      glass: new THREE.MeshPhysicalMaterial({ color: 0xa9d6e8, transparent: true, opacity: 0.32, roughness: 0.12, metalness: 0.08 })
+  async loadImage(kind, image, path) {
+    if (!image || !path) return;
+    try {
+      const response = await fetch(this.resolveAsset(path), { method: "HEAD", cache: "no-store" });
+      if (!response.ok) throw new Error(`${kind} ${response.status}`);
+    } catch {
+      image.removeAttribute("src");
+      image.classList.remove("is-loaded");
+      this.updateState();
+      return;
+    }
+    image.onload = () => {
+      if (kind === "plan") this.hasPlan = true;
+      if (kind === "hero") {
+        this.hasHeroRender = true;
+        this.hasRender = true;
+      }
+      if (kind === "interior") this.hasInteriorRender = true;
+      if (kind === "exterior") this.hasExteriorRender = true;
+      if (kind === "detail") this.hasDetailRender = true;
+      image.classList.add("is-loaded");
+      this.showcase.querySelector(`[data-pro-placeholder="${kind === "hero" ? "render" : kind}"]`)?.setAttribute("hidden", "");
+      this.updateModeAvailability();
+      this.resolveInitialMode();
+      this.updateState();
     };
-    this.materials = materials;
-    [materials.wood, materials.stone, materials.metal, materials.fabric, materials.glass].forEach((material) => { material.wireframe = true; });
-    const addToLayer = (object, layerName) => { this.layers[layerName]?.add(object); return object; };
-    const box = (size, position, material, layerName = "decor") => {
-      const mesh = new THREE.Mesh(new THREE.BoxGeometry(...size), material);
-      mesh.position.set(...position); mesh.castShadow = true; mesh.receiveShadow = true; return addToLayer(mesh, layerName);
+    image.onerror = () => {
+      image.removeAttribute("src");
+      image.classList.remove("is-loaded");
+      this.updateModeAvailability();
+      this.resolveInitialMode();
+      this.updateState();
     };
-    box([10, 0.18, 7], [0, -0.1, 0], materials.floor, "shell");
-    box([10, 5.2, 0.16], [0, 2.5, -3.45], materials.wall, "shell");
-    box([0.16, 5.2, 7], [-4.95, 2.5, 0], materials.wall, "shell");
-    box([5.7, 1.05, 1.15], [1.5, 0.55, -2.35], materials.wood, "counter");
-    box([5.9, 0.18, 1.35], [1.5, 1.15, -2.35], materials.stone, "counter");
-    box([4.8, 0.12, 0.55], [1.3, 2.35, -3.25], materials.wood, "counter");
-    box([4.8, 0.12, 0.55], [1.3, 3.15, -3.25], materials.wood, "counter");
-    box([1.1, 0.72, 0.62], [1.4, 1.62, -2.85], materials.metal, "counter");
-    box([0.7, 0.22, 0.7], [1.4, 2.08, -2.82], materials.stone, "counter");
-    box([0.12, 0.65, 0.12], [1.05, 1.62, -2.42], materials.metal, "counter");
-    box([0.12, 0.65, 0.12], [1.75, 1.62, -2.42], materials.metal, "counter");
-    box([0.18, 0.35, 0.18], [2.45, 1.43, -2.55], materials.glass, "material");
-    box([3.5, 0.62, 0.75], [-3.65, 0.55, -1.1], materials.fabric, "seating");
-    box([3.5, 1.05, 0.18], [-4.42, 1.05, -1.1], materials.fabric, "seating");
-    [[-2.8,2.3],[-1.5,2.3]].forEach(([x,y]) => box([0.82,1.05,0.08],[x,y,-3.32],materials.metal,"decor"));
-    box([6.5,0.08,0.08],[0,4.75,.4],materials.metal,"lighting");
-    box([2.8,2.3,0.08],[3.45,2.2,-3.3],materials.glass,"material");
+    image.src = this.resolveAsset(path);
+  }
 
-    const addTable = (x, z) => {
-      const top = new THREE.Mesh(new THREE.CylinderGeometry(0.72, 0.72, 0.12, 32), materials.wood);
-      top.position.set(x, 0.82, z); top.castShadow = true; addToLayer(top, "seating");
-      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.09, 0.15, 0.78, 16), materials.metal);
-      leg.position.set(x, 0.4, z); addToLayer(leg, "seating");
-      [[-.9,0],[.9,0],[0,-.9]].forEach(([dx,dz]) => {
-        box([0.52,0.12,0.52],[x+dx,0.48,z+dz],materials.fabric,"seating");
-        box([0.08,0.46,0.08],[x+dx,0.23,z+dz],materials.metal,"seating");
-        box([0.52,0.62,0.1],[x+dx,0.78,z+dz-.2],materials.fabric,"seating");
+  async checkRenderAvailability(kind, path) {
+    if (!path) return;
+    try {
+      const response = await fetch(this.resolveAsset(path), { method: "HEAD", cache: "no-store" });
+      if (!response.ok) throw new Error(`${kind} ${response.status}`);
+      if (kind === "detail") this.hasDetailRender = true;
+      this.updateState();
+    } catch {
+      if (kind === "detail") this.hasDetailRender = false;
+      this.updateState();
+    }
+  }
+
+  async initModelViewer() {
+    try {
+      const glbPath = this.manifest.model?.glb;
+      if (!glbPath) return;
+      const glbCheck = await fetch(this.resolveAsset(glbPath), { method: "HEAD", cache: "no-store" }).catch(() => null);
+      if (!glbCheck?.ok) {
+        this.hasModel = false;
+        this.updateModeAvailability();
+        this.updateState();
+        return;
+      }
+      const THREE = await loadOptionalThree();
+      if (this.disposed || !this.viewport.isConnected) return;
+      this.THREE = THREE;
+      this.scene = new THREE.Scene();
+      this.scene.background = new THREE.Color(0x111820);
+      this.camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+      this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+      this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      this.renderer.outputColorSpace = THREE.SRGBColorSpace;
+      if ("ACESFilmicToneMapping" in THREE) this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+      this.renderer.toneMappingExposure = 1.05;
+      this.renderer.shadowMap.enabled = true;
+      this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      this.viewport.appendChild(this.renderer.domElement);
+      this.scene.add(new THREE.HemisphereLight(0xd8ecff, 0x30251c, 1.1));
+      const key = new THREE.DirectionalLight(0xffe4bd, 2.1);
+      key.position.set(5, 8, 6);
+      key.castShadow = true;
+      key.shadow.mapSize.set(2048, 2048);
+      this.scene.add(key);
+      const fill = new THREE.PointLight(0x7cc7ff, 0.6, 18);
+      fill.position.set(-4, 4, 5);
+      this.scene.add(fill);
+      this.modelRoot = new THREE.Group();
+      this.scene.add(this.modelRoot);
+      this.resizeObserver = new ResizeObserver(() => this.resize());
+      this.resizeObserver.observe(this.viewport);
+      this.resize();
+      await this.loadGlbModel();
+      this.applyCameraPreset("exterior", false);
+      this.renderFrame();
+    } catch (error) {
+      console.info("[NOVA Design Viewer] GLB viewer unavailable.", error.message);
+      this.updateState();
+    }
+  }
+
+  async loadGlbModel() {
+    const glbPath = this.manifest.model?.glb;
+    if (!glbPath || !this.THREE) return;
+    try {
+      const glbUrl = this.resolveAsset(glbPath);
+      const module = await import("https://esm.sh/three@0.160.1/examples/jsm/loaders/GLTFLoader.js");
+      const loader = new module.GLTFLoader();
+      const gltf = await loader.loadAsync(glbUrl);
+      if (this.disposed) return;
+      this.modelRoot.clear();
+      this.modelRoot.add(gltf.scene);
+      gltf.scene.traverse((object) => {
+        if (object.isMesh) {
+          object.castShadow = true;
+          object.receiveShadow = true;
+        }
       });
+      this.centerModel(gltf.scene);
+      this.hasModel = true;
+      this.showcase.querySelector('[data-pro-placeholder="model"]')?.setAttribute("hidden", "");
+      this.viewport.classList.add("has-webgl");
+      this.updateModeAvailability();
+      this.resolveInitialMode();
+    } catch (error) {
+      console.info("[NOVA Design Viewer] SketchUp GLB not installed.", error.message);
+      this.hasModel = false;
+      this.viewport.classList.remove("has-webgl");
+    }
+  }
+
+  centerModel(object) {
+    const THREE = this.THREE;
+    const box = new THREE.Box3().setFromObject(object);
+    const size = box.getSize(new THREE.Vector3());
+    const center = box.getCenter(new THREE.Vector3());
+    object.position.sub(center);
+    const maxAxis = Math.max(size.x, size.y, size.z, 1);
+    object.scale.setScalar(4 / maxAxis);
+    this.targetCameraDistance = Math.max(5.5, Math.min(12, maxAxis * 1.4));
+  }
+
+  prepareOrbitFrames() {
+    const pattern = this.manifest.orbit?.pattern;
+    const count = Number(this.manifest.orbit?.count || 0);
+    if (!pattern || !count || !this.orbitImage || !window.NOVA_ENABLE_DESIGN_ASSET_PROBES) return;
+    this.orbitFrames = Array.from({ length: count }, (_, index) => this.resolveAsset(pattern.replace("####", String(index + 1).padStart(4, "0"))));
+    fetch(this.orbitFrames[0], { method: "HEAD", cache: "no-store" }).then((response) => {
+      if (!response.ok) throw new Error(`orbit ${response.status}`);
+      this.hasOrbitFrames = true;
+      this.orbitImage.src = this.orbitFrames[this.orbitFrame];
+      this.orbitImage.classList.add("is-loaded");
+      this.showcase.querySelector('[data-pro-placeholder="orbit"]')?.setAttribute("hidden", "");
+      this.updateModeAvailability();
+      this.resolveInitialMode();
+      this.updateState();
+    }).catch(() => {
+      this.hasOrbitFrames = false;
+      this.updateModeAvailability();
+      this.updateState();
+    });
+  }
+
+  bindAssetInteractions() {
+    this.onModelPointerDown = (event) => {
+      if (this.activeMode === "orbit") return this.beginOrbitDrag(event);
+      if (this.isImageMode(this.activeMode)) return this.beginRenderDrag(event);
+      this.stopAutoTour();
+      const mode = event.shiftKey || event.button === 2 ? "pan" : "rotate";
+      this.modelDrag = { mode, x:event.clientX, y:event.clientY, rx:this.targetRotation.x, ry:this.targetRotation.y, tx:this.targetCameraTarget.x, ty:this.targetCameraTarget.y };
+      try { this.interactionSurface.setPointerCapture?.(event.pointerId); } catch {}
     };
-    addTable(-2.5, 1.5); addTable(0, 1.35); addTable(2.55, 1.45);
-    [[-4.1,-2.6],[4.2,-2.7]].forEach(([x,z]) => {
-      const pot = new THREE.Mesh(new THREE.CylinderGeometry(.28,.38,.55,18), materials.stone); pot.position.set(x,.28,z); addToLayer(pot,"decor");
-      for (let index=0; index<5; index+=1) { const leaf = new THREE.Mesh(new THREE.SphereGeometry(.24,14,10),materials.green); leaf.scale.set(.55,1.7,.38); leaf.position.set(x+(index-2)*.1,.8+Math.abs(index-2)*.12,z); leaf.rotation.z=(index-2)*.35; addToLayer(leaf,"decor"); }
+    this.onModelPointerMove = (event) => {
+      if (this.activeMode === "orbit") return this.moveOrbitDrag(event);
+      if (this.activeMode === "render") return this.moveRenderDrag(event);
+      if (!this.modelDrag) return;
+      const dx = event.clientX - this.modelDrag.x;
+      const dy = event.clientY - this.modelDrag.y;
+      if (this.modelDrag.mode === "pan") {
+        const scale = this.targetCameraDistance * 0.0018;
+        this.targetCameraTarget.x = this.modelDrag.tx - dx * scale;
+        this.targetCameraTarget.y = Math.max(-1.5, Math.min(3.5, this.modelDrag.ty + dy * scale));
+      } else {
+        this.targetRotation.y = this.modelDrag.ry + dx * 0.008;
+        this.targetRotation.x = Math.max(-1.25, Math.min(0.8, this.modelDrag.rx + dy * 0.006));
+      }
+    };
+    this.onModelPointerUp = () => { this.modelDrag = null; this.orbitDrag = null; this.renderDrag = null; this.setCursorAction(null); };
+    this.onWheel = (event) => {
+      event.preventDefault();
+      if (this.activeMode === "orbit") {
+        this.orbitZoom = Math.max(1, Math.min(3.5, this.orbitZoom + (event.deltaY > 0 ? -0.12 : 0.12)));
+        this.applyOrbitTransform();
+        this.setCursorAction("drag_orbit");
+      } else if (this.isImageMode(this.activeMode)) {
+        this.renderZoom = Math.max(1, Math.min(3.6, this.renderZoom + (event.deltaY > 0 ? -0.12 : 0.12)));
+        this.applyRenderTransform();
+        this.setCursorAction("zoom_render");
+      } else {
+        this.stopAutoTour();
+        this.targetCameraDistance = Math.max(2.8, Math.min(18, this.targetCameraDistance + (event.deltaY > 0 ? 0.8 : -0.8)));
+      }
+      this.updateState();
+    };
+    this.onDoubleClick = () => {
+      if (this.activeMode === "orbit") {
+        this.orbitZoom = 1;
+        this.orbitPan = { x:0, y:0 };
+        this.applyOrbitTransform();
+      } else if (this.isImageMode(this.activeMode)) {
+        this.renderZoom = 1;
+        this.renderPan = { x:0, y:0 };
+        this.applyRenderTransform();
+      } else this.applyCameraPreset("exterior");
+    };
+    this.onContextMenu = (event) => event.preventDefault();
+    this.interactionSurface.addEventListener("pointerdown", this.onModelPointerDown);
+    this.interactionSurface.addEventListener("pointermove", this.onModelPointerMove);
+    this.interactionSurface.addEventListener("pointerup", this.onModelPointerUp);
+    this.interactionSurface.addEventListener("pointercancel", this.onModelPointerUp);
+    this.interactionSurface.addEventListener("wheel", this.onWheel, { passive:false });
+    this.interactionSurface.addEventListener("dblclick", this.onDoubleClick);
+    this.interactionSurface.addEventListener("contextmenu", this.onContextMenu);
+  }
+
+  beginOrbitDrag(event) {
+    this.orbitDrag = { x:event.clientX, y:event.clientY, frame:this.orbitFrame, pan:{ ...this.orbitPan }, panning:event.shiftKey || event.button === 2 };
+    this.setCursorAction("drag_orbit");
+  }
+
+  moveOrbitDrag(event) {
+    if (!this.orbitDrag) return;
+    const dx = event.clientX - this.orbitDrag.x;
+    const dy = event.clientY - this.orbitDrag.y;
+    if (this.orbitDrag.panning || this.orbitZoom > 1.05) {
+      this.orbitPan.x = this.orbitDrag.pan.x + dx;
+      this.orbitPan.y = this.orbitDrag.pan.y + dy;
+      this.applyOrbitTransform();
+      return;
+    }
+    if (!this.orbitFrames?.length) return;
+    const next = (this.orbitDrag.frame + Math.round(dx / 16)) % this.orbitFrames.length;
+    this.orbitFrame = (next + this.orbitFrames.length) % this.orbitFrames.length;
+    this.orbitImage.src = this.orbitFrames[this.orbitFrame];
+  }
+
+  beginRenderDrag(event) {
+    this.renderDrag = { x:event.clientX, y:event.clientY, pan:{ ...this.renderPan } };
+    this.setCursorAction(this.renderZoom > 1.05 ? "zoom_render" : "pan_plan");
+    try { this.interactionSurface.setPointerCapture?.(event.pointerId); } catch {}
+  }
+
+  moveRenderDrag(event) {
+    if (!this.renderDrag) return;
+    this.renderPan.x = this.renderDrag.pan.x + event.clientX - this.renderDrag.x;
+    this.renderPan.y = this.renderDrag.pan.y + event.clientY - this.renderDrag.y;
+    this.applyRenderTransform();
+  }
+
+  applyOrbitTransform() {
+    if (!this.orbitImage) return;
+    this.orbitImage.style.transform = `translate(${this.orbitPan.x}px, ${this.orbitPan.y}px) scale(${this.orbitZoom})`;
+  }
+
+  applyRenderTransform() {
+    this.showcase.querySelectorAll("[data-pro-plan], [data-pro-exterior], [data-pro-interior], [data-pro-render]").forEach((image) => {
+      image.style.transform = `translate(${this.renderPan.x}px, ${this.renderPan.y}px) scale(${this.renderZoom})`;
     });
-    [-2.3, 0, 2.3].forEach((x) => {
-      const cable = new THREE.Mesh(new THREE.CylinderGeometry(0.015,0.015,1.25,8), materials.metal);
-      cable.position.set(x,4.35,-.4); addToLayer(cable,"lighting");
-      const shade = new THREE.Mesh(new THREE.ConeGeometry(0.38,0.42,24,1,true), materials.metal);
-      shade.position.set(x,3.7,-.4); shade.rotation.x = Math.PI; addToLayer(shade,"lighting");
-      const light = new THREE.PointLight(0xffc784,1.8,5); light.position.set(x,3.5,-.4); light.castShadow = true; addToLayer(light,"lighting");
+  }
+
+  setMode(mode, options = {}) {
+    const requestedMode = ["exterior", "interior", "cutaway", "plan", "model", "render", "orbit"].includes(mode) ? mode : "render";
+    if (!options.workflow) window.clearTimeout(this.workflowTimer);
+    if (!options.force && !this.isModeAvailable(requestedMode)) {
+      this.showUnavailableHint(requestedMode);
+      return false;
+    }
+    this.activeMode = requestedMode;
+    this.workflowStep = this.workflowStepForMode(requestedMode);
+    this.showcase.dataset.viewMode = this.activeMode;
+    this.showcase.querySelectorAll("[data-pro-mode]").forEach((pane) => pane.classList.toggle("is-active", pane.dataset.proMode === this.activeMode));
+    this.showcase.querySelectorAll("[data-pro-view-mode]").forEach((button) => button.classList.toggle("is-active", button.dataset.proViewMode === this.activeMode));
+    this.updateWorkflowLabel();
+    this.moveCursorForMode(requestedMode);
+    if (requestedMode !== "model") this.stopAutoTour();
+    this.updateState();
+    return true;
+  }
+
+  workflowStepForMode(mode) {
+    return { exterior:"exterior_review", interior:"interior_review", cutaway:"cutaway_review", plan:"plan_review", model:"model_review", render:"render_review", orbit:"orbit_review" }[mode] || "render_review";
+  }
+
+  isModeAvailable(mode) {
+    if (mode === "exterior") return this.hasExteriorRender;
+    if (mode === "interior") return this.hasInteriorRender;
+    if (mode === "cutaway") return this.hasModel;
+    if (mode === "plan") return this.hasPlan;
+    if (mode === "model") return this.hasModel;
+    if (mode === "render") return this.hasHeroRender;
+    if (mode === "orbit") return this.hasOrbitFrames;
+    return false;
+  }
+
+  isImageMode(mode) {
+    return ["exterior", "interior", "plan", "render"].includes(mode);
+  }
+
+  resolveInitialMode() {
+    if (this.initialModeResolved) return;
+    if (this.hasHeroRender) {
+      this.initialModeResolved = true;
+      this.setMode("render");
+      return;
+    }
+    if (this.hasExteriorRender || this.hasInteriorRender || this.hasPlan || this.hasModel || this.hasOrbitFrames) {
+      this.initialModeResolved = true;
+      this.setMode(this.hasExteriorRender ? "exterior" : this.hasInteriorRender ? "interior" : this.hasPlan ? "plan" : this.hasModel ? "model" : "orbit");
+      return;
+    }
+    this.activeMode = "render";
+    this.showcase.dataset.viewMode = "render";
+    this.showcase.querySelectorAll("[data-pro-mode]").forEach((pane) => pane.classList.toggle("is-active", pane.dataset.proMode === "render"));
+    this.showcase.querySelectorAll("[data-pro-view-mode]").forEach((button) => button.classList.toggle("is-active", button.dataset.proViewMode === "render"));
+  }
+
+  updateModeAvailability() {
+    const availability = { exterior:this.hasExteriorRender, interior:this.hasInteriorRender, cutaway:this.hasModel, plan:this.hasPlan, model:this.hasModel, render:this.hasHeroRender, orbit:this.hasOrbitFrames };
+    this.showcase.querySelectorAll("[data-pro-view-mode]").forEach((button) => {
+      const available = !!availability[button.dataset.proViewMode];
+      button.classList.toggle("is-disabled", !available);
+      button.setAttribute("aria-disabled", String(!available));
     });
-    [-2.4,-.8,.8,2.4].forEach((x) => {
-      const fixture = box([0.22,0.16,0.28],[x,4.62,.4],materials.metal,"lighting");
-      fixture.rotation.x = -.3;
-      const spot = new THREE.SpotLight(0xffe2b7,1.2,7,Math.PI/7,.45,1.4); spot.position.set(x,4.5,.45); spot.target.position.set(x,0,0); addToLayer(spot,"lighting"); addToLayer(spot.target,"lighting");
-    });
-    this.scene.add(new THREE.HemisphereLight(0xcbe9ff, 0x38291f, 1.8));
-    const key = new THREE.DirectionalLight(0xffe2be, 2.2); key.position.set(5,8,6); key.castShadow = true; this.scene.add(key);
-    this.resizeObserver = new ResizeObserver(() => this.resize());
-    this.resizeObserver.observe(this.viewport);
-    this.resize();
-    this.viewport.classList.add("has-webgl");
-    this.revealedLayers.forEach((name) => this.revealLayer(name));
-    this.renderFrame();
+  }
+
+  showUnavailableHint(mode) {
+    const messages = {
+      exterior: "Exterior view requires exterior.jpg",
+      interior: "Interior view requires interior_bar.jpg",
+      cutaway: "Cutaway view requires a GLB cutaway camera or cutaway render",
+      plan: "Plan requires AutoCAD floor_plan.png",
+      model: "3D Model requires SketchUp cafe_showroom.glb",
+      orbit: "360 Orbit requires renderer frame sequence",
+      render: "Render requires hero.jpg"
+    };
+    const hint = this.showcase.querySelector("[data-pro-mode-hint]");
+    if (!hint) return;
+    hint.textContent = messages[mode] || "Asset not installed";
+    hint.classList.add("is-visible");
+    window.clearTimeout(this.hintTimer);
+    this.hintTimer = window.setTimeout(() => hint.classList.remove("is-visible"), 1800);
+  }
+
+  updateWorkflowLabel() {
+    const labels = {
+      exterior: "Exterior Presentation - storefront, glass, signage, landscape",
+      interior: "Interior Presentation - bar, seating, materials, lighting",
+      cutaway: "Cutaway Presentation - architectural model view pending",
+      plan: "Step 1 - AutoCAD Plan Review",
+      model: "Step 2 - SketchUp 3D Model Review",
+      render: "Step 3 - Renderer Material / Lighting Preview",
+      orbit: "Step 4 - 360 Orbit Presentation"
+    };
+    if (this.workflowLabel) this.workflowLabel.textContent = labels[this.activeMode] || labels.render;
+  }
+
+  moveCursorForMode(mode) {
+    if (!this.cursor) return;
+    const cursorMap = {
+      exterior: ["62%", "45%", "zoom_render"],
+      interior: ["48%", "52%", "zoom_render"],
+      cutaway: ["50%", "42%", "rotate_model"],
+      plan: ["18%", "28%", "pan_plan"],
+      model: ["46%", "42%", "rotate_model"],
+      render: ["58%", "54%", "zoom_render"],
+      orbit: ["72%", "45%", "drag_orbit"]
+    };
+    const [x, y, action] = cursorMap[mode] || cursorMap.render;
+    this.cursor.style.left = x;
+    this.cursor.style.top = y;
+    this.cursorVisible = true;
+    this.cursorAction = action;
+    this.cursor.classList.add("is-visible");
+    this.cursor.dataset.cursorAction = action;
+  }
+
+  setCursorAction(action) {
+    this.cursorAction = action;
+    if (!this.cursor) return;
+    if (!action) {
+      this.cursor.classList.remove("is-working");
+      return;
+    }
+    this.cursor.classList.add("is-visible", "is-working");
+    this.cursor.dataset.cursorAction = action;
+  }
+
+  startWorkflowAutoplay() {
+    window.clearTimeout(this.workflowTimer);
+    const sequence = ["exterior", "interior", "render", "cutaway", "orbit", "render"];
+    let index = 0;
+    const advance = () => {
+      if (this.disposed) return;
+      const mode = sequence[index % sequence.length];
+      this.setMode(mode, { force:true, workflow:true });
+      index += 1;
+      this.workflowTimer = window.setTimeout(advance, index === 1 ? 1700 : 1900);
+    };
+    this.workflowTimer = window.setTimeout(advance, this.hasHeroRender ? 3600 : 500);
+  }
+
+  loadRenderVariant(variant = "hero") {
+    const usingHeroDetailCrop = variant === "detail" && !this.hasDetailRender;
+    const path = usingHeroDetailCrop ? this.manifest.renders?.hero : this.manifest.renders?.[variant];
+    if (!path || !this.renderImage) return;
+    this.activeRenderVariant = variant;
+    this.renderZoom = variant === "detail" && !this.hasDetailRender ? 1.72 : 1;
+    this.renderPan = variant === "detail" && !this.hasDetailRender ? { x:-92, y:-38 } : { x:0, y:0 };
+    this.applyRenderTransform();
+    this.loadImage(variant === "hero" || usingHeroDetailCrop ? "hero" : variant, this.renderImage, path);
+    this.showcase.querySelectorAll("[data-render-variant]").forEach((button) => button.classList.toggle("is-active", button.dataset.renderVariant === variant));
+  }
+
+  focusHotspot(name) {
+    const hotspotMap = {
+      "bar-counter": { mode:"interior", zoom:1.55, pan:{ x:-120, y:20 } },
+      lighting: { mode:"render", variant:"detail", zoom:1.75, pan:{ x:-90, y:-80 } },
+      seating: { mode:"render", variant:"hero", zoom:1.55, pan:{ x:120, y:-20 } },
+      "exterior-glass": { mode:"exterior", zoom:1.48, pan:{ x:-80, y:-40 } },
+      "material-palette": { mode:"render", variant:"detail", zoom:1.8, pan:{ x:-110, y:-70 } },
+      signage: { mode:"exterior", zoom:1.6, pan:{ x:30, y:110 } }
+    };
+    const target = hotspotMap[name] || hotspotMap["bar-counter"];
+    if (target.variant) this.loadRenderVariant(target.variant);
+    this.setMode(target.mode, { force:true });
+    this.renderZoom = target.zoom;
+    this.renderPan = target.pan;
+    this.applyRenderTransform();
+    this.setCursorAction("zoom_render");
+    this.updateState();
   }
 
   applyCameraPreset(name, animate = true) {
@@ -361,23 +745,28 @@ class Interior3DEngine {
       this.toggleAutoTour();
       return;
     }
-    this.cameraPreset = name;
+    this.cameraMode = name;
     const presets = {
-      perspective: { rotation:{ x:-0.08, y:-0.45 }, distance:12.6, target:{ x:0, y:1.45, z:0 }, fov:42 },
-      front: { rotation:{ x:0.02, y:0 }, distance:13.4, target:{ x:0, y:1.55, z:-.7 }, fov:36 },
-      top: { rotation:{ x:-1.18, y:-0.02 }, distance:15.2, target:{ x:0, y:.25, z:0 }, fov:34 },
-      detail: { rotation:{ x:-0.18, y:-0.78 }, distance:7.1, target:{ x:1.1, y:1.35, z:-1.55 }, fov:32 }
+      exterior: { rotation:{ x:-0.12, y:-0.45 }, distance:7.5, target:{ x:0, y:1.2, z:0 }, fov:42 },
+      interior: { rotation:{ x:-0.1, y:-1.55 }, distance:5.2, target:{ x:0.2, y:1.35, z:-0.2 }, fov:38 },
+      top: { rotation:{ x:-1.2, y:0 }, distance:9.5, target:{ x:0, y:0, z:0 }, fov:34 },
+      detail: { rotation:{ x:-0.18, y:-0.72 }, distance:4.2, target:{ x:0.8, y:1.2, z:-0.8 }, fov:30 },
+      cutaway: { rotation:{ x:-0.54, y:-0.82 }, distance:7, target:{ x:0, y:1, z:0 }, fov:36 }
     };
-    const preset = presets[name] || presets.perspective;
+    const preset = presets[name] || presets.exterior;
     this.targetRotation = { ...preset.rotation };
     this.targetCameraDistance = preset.distance;
     this.targetCameraTarget = { ...preset.target };
-    if (this.camera) { this.camera.fov = preset.fov; this.camera.updateProjectionMatrix(); }
+    if (this.camera) {
+      this.camera.fov = preset.fov;
+      this.camera.updateProjectionMatrix();
+    }
     if (!animate) {
       this.rotation = { ...this.targetRotation };
       this.cameraDistance = this.targetCameraDistance;
       this.cameraTarget = { ...this.targetCameraTarget };
     }
+    this.updateState();
   }
 
   toggleAutoTour() {
@@ -385,96 +774,96 @@ class Interior3DEngine {
       this.stopAutoTour();
       return false;
     }
-    this.startAutoTour();
-    return true;
-  }
-
-  startAutoTour() {
-    this.stopAutoTour();
     this.autoTourActive = true;
-    const presets = ["perspective", "front", "top", "detail"];
-    const advance = () => {
-      if (!this.autoTourActive || this.disposed) return;
-      const preset = presets[this.autoTourIndex % presets.length];
-      this.autoTourIndex += 1;
-      this.applyCameraPreset(preset);
-      this.autoTourTimer = window.setTimeout(advance, 2300);
-    };
-    advance();
+    this.cameraMode = "auto_tour";
+    this.updateState();
+    return true;
   }
 
   stopAutoTour() {
     this.autoTourActive = false;
-    if (this.autoTourTimer) {
-      window.clearTimeout(this.autoTourTimer);
-      this.autoTourTimer = null;
-    }
+    if (this.cameraMode === "auto_tour") this.cameraMode = "exterior";
+    this.updateState();
   }
 
   resize() {
-    if (!this.renderer) return;
+    if (!this.renderer || !this.camera) return;
     const width = Math.max(1, this.viewport.clientWidth);
     const height = Math.max(1, this.viewport.clientHeight);
-    this.camera.aspect = width / height; this.camera.updateProjectionMatrix(); this.renderer.setSize(width, height, false);
+    this.camera.aspect = width / height;
+    this.camera.updateProjectionMatrix();
+    this.renderer.setSize(width, height, false);
   }
 
   renderFrame() {
-    if (this.disposed || !this.renderer) return;
-    if (!this.drag) this.targetRotation.y += 0.0015;
+    if (this.disposed || !this.renderer || !this.camera) return;
+    if (this.autoTourActive) this.targetRotation.y += 0.006;
     this.rotation.x += (this.targetRotation.x - this.rotation.x) * 0.08;
     this.rotation.y += (this.targetRotation.y - this.rotation.y) * 0.08;
     this.cameraDistance += (this.targetCameraDistance - this.cameraDistance) * 0.1;
     this.cameraTarget.x += (this.targetCameraTarget.x - this.cameraTarget.x) * 0.1;
     this.cameraTarget.y += (this.targetCameraTarget.y - this.cameraTarget.y) * 0.1;
     this.cameraTarget.z += (this.targetCameraTarget.z - this.cameraTarget.z) * 0.1;
-    const radius = this.cameraDistance;
     const cx = this.cameraTarget.x;
     const cy = this.cameraTarget.y;
     const cz = this.cameraTarget.z;
-    this.camera.position.set(cx + Math.sin(this.rotation.y) * Math.cos(this.rotation.x) * radius, cy + Math.sin(-this.rotation.x) * radius + 2.2, cz + Math.cos(this.rotation.y) * Math.cos(this.rotation.x) * radius);
+    const radius = this.cameraDistance;
+    this.camera.position.set(cx + Math.sin(this.rotation.y) * Math.cos(this.rotation.x) * radius, cy + Math.sin(-this.rotation.x) * radius + 1.6, cz + Math.cos(this.rotation.y) * Math.cos(this.rotation.x) * radius);
     this.camera.lookAt(cx, cy, cz);
     this.renderer.render(this.scene, this.camera);
+    this.updateState();
     this.frame = requestAnimationFrame(() => this.renderFrame());
   }
 
-  revealLayer(name) {
-    this.revealedLayers.add(name);
-    if (name === "material") {
-      Object.values(this.materials).forEach((material) => { material.wireframe = false; material.needsUpdate = true; });
-    }
-    const group = this.layers[name];
-    if (!group) return;
-    group.visible = true;
-    if (window.gsap) window.gsap.to(group.scale, { x: 1, y: 1, z: 1, duration: 0.62, ease: "power3.out" });
-    else group.scale.setScalar(1);
-  }
+  revealLayer() {}
+  applySceneSpec(spec) { this.sceneSpec = spec; return spec; }
+  setStage() {}
 
-  applySceneSpec(spec) {
-    this.sceneSpec = spec;
-    const counts = Object.fromEntries((spec?.objects || []).map((item) => [item.type, item.count]));
-    const hud = this.viewport.parentElement?.querySelector(".viewport-floating-hud div");
-    if (hud) hud.innerHTML = `<span>${escapeWorkbenchText(spec.style || "Interior")}</span><span>${counts.tables || 0} tables</span><span>${counts.chairs || 0} chairs</span><span>${escapeWorkbenchText(spec.lighting || "Lighting")}</span>`;
-    return spec;
-  }
-
-  setStage(index) {
-    this.viewport.dataset.renderStage = String(index);
-    const layer = [null, "shell", "counter", "seating", "lighting", "material", "decor"][index];
-    if (layer) this.revealLayer(layer);
+  updateState() {
+    const canvas = this.renderer?.domElement;
+    window.NOVA_PRO_DESIGN_VIEWER_STATE = {
+      activeMode: this.activeMode,
+      workflowStep: this.workflowStep,
+      hasManifest: this.hasManifest,
+      hasPlan: this.hasPlan,
+      hasModel: this.hasModel,
+      hasRender: this.hasRender,
+      hasHeroRender: this.hasHeroRender,
+      hasInteriorRender: this.hasInteriorRender,
+      hasExteriorRender: this.hasExteriorRender,
+      hasDetailRender: this.hasDetailRender,
+      hasOrbitFrames: this.hasOrbitFrames,
+      cursorVisible: this.cursorVisible,
+      cursorAction: this.cursorAction,
+      usingPrimitiveFallback: false,
+      cameraMode: this.cameraMode,
+      hasCanvas: !!canvas,
+      canvasWidth: canvas?.width || 0,
+      canvasHeight: canvas?.height || 0,
+      activeRenderVariant: this.activeRenderVariant,
+      renderZoom: this.renderZoom,
+      renderPan: { ...this.renderPan }
+    };
   }
 
   destroy() {
     this.disposed = true;
-    this.stopAutoTour();
+    window.clearTimeout(this.hintTimer);
+    window.clearTimeout(this.workflowTimer);
     cancelAnimationFrame(this.frame);
     this.resizeObserver?.disconnect();
-    this.viewport.removeEventListener("pointerdown", this.onPointerDown);
-    this.viewport.removeEventListener("pointermove", this.onPointerMove);
-    this.viewport.removeEventListener("pointerup", this.onPointerUp);
-    this.viewport.removeEventListener("pointercancel", this.onPointerUp);
-    this.viewport.removeEventListener("wheel", this.onWheel);
-    this.viewport.removeEventListener("contextmenu", this.onContextMenu);
-    if (this.scene) this.scene.traverse((object) => { object.geometry?.dispose?.(); if (Array.isArray(object.material)) object.material.forEach((item) => item.dispose()); else object.material?.dispose?.(); });
+    this.interactionSurface.removeEventListener("pointerdown", this.onModelPointerDown);
+    this.interactionSurface.removeEventListener("pointermove", this.onModelPointerMove);
+    this.interactionSurface.removeEventListener("pointerup", this.onModelPointerUp);
+    this.interactionSurface.removeEventListener("pointercancel", this.onModelPointerUp);
+    this.interactionSurface.removeEventListener("wheel", this.onWheel);
+    this.interactionSurface.removeEventListener("dblclick", this.onDoubleClick);
+    this.interactionSurface.removeEventListener("contextmenu", this.onContextMenu);
+    this.scene?.traverse((object) => {
+      object.geometry?.dispose?.();
+      if (Array.isArray(object.material)) object.material.forEach((material) => material.dispose?.());
+      else object.material?.dispose?.();
+    });
     this.renderer?.dispose();
     this.renderer?.forceContextLoss?.();
   }
@@ -1112,6 +1501,16 @@ class AvatarController {
         action.closest(".camera-preset-bar")?.querySelectorAll("button").forEach((button) => button.classList.toggle("is-active", button === action));
       }
     }
+    if (type === "pro-view-mode") {
+      const mode = action.dataset.proViewMode || "plan";
+      this.design3DEngine?.setMode?.(mode);
+    }
+    if (type === "render-variant") {
+      this.design3DEngine?.loadRenderVariant?.(action.dataset.renderVariant || "hero");
+    }
+    if (type === "design-hotspot") {
+      this.design3DEngine?.focusHotspot?.(action.dataset.hotspot || "bar-counter");
+    }
     if (type === "render-view-mode") {
       const showcase = action.closest(".render-showcase");
       if (showcase) showcase.dataset.viewMode = action.dataset.renderViewMode || "scene";
@@ -1417,8 +1816,6 @@ class AvatarController {
       if (layer) {
         layer.replaceChildren(image);
         layer.setAttribute("aria-hidden", "false");
-        viewer.dataset.viewMode = "final";
-        viewer.querySelectorAll("[data-render-view-mode]").forEach((button) => button.classList.toggle("is-active", button.dataset.renderViewMode === "final"));
       } else {
         viewer.replaceChildren(image);
       }

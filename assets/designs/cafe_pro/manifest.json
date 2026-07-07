@@ -1,0 +1,26 @@
+{
+  "title": "Professional Café Interior Proposal",
+  "workflow": {
+    "plan": "AutoCAD",
+    "model": "SketchUp",
+    "renderer": "V-Ray / Enscape / D5 Render"
+  },
+  "plans": {
+    "floor": "assets/designs/cafe_pro/plans/floor_plan.png",
+    "ceiling": "assets/designs/cafe_pro/plans/ceiling_plan.png",
+    "elevation": "assets/designs/cafe_pro/plans/elevation_bar_wall.png"
+  },
+  "model": {
+    "glb": "assets/designs/cafe_pro/models/cafe_showroom.glb"
+  },
+  "renders": {
+    "hero": "assets/designs/cafe_pro/renders/hero.jpg",
+    "interior": "assets/designs/cafe_pro/renders/interior_bar.jpg",
+    "exterior": "assets/designs/cafe_pro/renders/exterior.jpg",
+    "detail": "assets/designs/cafe_pro/renders/detail_lighting.jpg"
+  },
+  "orbit": {
+    "pattern": "assets/designs/cafe_pro/orbit/frame_####.jpg",
+    "count": 36
+  }
+}
