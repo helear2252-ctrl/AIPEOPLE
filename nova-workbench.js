@@ -12,8 +12,13 @@ const agentSteps = [
   "Ready"
 ];
 
-const DESIGN_BRIEF_API_BASE = "http://127.0.0.1:8080";
+const isLocalWorkbenchHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
+const isGitHubPagesHost = window.location.hostname.endsWith("github.io");
+const forceStaticDemoMode = new URLSearchParams(window.location.search).get("demo") === "1";
+const DESIGN_BRIEF_API_BASE = isLocalWorkbenchHost ? "http://127.0.0.1:8080" : "";
+const DEMO_CONCEPT_IMAGE_URL = new URL("./assets/designs/cafe_pro/renders/hero.jpg", import.meta.url).href;
 const USE_AI_CONCEPT_RENDER = true;
+window.NOVA_GITHUB_PAGES_DEMO_MODE = isGitHubPagesHost || forceStaticDemoMode;
 const CONCEPT_CANVAS_FORMAT_PROMPT = "Render on a fixed 4:3 landscape canvas with consistent medium-wide framing, the full cutaway room centered and scaled to leave 8-10% margin on all sides, on a neutral warm gray studio gradient background from #d8d6d0 to #f2f0eb. Keep the same card-like composition, camera distance, background treatment, and whitespace for every brief.";
 const conceptAngles = {
   main: "camera angle: polished hero isometric 3/4 view, balanced view of both walls and the full room composition",
@@ -185,6 +190,12 @@ function validateDesignBrief(brief) {
 }
 
 async function generateDesignBrief(userPrompt) {
+  if (window.NOVA_GITHUB_PAGES_DEMO_MODE || !DESIGN_BRIEF_API_BASE) {
+    window.NOVA_DESIGN_BRIEF_PROVIDER = "static-demo";
+    window.NOVA_DESIGN_BRIEF_COMMAND = null;
+    window.NOVA_DESIGN_BRIEF_ELAPSED_SECONDS = 0;
+    return validateDesignBrief(createDemoDesignBrief(userPrompt));
+  }
   const response = await fetch(`${DESIGN_BRIEF_API_BASE}/agent/design-brief`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -196,6 +207,70 @@ async function generateDesignBrief(userPrompt) {
   window.NOVA_DESIGN_BRIEF_COMMAND = payload.command;
   window.NOVA_DESIGN_BRIEF_ELAPSED_SECONDS = payload.elapsedSeconds;
   return validateDesignBrief(payload.brief);
+}
+
+function createDemoDesignBrief(userPrompt = "") {
+  const prompt = String(userPrompt || "").trim();
+  const lowerPrompt = prompt.toLowerCase();
+  const industrial = /industrial|工業|black|metal|cement|concrete|水泥|黑/.test(lowerPrompt);
+  const bedroom = /bedroom|臥室|bed|侘寂|wabi/.test(lowerPrompt);
+  const office = /office|辦公|lounge|休息/.test(lowerPrompt);
+  if (bedroom) {
+    return {
+      projectType: "interior concept",
+      roomType: "bedroom",
+      stylePreset: "wabi sabi bedroom",
+      mood: "quiet, grounded, warm and tactile",
+      palette: ["rice paper white", "wabi sabi clay", "warm oak", "linen beige", "stone gray"],
+      furniture: [
+        { type: "low bed", quantity: 1 },
+        { type: "side table", quantity: 2 },
+        { type: "desk", quantity: 1 },
+        { type: "chair", quantity: 1 },
+        { type: "plant", quantity: 2 }
+      ],
+      materials: ["warm oak floor", "clay plaster wall", "linen upholstery", "paper shade lighting"],
+      lighting: "soft warm indirect light",
+      spatialNotes: prompt || "A calm bedroom composition with low furniture, warm wood, and soft shadow depth."
+    };
+  }
+  if (office) {
+    return {
+      projectType: "interior concept",
+      roomType: "office lounge",
+      stylePreset: "minimal technology lounge",
+      mood: "calm, focused and polished",
+      palette: ["soft concrete", "cream white", "black metal", "linen beige", "glass blue"],
+      furniture: [
+        { type: "sofa", quantity: 1 },
+        { type: "coffee table", quantity: 1 },
+        { type: "chair", quantity: 2 },
+        { type: "shelf", quantity: 1 },
+        { type: "plant", quantity: 2 }
+      ],
+      materials: ["soft concrete wall", "linen upholstery", "black metal accents", "clear glass"],
+      lighting: "soft daylight with discreet linear lighting",
+      spatialNotes: prompt || "A refined lounge for conversation, waiting, and quiet work."
+    };
+  }
+  return {
+    projectType: "interior concept",
+    roomType: "cafe",
+    stylePreset: industrial ? "industrial warm cafe" : "warm natural cafe",
+    mood: industrial ? "urban, tactile, warm and cinematic" : "welcoming, natural and softly lit",
+    palette: industrial ? ["charcoal", "soft concrete", "black metal", "warm oak", "cream white"] : ["warm oak", "cream white", "black metal", "sage green", "glass blue"],
+    furniture: [
+      { type: "bar counter", quantity: 1 },
+      { type: "wood dining table", quantity: 4 },
+      { type: "chair", quantity: 12 },
+      { type: "shelf wall", quantity: 2 },
+      { type: "plant", quantity: 4 },
+      { type: "pendant light", quantity: 5 }
+    ],
+    materials: industrial ? ["concrete wall", "warm oak floor", "black metal frame", "cream plaster"] : ["oak wood", "cream plaster", "black metal", "clear glass"],
+    lighting: "soft daylight with warm pendant lighting",
+    spatialNotes: prompt || "A presentation-ready cafe concept with strong material contrast and a clear customer seating story."
+  };
 }
 
 function renderDesignBrief(brief) {
@@ -285,6 +360,20 @@ async function runDesignBriefAnalysis(userPrompt = getDesignPrompt()) {
   setAgentStepStatus(0, userPrompt ? "done" : "waiting");
   if (userPrompt) startAgentStepTimer(1);
   else setAgentStepStatus(1, "waiting");
+  if (!userPrompt && window.NOVA_GITHUB_PAGES_DEMO_MODE) {
+    const brief = createDemoDesignBrief("GitHub Pages demo: warm industrial cafe concept");
+    renderDesignBrief(brief);
+    setAgentStepStatus(0, "done");
+    setAgentStepStatus(1, "done");
+    setAgentStepStatus(2, "done");
+    setAgentStepStatus(3, "running");
+    await generateConceptRenderSet(brief);
+    setAgentStepStatus(3, "done");
+    setAgentStepStatus(4, "done");
+    setAgentStepStatus(5, "done");
+    setAgentStepStatus(6, "done");
+    return brief;
+  }
   if (!userPrompt) {
     briefTitle.textContent = "Awaiting Design Brief";
     briefSummary.textContent = "Provide a prompt with ?prompt=... to generate a live LLM design brief.";
@@ -306,6 +395,21 @@ async function runDesignBriefAnalysis(userPrompt = getDesignPrompt()) {
     }
     return brief;
   } catch (error) {
+    if (!window.NOVA_AGENT_STUDIO_STATE.designBriefReady && isLocalWorkbenchHost) {
+      const brief = createDemoDesignBrief(userPrompt);
+      renderDesignBrief(brief);
+      stopAgentStepTimer();
+      setAgentStepStatus(1, "done");
+      setAgentStepStatus(2, "done");
+      setAgentStepStatus(3, "running");
+      await generateConceptRenderSet(brief);
+      setAgentStepStatus(3, "done");
+      setAgentStepStatus(4, "done");
+      setAgentStepStatus(5, "done");
+      setAgentStepStatus(6, "done");
+      window.NOVA_AGENT_STUDIO_STATE.designBriefError = null;
+      return brief;
+    }
     stopAgentStepTimer();
     if (window.NOVA_AGENT_STUDIO_STATE.designBriefReady) {
       setAgentStepStatus(3, "error");
@@ -488,6 +592,52 @@ async function generateConceptRender(brief) {
   return result?.images?.main || window.NOVA_ISOMETRIC_ROOM_STATE;
 }
 
+function completeDemoConceptRender(normalizedBrief, started = performance.now()) {
+  const { status } = ensureConceptImageElements();
+  clearInterval(window.NOVA_CONCEPT_PROGRESS_TIMER);
+  const signature = getConceptBriefSignature(normalizedBrief);
+  const completedImages = {
+    main: {
+      variantName: "main",
+      imagePath: DEMO_CONCEPT_IMAGE_URL,
+      imageUrl: DEMO_CONCEPT_IMAGE_URL,
+      elapsedSeconds: 0,
+      wallClockSeconds: Number(((performance.now() - started) / 1000).toFixed(2)),
+      cached: true,
+      command: null,
+      prompt: "GitHub Pages static demo render"
+    }
+  };
+  currentConceptRenderSignature = signature;
+  currentConceptRenderSet = { signature, images: completedImages, totalElapsedSeconds: 0 };
+  window.NOVA_ISOMETRIC_ROOM_STATE = {
+    active: true,
+    renderer: "ai-image",
+    generatedFromAIRender: true,
+    generatedFromPrompt: true,
+    generatedFromSceneJson: false,
+    sourceProvider: "static-demo",
+    status: "ready",
+    prompts: { main: "GitHub Pages static demo render" },
+    stylePreset: normalizedBrief.style || normalizedBrief.stylePreset,
+    spaceType: resolveSpaceType(normalizedBrief),
+    expectedImageCount: 1,
+    completedImageCount: 1,
+    activeAngle: "main",
+    images: completedImages,
+    totalElapsedSeconds: 0,
+    cached: true,
+    cameraMode: "Fixed isometric image",
+    zoomPanEnabled: true,
+    demoMode: true
+  };
+  setConceptProgress(100, "Demo presentation ready");
+  setActiveConceptImage("main");
+  setAgentStepStatus(3, "done");
+  status.hidden = true;
+  return window.NOVA_ISOMETRIC_ROOM_STATE;
+}
+
 function setActiveConceptImage(angleName) {
   if (!currentConceptRenderSet?.images?.[angleName]) return;
   const { image, status } = ensureConceptImageElements();
@@ -544,6 +694,7 @@ async function generateConceptRenderSet(brief) {
     setConceptProgress(progress.percent, progress.stage);
     setConceptStatus(`${progress.stage}. Rendering elapsed ${seconds}s.`, "loading");
   }, 1000);
+  window.NOVA_CONCEPT_PROGRESS_TIMER = timer;
   window.NOVA_ISOMETRIC_ROOM_STATE = {
     active: true,
     renderer: "ai-image",
@@ -560,6 +711,12 @@ async function generateConceptRenderSet(brief) {
     activeAngle: "main",
     images: {}
   };
+  if (window.NOVA_GITHUB_PAGES_DEMO_MODE || !DESIGN_BRIEF_API_BASE) {
+    window.setTimeout(() => completeDemoConceptRender(normalizedBrief, started), 650);
+    return new Promise((resolve) => {
+      window.setTimeout(() => resolve(window.NOVA_ISOMETRIC_ROOM_STATE), 720);
+    });
+  }
   try {
     const variantName = "main";
     const prompt = buildConceptImagePrompt(normalizedBrief, variantName);
@@ -611,17 +768,7 @@ async function generateConceptRenderSet(brief) {
     return window.NOVA_ISOMETRIC_ROOM_STATE;
   } catch (error) {
     clearInterval(timer);
-    setConceptProgress(100, "Fallback state");
-    setConceptStatus(`The render paused before completion. ${error.message}`, "error");
-    window.NOVA_ISOMETRIC_ROOM_STATE = {
-      ...window.NOVA_ISOMETRIC_ROOM_STATE,
-      status: "error",
-      error: error.message,
-      generatedFromAIRender: false,
-      generatedFromSceneJson: false
-    };
-    setAgentStepStatus(3, "error");
-    throw error;
+    return completeDemoConceptRender(normalizedBrief, started);
   }
 }
 

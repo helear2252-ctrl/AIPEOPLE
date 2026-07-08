@@ -10,9 +10,9 @@
     />
     <link rel="icon" href="data:," />
     <title>NOVA Agent Design Studio</title>
-    <script type="module" crossorigin src="/AIPEOPLE/assets/workbench-pmXFNo2I.js"></script>
+    <script type="module" crossorigin src="/AIPEOPLE/assets/workbench-CO7CpYiN.js"></script>
     <link rel="modulepreload" crossorigin href="/AIPEOPLE/assets/modulepreload-polyfill-B5Qt9EMX.js">
-    <link rel="stylesheet" crossorigin href="/AIPEOPLE/assets/workbench-BbQ1iOwX.css">
+    <link rel="stylesheet" crossorigin href="/AIPEOPLE/assets/workbench-DDiwXf1O.css">
   </head>
   <body>
     <main class="studio-app" aria-label="NOVA Agent Design Studio">
@@ -47,71 +47,67 @@
         </section>
       </aside>
 
-      <section class="render-studio" aria-label="Main Visual Render Studio">
+      <section class="concept-studio" aria-label="AI Concept Render Studio">
         <div class="studio-toolbar">
           <div>
-            <p class="eyebrow">Main Visual</p>
-            <h2 id="renderTitle">Hero Render</h2>
+            <p class="eyebrow">AI Concept</p>
+            <h2 id="conceptTitle">Generated Interior View</h2>
           </div>
-          <div class="render-tabs" aria-label="Render views">
-            <button type="button" data-render-view="hero">Hero</button>
-            <button type="button" data-render-view="interior">Interior</button>
-            <button type="button" data-render-view="exterior">Exterior</button>
-            <button type="button" id="resetRender">Reset</button>
+          <div class="render-tabs" aria-label="Concept controls">
+            <button type="button" id="resetConcept">Reset</button>
           </div>
         </div>
 
-        <div class="render-canvas" id="renderCanvas">
-          <img id="renderImage" alt="Professional cafe render" draggable="false" />
-          <button class="render-hotspot hotspot-material" type="button">Material palette</button>
-          <button class="render-hotspot hotspot-lighting" type="button">Lighting</button>
-          <button class="render-hotspot hotspot-layout" type="button">Client view</button>
+        <div class="concept-composer">
+          <div id="roomViewport" class="concept-main-viewport" aria-label="AI generated concept render">
+            <img id="conceptImage" class="concept-image" alt="AI generated isometric concept render" draggable="false" />
+            <div id="conceptStatus" class="concept-status concept-loading" data-mode="waiting">
+              <div class="loading-card">
+                <p class="eyebrow">Rendering</p>
+                <h3 id="conceptLoadingTitle">Waiting for design brief</h3>
+                <p id="conceptLoadingMessage">NOVA will prepare the visual direction after the brief is ready.</p>
+                <div class="progress-track" aria-hidden="true"><i id="conceptProgressBar"></i></div>
+                <div class="progress-meta"><span id="conceptProgressLabel">0%</span><span id="conceptProgressStage">Standby</span></div>
+              </div>
+            </div>
+          </div>
         </div>
 
         <footer class="render-status">
-          <span>Zoom <b id="zoomValue">100%</b></span>
+          <span>Zoom <b id="conceptZoomValue">100%</b></span>
           <span>Pan <b>enabled</b></span>
-          <span>Reference gallery <b>false</b></span>
-          <span>Primitive fallback <b>false</b></span>
+          <span>Source <b>AI render</b></span>
         </footer>
       </section>
 
-      <aside class="side-stack" aria-label="Concept 3D and IDE Backstage">
-        <section class="concept-card">
+      <aside class="side-stack" aria-label="Design Work Log">
+        <section class="ide-backstage design-log-panel">
           <div class="section-heading">
             <div>
-              <p class="eyebrow">Concept 3D</p>
-              <h2>Isometric Preview</h2>
-            </div>
-            <span class="status-pill">Scene JSON</span>
-          </div>
-          <div class="camera-bar" aria-label="Concept camera controls">
-            <button type="button" data-camera="Iso">Iso</button>
-            <button type="button" data-camera="Front">Front</button>
-            <button type="button" data-camera="Top">Top</button>
-            <button type="button" id="autoTourButton">Tour</button>
-          </div>
-          <div id="roomViewport" class="room-viewport" aria-label="Compact isometric 3D preview"></div>
-          <div class="metric-row">
-            <span>Objects <b id="objectCount">0</b></span>
-            <span>Materials <b id="materialCount">0</b></span>
-          </div>
-        </section>
-
-        <section class="ide-backstage">
-          <div class="section-heading">
-            <div>
-              <p class="eyebrow">IDE Backstage</p>
-              <h2>Task Packet</h2>
+              <p class="eyebrow">Design Work Log</p>
+              <h2 id="logTitle">Presentation Narrative</h2>
             </div>
             <span class="status-pill">Codex</span>
           </div>
-          <div class="code-tabs" role="tablist" aria-label="Task packet tabs">
-            <button type="button" data-code-tab="html">HTML</button>
-            <button type="button" data-code-tab="json">JSON</button>
-            <button type="button" data-code-tab="css">CSS</button>
+          <div class="narrative-scroll">
+            <section class="narrative-card">
+              <p class="eyebrow">Today's Concept</p>
+              <h3 id="logConcept">Awaiting design direction</h3>
+              <p id="logSummary">The design narrative will appear after NOVA reads the brief.</p>
+            </section>
+            <section class="narrative-card">
+              <p class="eyebrow">Why This Works</p>
+              <ul id="logRationale"></ul>
+            </section>
           </div>
-          <pre id="codePreview"></pre>
+          <div class="technical-strip">
+            <div class="code-tabs" role="tablist" aria-label="Task packet tabs">
+              <button type="button" data-code-tab="html">HTML</button>
+              <button type="button" data-code-tab="json">JSON</button>
+              <button type="button" data-code-tab="css">CSS</button>
+            </div>
+            <pre id="codePreview"></pre>
+          </div>
         </section>
       </aside>
     </main>
