@@ -12,13 +12,22 @@ const agentSteps = [
   "Ready"
 ];
 
+const workbenchParams = new URLSearchParams(window.location.search);
 const isLocalWorkbenchHost = ["localhost", "127.0.0.1", "::1"].includes(window.location.hostname);
-const isGitHubPagesHost = window.location.hostname.endsWith("github.io");
-const forceStaticDemoMode = new URLSearchParams(window.location.search).get("demo") === "1";
-const DESIGN_BRIEF_API_BASE = isLocalWorkbenchHost ? "http://127.0.0.1:8080" : "";
+const forceStaticDemoMode = workbenchParams.get("demo") === "1";
+const requestedBackendBase = normalizeBackendBase(workbenchParams.get("backend"));
+const DESIGN_BRIEF_API_BASE = requestedBackendBase || (isLocalWorkbenchHost ? "http://127.0.0.1:8080" : "");
 const DEMO_CONCEPT_IMAGE_URL = new URL("./assets/designs/cafe_pro/renders/hero.jpg", import.meta.url).href;
 const USE_AI_CONCEPT_RENDER = true;
-window.NOVA_GITHUB_PAGES_DEMO_MODE = isGitHubPagesHost || forceStaticDemoMode;
+window.NOVA_GITHUB_PAGES_DEMO_MODE = forceStaticDemoMode;
+window.NOVA_WORKBENCH_BACKEND_CONNECTED = false;
+window.NOVA_WORKBENCH_RUNTIME_STATE = {
+  mode: forceStaticDemoMode ? "demo" : DESIGN_BRIEF_API_BASE ? "live" : "backend_missing",
+  backendBase: DESIGN_BRIEF_API_BASE,
+  backendConnected: false,
+  demoMode: forceStaticDemoMode,
+  usingDemoImage: false
+};
 const CONCEPT_CANVAS_FORMAT_PROMPT = "Render on a fixed 4:3 landscape canvas with consistent medium-wide framing, the full cutaway room centered and scaled to leave 8-10% margin on all sides, on a neutral warm gray studio gradient background from #d8d6d0 to #f2f0eb. Keep the same card-like composition, camera distance, background treatment, and whitespace for every brief.";
 const conceptAngles = {
   main: "camera angle: polished hero isometric 3/4 view, balanced view of both walls and the full room composition",
@@ -26,6 +35,27 @@ const conceptAngles = {
   center: "camera angle: centered isometric cutaway, balanced symmetrical view of the room layout and main furniture group",
   right: "camera angle: rotated slightly to the right, showing the right wall, shelves, storage, and side details in more detail"
 };
+
+function normalizeBackendBase(value) {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(raw);
+    if (!["http:", "https:"].includes(url.protocol)) return "";
+    return url.href.replace(/\/+$/, "");
+  } catch {
+    return "";
+  }
+}
+
+function setWorkbenchRuntimeState(patch) {
+  window.NOVA_WORKBENCH_RUNTIME_STATE = {
+    ...window.NOVA_WORKBENCH_RUNTIME_STATE,
+    ...patch
+  };
+  window.NOVA_WORKBENCH_BACKEND_CONNECTED = Boolean(window.NOVA_WORKBENCH_RUNTIME_STATE.backendConnected);
+}
+
 const DESIGN_BRIEF_SCHEMA = {
   type: "object",
   additionalProperties: false,
@@ -190,11 +220,16 @@ function validateDesignBrief(brief) {
 }
 
 async function generateDesignBrief(userPrompt) {
-  if (window.NOVA_GITHUB_PAGES_DEMO_MODE || !DESIGN_BRIEF_API_BASE) {
+  if (window.NOVA_GITHUB_PAGES_DEMO_MODE) {
+    setWorkbenchRuntimeState({ mode: "demo", backendConnected: false, demoMode: true, usingDemoImage: true });
     window.NOVA_DESIGN_BRIEF_PROVIDER = "static-demo";
     window.NOVA_DESIGN_BRIEF_COMMAND = null;
     window.NOVA_DESIGN_BRIEF_ELAPSED_SECONDS = 0;
     return validateDesignBrief(createDemoDesignBrief(userPrompt));
+  }
+  if (!DESIGN_BRIEF_API_BASE) {
+    setWorkbenchRuntimeState({ mode: "backend_missing", backendConnected: false, demoMode: false, usingDemoImage: false });
+    throw new Error("Backend not connected. Add ?demo=1 to view the static demo.");
   }
   const response = await fetch(`${DESIGN_BRIEF_API_BASE}/agent/design-brief`, {
     method: "POST",
@@ -203,6 +238,7 @@ async function generateDesignBrief(userPrompt) {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) throw new Error(payload.detail || `Design brief API returned HTTP ${response.status}`);
+  setWorkbenchRuntimeState({ mode: "live", backendConnected: true, demoMode: false, usingDemoImage: false });
   window.NOVA_DESIGN_BRIEF_PROVIDER = payload.provider;
   window.NOVA_DESIGN_BRIEF_COMMAND = payload.command;
   window.NOVA_DESIGN_BRIEF_ELAPSED_SECONDS = payload.elapsedSeconds;
@@ -341,6 +377,14 @@ function escapeHtml(value) {
   })[character]);
 }
 
+function getBackendNotConnectedMessage(error) {
+  const detail = error?.message || "";
+  if (!detail || /failed to fetch|networkerror|load failed/i.test(detail)) {
+    return "Backend not connected. Start agent_runtime.py locally, or add ?demo=1 to view the static demo.";
+  }
+  return detail;
+}
+
 async function runInjectedBriefForTest(brief) {
   stopAgentStepTimer();
   renderInjectedDesignBrief(brief);
@@ -361,7 +405,7 @@ async function runDesignBriefAnalysis(userPrompt = getDesignPrompt()) {
   if (userPrompt) startAgentStepTimer(1);
   else setAgentStepStatus(1, "waiting");
   if (!userPrompt && window.NOVA_GITHUB_PAGES_DEMO_MODE) {
-    const brief = createDemoDesignBrief("GitHub Pages demo: warm industrial cafe concept");
+    const brief = createDemoDesignBrief("Demo mode: warm industrial cafe concept");
     renderDesignBrief(brief);
     setAgentStepStatus(0, "done");
     setAgentStepStatus(1, "done");
@@ -375,6 +419,14 @@ async function runDesignBriefAnalysis(userPrompt = getDesignPrompt()) {
     return brief;
   }
   if (!userPrompt) {
+    if (!DESIGN_BRIEF_API_BASE) {
+      setWorkbenchRuntimeState({ mode: "backend_missing", backendConnected: false, demoMode: false, usingDemoImage: false });
+      setAgentStepStatus(1, "error");
+      briefTitle.textContent = "Backend not connected";
+      briefSummary.textContent = "This static site cannot reach the NOVA backend. Add ?demo=1 to view the static demo.";
+      window.NOVA_AGENT_STUDIO_STATE.designBriefError = briefSummary.textContent;
+      return null;
+    }
     briefTitle.textContent = "Awaiting Design Brief";
     briefSummary.textContent = "Provide a prompt with ?prompt=... to generate a live LLM design brief.";
     return null;
@@ -395,30 +447,15 @@ async function runDesignBriefAnalysis(userPrompt = getDesignPrompt()) {
     }
     return brief;
   } catch (error) {
-    if (!window.NOVA_AGENT_STUDIO_STATE.designBriefReady && isLocalWorkbenchHost) {
-      const brief = createDemoDesignBrief(userPrompt);
-      renderDesignBrief(brief);
-      stopAgentStepTimer();
-      setAgentStepStatus(1, "done");
-      setAgentStepStatus(2, "done");
-      setAgentStepStatus(3, "running");
-      await generateConceptRenderSet(brief);
-      setAgentStepStatus(3, "done");
-      setAgentStepStatus(4, "done");
-      setAgentStepStatus(5, "done");
-      setAgentStepStatus(6, "done");
-      window.NOVA_AGENT_STUDIO_STATE.designBriefError = null;
-      return brief;
-    }
     stopAgentStepTimer();
     if (window.NOVA_AGENT_STUDIO_STATE.designBriefReady) {
       setAgentStepStatus(3, "error");
     } else {
       setAgentStepStatus(1, "error");
-      briefTitle.textContent = "Design Brief Failed";
-      briefSummary.textContent = error.message;
+      briefTitle.textContent = "Backend not connected";
+      briefSummary.textContent = getBackendNotConnectedMessage(error);
     }
-    window.NOVA_AGENT_STUDIO_STATE.designBriefError = error.message;
+    window.NOVA_AGENT_STUDIO_STATE.designBriefError = getBackendNotConnectedMessage(error);
     throw error;
   }
 }
@@ -595,6 +632,7 @@ async function generateConceptRender(brief) {
 function completeDemoConceptRender(normalizedBrief, started = performance.now()) {
   const { status } = ensureConceptImageElements();
   clearInterval(window.NOVA_CONCEPT_PROGRESS_TIMER);
+  setWorkbenchRuntimeState({ mode: "demo", backendConnected: false, demoMode: true, usingDemoImage: true });
   const signature = getConceptBriefSignature(normalizedBrief);
   const completedImages = {
     main: {
@@ -711,11 +749,26 @@ async function generateConceptRenderSet(brief) {
     activeAngle: "main",
     images: {}
   };
-  if (window.NOVA_GITHUB_PAGES_DEMO_MODE || !DESIGN_BRIEF_API_BASE) {
+  if (window.NOVA_GITHUB_PAGES_DEMO_MODE) {
+    setWorkbenchRuntimeState({ mode: "demo", backendConnected: false, demoMode: true, usingDemoImage: true });
     window.setTimeout(() => completeDemoConceptRender(normalizedBrief, started), 650);
     return new Promise((resolve) => {
       window.setTimeout(() => resolve(window.NOVA_ISOMETRIC_ROOM_STATE), 720);
     });
+  }
+  if (!DESIGN_BRIEF_API_BASE) {
+    clearInterval(timer);
+    const error = new Error("Backend not connected. Add ?demo=1 to view the static demo.");
+    setWorkbenchRuntimeState({ mode: "backend_missing", backendConnected: false, demoMode: false, usingDemoImage: false });
+    setConceptProgress(0, "Backend not connected");
+    setConceptStatus(error.message, "error");
+    window.NOVA_ISOMETRIC_ROOM_STATE = {
+      ...window.NOVA_ISOMETRIC_ROOM_STATE,
+      status: "error",
+      sourceProvider: "backend-unavailable",
+      error: error.message
+    };
+    throw error;
   }
   try {
     const variantName = "main";
@@ -729,6 +782,7 @@ async function generateConceptRenderSet(brief) {
     });
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) throw new Error(payload.detail || `Concept render API returned HTTP ${response.status}`);
+    setWorkbenchRuntimeState({ mode: "live", backendConnected: true, demoMode: false, usingDemoImage: false });
     const imageUrl = payload.imagePath?.startsWith("http")
       ? payload.imagePath
       : `${DESIGN_BRIEF_API_BASE}${payload.imagePath}`;
@@ -768,7 +822,17 @@ async function generateConceptRenderSet(brief) {
     return window.NOVA_ISOMETRIC_ROOM_STATE;
   } catch (error) {
     clearInterval(timer);
-    return completeDemoConceptRender(normalizedBrief, started);
+    const message = getBackendNotConnectedMessage(error);
+    setWorkbenchRuntimeState({ mode: "backend_missing", backendConnected: false, demoMode: false, usingDemoImage: false });
+    setConceptProgress(0, "Backend not connected");
+    setConceptStatus(message, "error");
+    window.NOVA_ISOMETRIC_ROOM_STATE = {
+      ...window.NOVA_ISOMETRIC_ROOM_STATE,
+      status: "error",
+      sourceProvider: "backend-unavailable",
+      error: message
+    };
+    throw error;
   }
 }
 

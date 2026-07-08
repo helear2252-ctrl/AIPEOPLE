@@ -20,7 +20,7 @@ RENDER_TIMEOUT_SECONDS=max(480,int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS","480"
 os.environ.setdefault("NOVA_RENDER_TIMEOUT_SECONDS",str(RENDER_TIMEOUT_SECONDS))
 RUNTIME_CONFIG=NovaRuntimeConfig.load()
 GENERATED_ASSETS_DIR=ROOT / "generated_assets"; GENERATED_ASSETS_DIR.mkdir(parents=True,exist_ok=True)
-app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080","http://127.0.0.1:5173","http://localhost:5173"],allow_methods=["*"],allow_headers=["*"])
+app.add_middleware(CORSMiddleware,allow_origins=["https://helear2252-ctrl.github.io","http://127.0.0.1:8080","http://localhost:8080","http://127.0.0.1:5173","http://localhost:5173"],allow_methods=["*"],allow_headers=["*"])
 stream=AgentEventStream(); orchestrator=NovaUniversalAgentCore(stream); tasks={}
 class TaskRequest(BaseModel): userMessage: str; brain: str="localMock"
 class DesignBriefRequest(BaseModel): userPrompt: str

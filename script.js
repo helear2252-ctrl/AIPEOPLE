@@ -2534,7 +2534,12 @@ class AvatarController {
     document.body.classList.toggle("agent-workbench-iframe-mode", useIframeWorkbench);
     this.agentIframe.setAttribute("aria-hidden", useIframeWorkbench ? "false" : "true");
     if (useIframeWorkbench) {
-      this.agentIframe.src = `/AIPEOPLE/nova-workbench.html?prompt=${encodeURIComponent(task || "")}`;
+      const iframeParams = new URLSearchParams();
+      const currentParams = new URLSearchParams(window.location.search);
+      iframeParams.set("prompt", task || "");
+      if (currentParams.has("backend")) iframeParams.set("backend", currentParams.get("backend"));
+      if (currentParams.get("demo") === "1") iframeParams.set("demo", "1");
+      this.agentIframe.src = `/AIPEOPLE/nova-workbench.html?${iframeParams.toString()}`;
       this.agentCloseButton.hidden = false;
       this.agentCloseButton.disabled = false;
       this.agentCloseButton.textContent = "Return to NOVA";
