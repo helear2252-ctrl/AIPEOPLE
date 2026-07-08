@@ -1,6 +1,6 @@
 """Run: python agent_runtime.py, then open http://127.0.0.1:8080/nova.html"""
 from __future__ import annotations
-import json, logging, os, threading, uuid
+import hashlib, json, logging, os, shutil, subprocess, threading, time, uuid
 from pathlib import Path
 from urllib.parse import urlsplit
 from fastapi import FastAPI, HTTPException, Query
@@ -9,6 +9,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from agent_stream import AgentEventStream
+from design_brief_agent import DESIGN_BRIEF_SCHEMA, DesignBriefGenerationError, detect_design_brief_cli, generateDesignBriefResult
 from nova_agent_core import NovaUniversalAgentCore
 from nova_runtime_config import NovaRuntimeConfig
 from render_provider_factory import create_render_provider
@@ -19,13 +20,100 @@ RENDER_TIMEOUT_SECONDS=max(480,int(os.getenv("NOVA_RENDER_TIMEOUT_SECONDS","480"
 os.environ.setdefault("NOVA_RENDER_TIMEOUT_SECONDS",str(RENDER_TIMEOUT_SECONDS))
 RUNTIME_CONFIG=NovaRuntimeConfig.load()
 GENERATED_ASSETS_DIR=ROOT / "generated_assets"; GENERATED_ASSETS_DIR.mkdir(parents=True,exist_ok=True)
-app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080"],allow_methods=["*"],allow_headers=["*"])
+app.add_middleware(CORSMiddleware,allow_origins=["http://127.0.0.1:8080","http://localhost:8080","http://127.0.0.1:5173","http://localhost:5173"],allow_methods=["*"],allow_headers=["*"])
 stream=AgentEventStream(); orchestrator=NovaUniversalAgentCore(stream); tasks={}
 class TaskRequest(BaseModel): userMessage: str; brain: str="localMock"
+class DesignBriefRequest(BaseModel): userPrompt: str
+class ConceptRenderRequest(BaseModel):
+    brief: dict
+    prompt: str
+    variantName: str = "main"
+
+def is_valid_png(path: Path) -> bool:
+    if not path.exists() or path.stat().st_size < 1024:
+        return False
+    with path.open("rb") as file:
+        return file.read(8) == b"\x89PNG\r\n\x1a\n"
 
 @app.get("/agent/config")
 def runtime_config():
-    return {"gptBrainAvailable":bool(RUNTIME_CONFIG.openai_api_key),"renderTimeoutSeconds":RENDER_TIMEOUT_SECONDS,"renderProvider":RUNTIME_CONFIG.render_provider,"apiKeyExposed":False}
+    try: brief_cli=detect_design_brief_cli()
+    except DesignBriefGenerationError: brief_cli={"provider":None,"command":None}
+    return {"gptBrainAvailable":bool(RUNTIME_CONFIG.openai_api_key),"designBriefProvider":brief_cli["provider"],"renderTimeoutSeconds":RENDER_TIMEOUT_SECONDS,"renderProvider":RUNTIME_CONFIG.render_provider,"apiKeyExposed":False}
+
+@app.get("/agent/design-brief/schema")
+def design_brief_schema():
+    try: brief_cli=detect_design_brief_cli()
+    except DesignBriefGenerationError: brief_cli={"provider":None,"command":None}
+    return {"provider":brief_cli["provider"],"command":brief_cli["command"],"schema":DESIGN_BRIEF_SCHEMA,"apiKeyConfigured":False}
+
+@app.post("/agent/design-brief")
+def create_design_brief(req: DesignBriefRequest):
+    prompt=req.userPrompt.strip()
+    if not prompt: raise HTTPException(400,"userPrompt is required")
+    try:
+        result=generateDesignBriefResult(prompt)
+        return result
+    except DesignBriefGenerationError as exc:
+        raise HTTPException(503,str(exc))
+    except Exception as exc:
+        raise HTTPException(502,f"LLM design brief generation failed: {type(exc).__name__}")
+
+@app.post("/agent/concept-render")
+def create_concept_render(req: ConceptRenderRequest):
+    if not req.prompt.strip():
+        raise HTTPException(400, "prompt is required")
+    codex_path = shutil.which("codex")
+    if not codex_path:
+        raise HTTPException(503, "Codex CLI is not available.")
+    cache_key = {"brief": req.brief, "variantName": req.variantName, "promptVersion": "concept-four-angle-v1"}
+    signature = hashlib.sha256(json.dumps(cache_key, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()[:16]
+    output_dir = GENERATED_ASSETS_DIR / "concept_ai_renders" / signature
+    output_dir.mkdir(parents=True, exist_ok=True)
+    safe_variant = "".join(char if char.isalnum() or char in ("-", "_") else "_" for char in req.variantName.lower())[:32] or "main"
+    output_name = f"concept_3d_{safe_variant}_{signature}.png"
+    output_path = output_dir / output_name
+    if is_valid_png(output_path):
+        return {
+            "provider": "codex-cli",
+            "cached": True,
+            "elapsedSeconds": 0,
+            "imagePath": f"/generated_assets/concept_ai_renders/{signature}/{output_name}",
+            "prompt": req.prompt,
+            "command": ["codex", "exec", "--ephemeral", "--sandbox", "workspace-write", "-C", str(output_dir), "<prompt>"],
+        }
+    if output_path.exists():
+        output_path.unlink()
+    prompt = (
+        req.prompt.strip()
+        + f"\n\nSave a real raster PNG as {output_name} in the current directory. "
+        "Do not create SVG, HTML, text art, a placeholder, or a markdown-only answer."
+    )
+    command = ["codex", "exec", "--ephemeral", "--sandbox", "workspace-write", "-C", str(output_dir), prompt]
+    started = time.perf_counter()
+    try:
+        completed = subprocess.run(command, capture_output=True, text=True, encoding="utf-8", timeout=RENDER_TIMEOUT_SECONDS)
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(504, f"Codex concept render timed out after {RENDER_TIMEOUT_SECONDS} seconds.") from exc
+    elapsed = time.perf_counter() - started
+    if completed.returncode != 0:
+        message = (completed.stderr or completed.stdout or "Codex CLI failed.").strip()
+        raise HTTPException(502, "Codex concept render failed: " + message.splitlines()[-1])
+    if not output_path.exists():
+        pngs = sorted(output_dir.glob("*.png"), key=lambda path: path.stat().st_mtime, reverse=True)
+        if pngs:
+            pngs[0].replace(output_path)
+    if not is_valid_png(output_path):
+        raise HTTPException(502, "Codex concept render completed but no PNG file was created.")
+    return {
+        "provider": "codex-cli",
+        "cached": False,
+        "elapsedSeconds": round(elapsed, 2),
+        "imagePath": f"/generated_assets/concept_ai_renders/{signature}/{output_name}",
+        "prompt": req.prompt,
+        "command": ["codex", "exec", "--ephemeral", "--sandbox", "workspace-write", "-C", str(output_dir), "<prompt>"],
+        "stdout": completed.stdout,
+    }
 
 @app.on_event("startup")
 def log_render_provider_status():

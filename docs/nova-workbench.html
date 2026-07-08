@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f1eb" />
+    <meta
+      name="description"
+      content="NOVA Agent Design Studio fixed 100vh product workbench with render studio, agent panel, concept 3D, and IDE packet."
+    />
+    <link rel="icon" href="data:," />
+    <title>NOVA Agent Design Studio</title>
+    <script type="module" crossorigin src="/AIPEOPLE/assets/workbench-pmXFNo2I.js"></script>
+    <link rel="modulepreload" crossorigin href="/AIPEOPLE/assets/modulepreload-polyfill-B5Qt9EMX.js">
+    <link rel="stylesheet" crossorigin href="/AIPEOPLE/assets/workbench-BbQ1iOwX.css">
+  </head>
+  <body>
+    <main class="studio-app" aria-label="NOVA Agent Design Studio">
+      <aside class="agent-panel" aria-label="Agent Work Panel">
+        <header class="brand-block">
+          <span class="brand-mark">N</span>
+          <div>
+            <p>NOVA</p>
+            <h1>Agent Design Studio</h1>
+          </div>
+        </header>
+
+        <section class="brief-panel">
+          <p class="eyebrow">Design Brief</p>
+          <h2 id="briefTitle">Awaiting Design Brief</h2>
+          <p class="brief-copy" id="briefSummary">
+            Provide a prompt with ?prompt=... to generate a live LLM design brief.
+          </p>
+          <dl class="brief-stats">
+            <div><dt>Room Type</dt><dd id="briefRoomType">Waiting</dd></div>
+            <div><dt>Style</dt><dd id="briefStyle">Waiting</dd></div>
+            <div><dt>Palette</dt><dd id="briefPalette">Waiting</dd></div>
+          </dl>
+        </section>
+
+        <section class="agent-steps">
+          <div class="section-heading">
+            <p class="eyebrow">Agent Work Panel</p>
+            <span class="status-pill">Ready</span>
+          </div>
+          <ol id="agentSteps"></ol>
+        </section>
+      </aside>
+
+      <section class="render-studio" aria-label="Main Visual Render Studio">
+        <div class="studio-toolbar">
+          <div>
+            <p class="eyebrow">Main Visual</p>
+            <h2 id="renderTitle">Hero Render</h2>
+          </div>
+          <div class="render-tabs" aria-label="Render views">
+            <button type="button" data-render-view="hero">Hero</button>
+            <button type="button" data-render-view="interior">Interior</button>
+            <button type="button" data-render-view="exterior">Exterior</button>
+            <button type="button" id="resetRender">Reset</button>
+          </div>
+        </div>
+
+        <div class="render-canvas" id="renderCanvas">
+          <img id="renderImage" alt="Professional cafe render" draggable="false" />
+          <button class="render-hotspot hotspot-material" type="button">Material palette</button>
+          <button class="render-hotspot hotspot-lighting" type="button">Lighting</button>
+          <button class="render-hotspot hotspot-layout" type="button">Client view</button>
+        </div>
+
+        <footer class="render-status">
+          <span>Zoom <b id="zoomValue">100%</b></span>
+          <span>Pan <b>enabled</b></span>
+          <span>Reference gallery <b>false</b></span>
+          <span>Primitive fallback <b>false</b></span>
+        </footer>
+      </section>
+
+      <aside class="side-stack" aria-label="Concept 3D and IDE Backstage">
+        <section class="concept-card">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Concept 3D</p>
+              <h2>Isometric Preview</h2>
+            </div>
+            <span class="status-pill">Scene JSON</span>
+          </div>
+          <div class="camera-bar" aria-label="Concept camera controls">
+            <button type="button" data-camera="Iso">Iso</button>
+            <button type="button" data-camera="Front">Front</button>
+            <button type="button" data-camera="Top">Top</button>
+            <button type="button" id="autoTourButton">Tour</button>
+          </div>
+          <div id="roomViewport" class="room-viewport" aria-label="Compact isometric 3D preview"></div>
+          <div class="metric-row">
+            <span>Objects <b id="objectCount">0</b></span>
+            <span>Materials <b id="materialCount">0</b></span>
+          </div>
+        </section>
+
+        <section class="ide-backstage">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">IDE Backstage</p>
+              <h2>Task Packet</h2>
+            </div>
+            <span class="status-pill">Codex</span>
+          </div>
+          <div class="code-tabs" role="tablist" aria-label="Task packet tabs">
+            <button type="button" data-code-tab="html">HTML</button>
+            <button type="button" data-code-tab="json">JSON</button>
+            <button type="button" data-code-tab="css">CSS</button>
+          </div>
+          <pre id="codePreview"></pre>
+        </section>
+      </aside>
+    </main>
+  </body>
+</html>

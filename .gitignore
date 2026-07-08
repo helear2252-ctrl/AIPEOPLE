@@ -1,4 +1,9 @@
 __pycache__/
+.pytest_cache/
+.tmp-agent-runtime-*
+.tmp-agent-runtime-*.log
+.tmp-chrome-*
+*.tmp
 *.pyc
 *.pyo
 *.pyd

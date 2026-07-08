@@ -41,7 +41,8 @@ export default defineConfig({
       input: {
         main: resolve(__dirname, 'index.html'),
         login: resolve(__dirname, 'login/index.html'),
-        nova: resolve(__dirname, 'nova.html')
+        nova: resolve(__dirname, 'nova.html'),
+        workbench: resolve(__dirname, 'nova-workbench.html')
       }
     }
   }

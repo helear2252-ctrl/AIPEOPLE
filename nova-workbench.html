@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#f4f1eb" />
+    <meta
+      name="description"
+      content="NOVA Agent Design Studio fixed 100vh product workbench with render studio, agent panel, concept 3D, and IDE packet."
+    />
+    <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="/nova-workbench.css" />
+    <title>NOVA Agent Design Studio</title>
+  </head>
+  <body>
+    <main class="studio-app" aria-label="NOVA Agent Design Studio">
+      <aside class="agent-panel" aria-label="Agent Work Panel">
+        <header class="brand-block">
+          <span class="brand-mark">N</span>
+          <div>
+            <p>NOVA</p>
+            <h1>Agent Design Studio</h1>
+          </div>
+        </header>
+
+        <section class="brief-panel">
+          <p class="eyebrow">Design Brief</p>
+          <h2 id="briefTitle">Awaiting Design Brief</h2>
+          <p class="brief-copy" id="briefSummary">
+            Provide a prompt with ?prompt=... to generate a live LLM design brief.
+          </p>
+          <dl class="brief-stats">
+            <div><dt>Room Type</dt><dd id="briefRoomType">Waiting</dd></div>
+            <div><dt>Style</dt><dd id="briefStyle">Waiting</dd></div>
+            <div><dt>Palette</dt><dd id="briefPalette">Waiting</dd></div>
+          </dl>
+        </section>
+
+        <section class="agent-steps">
+          <div class="section-heading">
+            <p class="eyebrow">Agent Work Panel</p>
+            <span class="status-pill">Ready</span>
+          </div>
+          <ol id="agentSteps"></ol>
+        </section>
+      </aside>
+
+      <section class="concept-studio" aria-label="AI Concept Render Studio">
+        <div class="studio-toolbar">
+          <div>
+            <p class="eyebrow">AI Concept</p>
+            <h2 id="conceptTitle">Generated Interior View</h2>
+          </div>
+          <div class="render-tabs" aria-label="Concept controls">
+            <button type="button" id="resetConcept">Reset</button>
+          </div>
+        </div>
+
+        <div class="concept-composer">
+          <div id="roomViewport" class="concept-main-viewport" aria-label="AI generated concept render">
+            <img id="conceptImage" class="concept-image" alt="AI generated isometric concept render" draggable="false" />
+            <div id="conceptStatus" class="concept-status concept-loading" data-mode="waiting">
+              <div class="loading-card">
+                <p class="eyebrow">Rendering</p>
+                <h3 id="conceptLoadingTitle">Waiting for design brief</h3>
+                <p id="conceptLoadingMessage">NOVA will prepare the visual direction after the brief is ready.</p>
+                <div class="progress-track" aria-hidden="true"><i id="conceptProgressBar"></i></div>
+                <div class="progress-meta"><span id="conceptProgressLabel">0%</span><span id="conceptProgressStage">Standby</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <footer class="render-status">
+          <span>Zoom <b id="conceptZoomValue">100%</b></span>
+          <span>Pan <b>enabled</b></span>
+          <span>Source <b>AI render</b></span>
+        </footer>
+      </section>
+
+      <aside class="side-stack" aria-label="Design Work Log">
+        <section class="ide-backstage design-log-panel">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">Design Work Log</p>
+              <h2 id="logTitle">Presentation Narrative</h2>
+            </div>
+            <span class="status-pill">Codex</span>
+          </div>
+          <div class="narrative-scroll">
+            <section class="narrative-card">
+              <p class="eyebrow">Today's Concept</p>
+              <h3 id="logConcept">Awaiting design direction</h3>
+              <p id="logSummary">The design narrative will appear after NOVA reads the brief.</p>
+            </section>
+            <section class="narrative-card">
+              <p class="eyebrow">Why This Works</p>
+              <ul id="logRationale"></ul>
+            </section>
+          </div>
+          <div class="technical-strip">
+            <div class="code-tabs" role="tablist" aria-label="Task packet tabs">
+              <button type="button" data-code-tab="html">HTML</button>
+              <button type="button" data-code-tab="json">JSON</button>
+              <button type="button" data-code-tab="css">CSS</button>
+            </div>
+            <pre id="codePreview"></pre>
+          </div>
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="/nova-workbench.js?v=agent-studio-fixed-v1"></script>
+  </body>
+</html>

@@ -2220,17 +2220,20 @@ class AvatarController {
     this.destroyCapabilityEngines();
     this.currentWorkbenchRequest = task;
     this.currentWorkbenchTaskType = detectWorkbenchTaskType(task);
+    if (this.currentWorkbenchTaskType === "design3d") {
+      this.workbenchTaskCanvas.innerHTML = "";
+      this.workbenchCurrentTask = null;
+      this.workbenchCards = Array.from(this.agentOverlay.querySelectorAll(".workbench-card"));
+      this.logFlowEvent("workbench:task-rendered", {
+        taskType: this.currentWorkbenchTaskType,
+        displayMode: "iframe"
+      });
+      return;
+    }
     this.workbenchTaskCanvas.innerHTML = renderWorkbenchTask(this.currentWorkbenchTaskType, task);
-    if (this.currentWorkbenchTaskType !== "design3d") this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
+    this.workbenchTaskCanvas.querySelector(".task-workflow")?.insertAdjacentHTML("beforeend", `<div class="agent-live-console"><strong>AGENT LOG</strong><div class="agent-log-stream"></div></div>`);
     this.workbenchCurrentTask = document.getElementById("workbench-current-task");
     this.workbenchCards = Array.from(this.agentOverlay.querySelectorAll(".workbench-card"));
-    if (this.currentWorkbenchTaskType === "design3d") {
-      const viewport = this.workbenchTaskCanvas.querySelector("[data-3d-viewport]");
-      if (viewport) {
-        this.design3DEngine = new Interior3DEngine(viewport);
-        this.toolExecutor.register("Interior3DEngine", this.design3DEngine);
-      }
-    }
     this.logFlowEvent("workbench:task-rendered", {
       taskType: this.currentWorkbenchTaskType
     });
@@ -2527,7 +2530,17 @@ class AvatarController {
     this.agentErrorText.hidden = true;
     this.agentStreamlitNotice.hidden = true;
     this.agentCloseButton.hidden = true;
-    this.agentIframe.src = "about:blank";
+    const useIframeWorkbench = this.currentWorkbenchTaskType === "design3d";
+    document.body.classList.toggle("agent-workbench-iframe-mode", useIframeWorkbench);
+    this.agentIframe.setAttribute("aria-hidden", useIframeWorkbench ? "false" : "true");
+    if (useIframeWorkbench) {
+      this.agentIframe.src = `/AIPEOPLE/nova-workbench.html?prompt=${encodeURIComponent(task || "")}`;
+      this.agentCloseButton.hidden = false;
+      this.agentCloseButton.disabled = false;
+      this.agentCloseButton.textContent = "Return to NOVA";
+    } else {
+      this.agentIframe.src = "about:blank";
+    }
     document.body.classList.remove("agent-overlay-closing");
     document.body.classList.add("agent-overlay-preparing", "agent-overlay-open");
 
@@ -2700,7 +2713,8 @@ class AvatarController {
     await this.wait(340);
     this.agentOverlay.classList.remove("preparing", "is-closing");
     this.agentStatusBadge.classList.remove("is-error");
-    document.body.classList.remove("agent-overlay-preparing", "agent-overlay-open", "agent-overlay-closing");
+    document.body.classList.remove("agent-overlay-preparing", "agent-overlay-open", "agent-overlay-closing", "agent-workbench-iframe-mode");
+    this.agentIframe.setAttribute("aria-hidden", "true");
     this.agentIframe.src = "about:blank";
   }
 
